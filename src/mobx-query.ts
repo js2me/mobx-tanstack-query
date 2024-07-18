@@ -94,8 +94,15 @@ export class MobxQuery<
     });
 
     if (dynamicOptions) {
-      // @ts-expect-error ???
-      this.disposer.add(autorun(() => this.update(dynamicOptions())));
+      this.disposer.add(
+        autorun(() =>
+          this.update(
+            dynamicOptions() as Partial<
+              QueryObserverOptions<TData, TError, TQueryKey>
+            >,
+          ),
+        ),
+      );
     }
     if (onDone) {
       this.onDone(onDone);
@@ -120,11 +127,10 @@ export class MobxQuery<
 
   @action.bound
   update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
-    // @ts-expect-error ???
-    this.options = queryClient.defaultQueryOptions({
+    this.options = this.queryClient.defaultQueryOptions({
       ...this.options,
       ...options,
-    });
+    } as any);
     this.options.queryHash =
       this.options.queryKeyHashFn?.(this.options.queryKey) ??
       this.options.queryHash;
