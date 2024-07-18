@@ -1,0 +1,17 @@
+swagger-api-codegen
+tsconfig.json
+webpack.config.js
+.eslintrc
+.babelrc.js
+public*
+node_modules
+dist
+.vscode
+.kube
+.idea
+.dockerignore
+.gitlab-ci.yml
+nginx.conf
+jsconfig.json
+*.json
+.eslintrc.js
