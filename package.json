@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "dist/index.js",
   "files": [
     "dist"
@@ -14,6 +14,14 @@
   "author": "js2me",
   "license": "ISC",
   "description": "",
+  "bugs": {
+    "url": "https://github.com/js2me/mobx-tanstack-query/issues"
+  },
+  "homepage": "https://github.com/js2me/mobx-tanstack-query",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/js2me/mobx-tanstack-query"
+  },
   "dependencies": {
     "mobx-disposer-util": "latest"
   },
