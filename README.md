@@ -17,6 +17,25 @@ Current supporting [Queries](https://tanstack.com/query/latest/docs/framework/re
 
 # Usage  
 
+First of needs to create `queryClient` using `tanstack-query` core package   
+
+```ts
+import { hashKey, QueryClient } from '@tanstack/query-core';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      throwOnError: true,
+      staleTime: Infinity,
+      queryKeyHashFn: hashKey,
+    },
+    mutations: {
+      throwOnError: true,
+    },
+  },
+});
+```  
+
 ## MobxQuery  
 
 ```ts
