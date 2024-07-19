@@ -40,6 +40,7 @@ class YammyModel {
     queryClient,
     disposer: this.disposer,
     enabled: false,
+    queryKey: ['yammy'],
     queryFn: async () => {
       const response = await yammiApi.list(this.params);
       return response.data;
