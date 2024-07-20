@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "dist/index.js",
   "files": [
     "dist"
@@ -23,9 +23,9 @@
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
   "dependencies": {
-    "mobx-disposer-util": "latest"
   },
   "peerDependencies": {
+    "mobx-disposer-util": "*",
     "@tanstack/query-core": ">=5.0.0",
     "mobx": ">=6.12.4"
   },
