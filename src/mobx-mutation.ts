@@ -6,8 +6,8 @@ import {
   MutationOptions,
   QueryClient,
 } from '@tanstack/query-core';
+import { Disposer } from 'disposer-util';
 import { action, makeObservable, observable, reaction } from 'mobx';
-import { Disposer } from 'mobx-disposer-util';
 
 export interface MobxMutationConfig<
   TData = unknown,

@@ -1,25 +1,27 @@
 import {
-  DefaultedQueryObserverOptions,
+  DefaultedInfiniteQueryObserverOptions,
   DefaultError,
+  FetchNextPageOptions,
+  FetchPreviousPageOptions,
+  InfiniteQueryObserver,
+  InfiniteQueryObserverOptions,
   QueryClient,
   QueryFilters,
   QueryKey,
-  QueryObserver,
-  QueryObserverOptions,
   QueryObserverResult,
 } from '@tanstack/query-core';
 import { Disposer } from 'disposer-util';
 import { action, autorun, makeObservable, observable, reaction } from 'mobx';
 
-export interface MobxQueryConfig<
+export interface MobxInfiniteQueryConfig<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
-    QueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
   > {
   queryClient: QueryClient;
-  onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
+  onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
   disposer?: Disposer;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
@@ -28,12 +30,12 @@ export interface MobxQueryConfig<
    * (autorun -> setOptions)
    */
   options?: () => Partial<
-    QueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
   >;
   resetOnDispose?: boolean;
 }
 
-export class MobxQuery<
+export class MobxInfiniteQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
@@ -42,25 +44,26 @@ export class MobxQuery<
   private queryClient: QueryClient;
 
   result!: QueryObserverResult<TData, TError>;
-  options: DefaultedQueryObserverOptions<
+  options: DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
     TData,
     TData,
     TQueryKey
   >;
-  queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
+  queryObserver: InfiniteQueryObserver<TData, TError, TData, TData, TQueryKey>;
 
   constructor({
     queryClient,
     onInit,
     options: dynamicOptions,
+
     onDone,
     onError,
     disposer,
     resetOnDispose,
     ...options
-  }: MobxQueryConfig<TData, TError, TQueryKey>) {
+  }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
 
@@ -72,7 +75,14 @@ export class MobxQuery<
     this.options = queryClient.defaultQueryOptions({
       ...mergedOptions,
       queryKey: (mergedOptions.queryKey ?? []) as TQueryKey,
-    });
+    }) as DefaultedInfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TData,
+      TData,
+      TQueryKey
+    >;
+
     this.options.queryHash = this.options.queryKeyHashFn!(
       this.options.queryKey,
     );
@@ -83,7 +93,7 @@ export class MobxQuery<
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
-    this.queryObserver = new QueryObserver(queryClient, this.options);
+    this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
 
     this.updateResult();
 
@@ -98,7 +108,13 @@ export class MobxQuery<
         autorun(() =>
           this.update(
             dynamicOptions() as Partial<
-              QueryObserverOptions<TData, TError, TQueryKey>
+              InfiniteQueryObserverOptions<
+                TData,
+                TError,
+                TData,
+                TData,
+                TQueryKey
+              >
             >,
           ),
         ),
@@ -125,12 +141,30 @@ export class MobxQuery<
     this.queryClient.setQueryData<TData>(this.options.queryKey, data);
   }
 
+  fetchNextPage(options?: FetchNextPageOptions | undefined) {
+    return this.queryObserver.fetchNextPage(options);
+  }
+
+  fetchPreviousPage(options?: FetchPreviousPageOptions | undefined) {
+    return this.queryObserver.fetchPreviousPage(options);
+  }
+
   @action.bound
-  update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
+  update(
+    options: Partial<
+      InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    >,
+  ) {
     this.options = this.queryClient.defaultQueryOptions({
       ...this.options,
       ...options,
-    } as any);
+    } as any) as DefaultedInfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TData,
+      TData,
+      TQueryKey
+    >;
     this.options.queryHash =
       this.options.queryKeyHashFn?.(this.options.queryKey) ??
       this.options.queryHash;
@@ -143,6 +177,7 @@ export class MobxQuery<
   @action.bound
   private updateResult() {
     const nextResult = this.queryObserver.getOptimisticResult(this.options);
+
     this.result = nextResult || {};
   }
 

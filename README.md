@@ -3,13 +3,6 @@
 
 # MobX wrapper for [Tanstack Query Core](https://tanstack.com/query/latest) package  
 
-> [!WARNING]  
-> It's fine if you use this library from NPM package with a **static versioning** in case you
-> want it for some pet-project or to test it's capabilities.
->
-> But for production use it's **strongly recommended** to create a fork, because I do not write
-> Changelogs and may break / add some functionality without notice.  
-
 
 
 Current supporting [Queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) and [Mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)  
@@ -123,4 +116,24 @@ class YammyModel {
 }
 
 yammyModel.createMutation.mutate({ kek: 'M&M' })
+```
+
+
+## MobxInfiniteQuery  
+
+```ts
+import { MobxInfiniteQuery } from "mobx-tanstack-query";  
+
+
+const query = new MobxInfiniteQuery({
+  queryClient,
+  disposer?,
+  ...options, // TanstackInfiniteQuery.Query options  
+  // Dynamic query parameters, when result of this function changed query will be updated
+  // (autorun -> setOptions)
+  options: () => ({
+    ...options // TanstackInfiniteQuery.Query options  
+  })
+})
+
 ```
