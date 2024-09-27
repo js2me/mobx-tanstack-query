@@ -10,7 +10,7 @@ import {
   QueryKey,
   QueryObserverResult,
 } from '@tanstack/query-core';
-import { Disposer } from 'disposer-util';
+import { Disposer, IDisposer } from 'disposer-util';
 import { action, autorun, makeObservable, observable, reaction } from 'mobx';
 
 export interface MobxInfiniteQueryConfig<
@@ -22,7 +22,7 @@ export interface MobxInfiniteQueryConfig<
   > {
   queryClient: QueryClient;
   onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
-  disposer?: Disposer;
+  disposer?: IDisposer;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
@@ -40,7 +40,7 @@ export class MobxInfiniteQuery<
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
 > {
-  private disposer: Disposer;
+  private disposer: IDisposer;
   private queryClient: QueryClient;
 
   result!: QueryObserverResult<TData, TError>;

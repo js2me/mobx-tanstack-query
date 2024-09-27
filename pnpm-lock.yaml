@@ -12,8 +12,8 @@ importers:
         specifier: '>=5.0.0'
         version: 5.51.9
       disposer-util:
-        specifier: '*'
-        version: 1.0.0
+        specifier: ^1.0.2
+        version: 1.0.2
       mobx:
         specifier: '>=6.12.4'
         version: 6.13.0
@@ -297,8 +297,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  disposer-util@1.0.0:
-    resolution: {integrity: sha512-naf4+x6qIKZSKgbifv0FClbAfYM4CsZPSZfN2iranlSCv5XcXcAmAMtbNwm56pyMmywg0qN9AUYYaqsJ1pAUdA==}
+  disposer-util@1.0.2:
+    resolution: {integrity: sha512-kDdhQy9qXhUeEZPInJQ9ncjXUiSLsV/8l1OVzrX8yn2RETDWWr2Gu74Q7LK31HruLC20hAS+AzELwrOCWDciMA==}
 
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
@@ -1430,7 +1430,7 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  disposer-util@1.0.0: {}
+  disposer-util@1.0.2: {}
 
   doctrine@2.1.0:
     dependencies:

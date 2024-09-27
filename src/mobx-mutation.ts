@@ -6,7 +6,7 @@ import {
   MutationOptions,
   QueryClient,
 } from '@tanstack/query-core';
-import { Disposer } from 'disposer-util';
+import { Disposer, IDisposer } from 'disposer-util';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
 export interface MobxMutationConfig<
@@ -19,7 +19,7 @@ export interface MobxMutationConfig<
     '_defaulted'
   > {
   queryClient: QueryClient;
-  disposer?: Disposer;
+  disposer?: IDisposer;
   resetOnDispose?: boolean;
   onInit?: (
     mutation: MobxMutation<TData, TVariables, TError, TContext>,
@@ -32,7 +32,7 @@ export class MobxMutation<
   TError = DefaultError,
   TContext = unknown,
 > {
-  private disposer: Disposer;
+  private disposer: IDisposer;
   private queryClient: QueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
