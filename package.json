@@ -1,15 +1,18 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "1.0.1",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "version": "2.0.0",
   "files": [
-    "dist"
+    "*"
   ],
   "scripts": {
-    "prebuild": "eslint . --fix",
+    "clean": "rimraf dist",
+
+    "prebuild": "npm run clean && eslint . --fix",
     "build": "tsc",
-    "prepublish": "pnpm run build"
+    "postbuild": "node ./post-build.mjs",
+    "prepub": "pnpm run build",
+    "pub": "cd dist && npm publish",
+    "postpub": "npm run clean"
   },
   "keywords": ["mobx", "tanstack", "tanstack-query", "query", "mutation"],
   "author": "js2me",
