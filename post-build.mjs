@@ -44,7 +44,7 @@ const lookupExportsMap = (targetPath, exportsMap) => {
           types: `./${fixedPath}.d.ts`,
         };
       } else if (fixedPath.endsWith('/index')) {
-        exportsMap[`${fixedPath.split('/').slice(0, -1).join('/')}`] = {
+        exportsMap[`./${fixedPath.split('/').slice(0, -1).join('/')}`] = {
           import: `./${fixedPath}.js`,
           types: `./${fixedPath}.d.ts`,
         };
