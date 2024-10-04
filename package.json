@@ -1,9 +1,8 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "scripts": {
     "clean": "rimraf dist",
-
     "prebuild": "npm run clean && eslint . --fix",
     "build": "tsc",
     "postbuild": "node ./post-build.mjs",
@@ -11,7 +10,13 @@
     "pub": "cd dist && npm publish",
     "postpub": "npm run clean"
   },
-  "keywords": ["mobx", "tanstack", "tanstack-query", "query", "mutation"],
+  "keywords": [
+    "mobx",
+    "tanstack",
+    "tanstack-query",
+    "query",
+    "mutation"
+  ],
   "author": "js2me",
   "license": "MIT",
   "description": "",
@@ -23,15 +28,15 @@
     "type": "git",
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
-  "dependencies": {},
   "peerDependencies": {
-    "disposer-util": "^1.0.2",
     "@tanstack/query-core": ">=5.0.0",
+    "disposer-util": "^1.0.2",
     "mobx": ">=6.12.4"
   },
   "devDependencies": {
     "@types/node": "20.14.5",
     "eslint": "8.57.0",
+    "exports-post-build-script": "github:js2me/exports-post-build-script",
     "js2me-eslint-config": "1.0.0",
     "typescript": "5.4.5"
   },

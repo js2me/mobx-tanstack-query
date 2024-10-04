@@ -23,7 +23,6 @@
     "noEmit": false
   },
   "include": [
-    "src",
-    "./.eslintrc.cjs"
+    "src"
   ]
 }
