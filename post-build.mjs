@@ -49,13 +49,13 @@ const lookupExportsMap = (targetPath, exportsMap) => {
           types: `./${fixedPath}.d.ts`,
         };
       } else {
-        exportsMap[`${fixedPath}`] = {
+        exportsMap[`./${fixedPath}`] = {
           import: `./${fixedPath}.js`,
           types: `./${fixedPath}.d.ts`,
         };
       }
     } else {
-      exportsMap[`${fixedPath}`] = `./${fixedPath}${ext}`;
+      exportsMap[`./${fixedPath}`] = `./${fixedPath}${ext}`;
     }
   }
 
