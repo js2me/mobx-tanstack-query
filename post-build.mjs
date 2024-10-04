@@ -41,16 +41,19 @@ const lookupExportsMap = (targetPath, exportsMap) => {
       if (fixedPath === 'index') {
         exportsMap[`.`] = {
           import: `./${fixedPath}.js`,
+          default: `./${fixedPath}.js`,
           types: `./${fixedPath}.d.ts`,
         };
       } else if (fixedPath.endsWith('/index')) {
         exportsMap[`./${fixedPath.split('/').slice(0, -1).join('/')}`] = {
           import: `./${fixedPath}.js`,
+          default: `./${fixedPath}.js`,
           types: `./${fixedPath}.d.ts`,
         };
       } else {
         exportsMap[`./${fixedPath}`] = {
           import: `./${fixedPath}.js`,
+          default: `./${fixedPath}.js`,
           types: `./${fixedPath}.d.ts`,
         };
       }
@@ -71,6 +74,9 @@ writeFile(
         './package.json': './package.json',
         ...lookupExportsMap('src'),
       },
+      main: './index.js',
+      typings: './index.d.ts',
+      files: ['*']
     },
     null,
     2,
