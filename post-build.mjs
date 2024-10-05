@@ -4,5 +4,5 @@ postBuildScript({
   buildDir: 'dist',
   rootDir: '.',
   srcDirName: 'src',
-  filesToCopy: ['LICENSE'],
+  filesToCopy: ['LICENSE', 'README.md'],
 });
