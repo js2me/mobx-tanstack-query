@@ -54,7 +54,7 @@ export class MobxQuery<
   constructor({
     queryClient,
     onInit,
-    options: dynamicOptions,
+    options: getDynamicOptions,
     onDone,
     onError,
     disposer,
@@ -66,7 +66,7 @@ export class MobxQuery<
 
     const mergedOptions = {
       ...options,
-      ...dynamicOptions?.(),
+      ...getDynamicOptions?.(),
     };
 
     this.options = queryClient.defaultQueryOptions({
@@ -89,15 +89,18 @@ export class MobxQuery<
 
     this.disposer.add(this.queryObserver.subscribe(this.updateResult));
 
-    makeObservable(this, {
+    makeObservable<this, 'updateResult'>(this, {
       result: observable.ref,
+      setData: action.bound,
+      update: action.bound,
+      updateResult: action.bound,
     });
 
-    if (dynamicOptions) {
+    if (getDynamicOptions) {
       this.disposer.add(
         autorun(() =>
           this.update(
-            dynamicOptions() as Partial<
+            getDynamicOptions() as Partial<
               QueryObserverOptions<TData, TError, TQueryKey>
             >,
           ),
@@ -120,12 +123,10 @@ export class MobxQuery<
     onInit?.(this);
   }
 
-  @action.bound
   setData(data: TData) {
     this.queryClient.setQueryData<TData>(this.options.queryKey, data);
   }
 
-  @action.bound
   update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
     this.options = this.queryClient.defaultQueryOptions({
       ...this.options,
@@ -140,7 +141,6 @@ export class MobxQuery<
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  @action.bound
   private updateResult() {
     const nextResult = this.queryObserver.getOptimisticResult(this.options);
     this.result = nextResult || {};
@@ -153,11 +153,6 @@ export class MobxQuery<
     });
   }
 
-  dispose() {
-    this.disposer.dispose();
-    this.queryObserver.destroy();
-  }
-
   async invalidate(filters: Omit<QueryFilters, 'queryKey' | 'exact'> = {}) {
     await this.queryClient.invalidateQueries({
       ...filters,
@@ -166,29 +161,34 @@ export class MobxQuery<
     });
   }
 
-  onDone(doneFn: (data: TData, payload: void) => void): void {
+  onDone(onDoneCallback: (data: TData, payload: void) => void): void {
     this.disposer.add(
       reaction(
         () => !this.result.error && this.result.isSuccess,
         (isDone) => {
           if (isDone) {
-            doneFn(this.result.data!, void 0);
+            onDoneCallback(this.result.data!, void 0);
           }
         },
       ),
     );
   }
 
-  onError(errorFn: (error: TError, payload: void) => void): void {
+  onError(onErrorCallback: (error: TError, payload: void) => void): void {
     this.disposer.add(
       reaction(
         () => this.result.error,
         (error) => {
           if (error) {
-            errorFn(error, void 0);
+            onErrorCallback(error, void 0);
           }
         },
       ),
     );
+  }
+
+  dispose() {
+    this.disposer.dispose();
+    this.queryObserver.destroy();
   }
 }

@@ -63,10 +63,11 @@ export class MobxMutation<
 
     this.disposer.add(this.mutationObserver.subscribe(this.updateResult));
 
-    makeObservable(
+    makeObservable<this, 'updateResult'>(
       this,
       {
         result: observable.ref,
+        updateResult: action.bound,
       },
       { deep: false },
     );
@@ -96,32 +97,31 @@ export class MobxMutation<
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  @action.bound
   private updateResult() {
     const nextResult = this.mutationObserver.getCurrentResult();
     this.result = nextResult || {};
   }
 
-  onDone(doneFn: (data: TData, payload: TVariables) => void): void {
+  onDone(onDoneCallback: (data: TData, payload: TVariables) => void): void {
     this.disposer.add(
       reaction(
         () => !this.result.error && this.result.isSuccess,
         (isDone) => {
           if (isDone) {
-            doneFn(this.result.data!, this.result.variables!);
+            onDoneCallback(this.result.data!, this.result.variables!);
           }
         },
       ),
     );
   }
 
-  onError(errorFn: (error: TError, payload: TVariables) => void): void {
+  onError(onErrorCallback: (error: TError, payload: TVariables) => void): void {
     this.disposer.add(
       reaction(
         () => this.result.error,
         (error) => {
           if (error) {
-            errorFn(error, this.result.variables!);
+            onErrorCallback(error, this.result.variables!);
           }
         },
       ),

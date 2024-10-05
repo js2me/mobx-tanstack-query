@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "types": [],
-    "target": "ES2018",
+    "target": "ESNext",
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
