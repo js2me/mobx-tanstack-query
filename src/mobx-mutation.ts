@@ -50,6 +50,15 @@ export class MobxMutation<
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
 
+    makeObservable<this, 'updateResult'>(
+      this,
+      {
+        result: observable.ref,
+        updateResult: action.bound,
+      },
+      { deep: false },
+    );
+
     this.mutationOptions = this.queryClient.defaultMutationOptions(options);
 
     this.mutationObserver = new MutationObserver<
@@ -62,15 +71,6 @@ export class MobxMutation<
     this.updateResult();
 
     this.disposer.add(this.mutationObserver.subscribe(this.updateResult));
-
-    makeObservable<this, 'updateResult'>(
-      this,
-      {
-        result: observable.ref,
-        updateResult: action.bound,
-      },
-      { deep: false },
-    );
 
     if (resetOnDispose) {
       this.disposer.add(() => {

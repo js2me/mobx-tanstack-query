@@ -64,6 +64,13 @@ export class MobxQuery<
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
 
+    makeObservable<this, 'updateResult'>(this, {
+      result: observable.ref,
+      setData: action.bound,
+      update: action.bound,
+      updateResult: action.bound,
+    });
+
     const mergedOptions = {
       ...options,
       ...getDynamicOptions?.(),
@@ -88,13 +95,6 @@ export class MobxQuery<
     this.updateResult();
 
     this.disposer.add(this.queryObserver.subscribe(this.updateResult));
-
-    makeObservable<this, 'updateResult'>(this, {
-      result: observable.ref,
-      setData: action.bound,
-      update: action.bound,
-      updateResult: action.bound,
-    });
 
     if (getDynamicOptions) {
       this.disposer.add(
