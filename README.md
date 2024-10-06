@@ -1,9 +1,4 @@
-[![npm](https://img.shields.io/npm/v/mobx-tanstack-query)](https://www.npmjs.com/package/mobx-tanstack-query) 
-[![license](https://img.shields.io/npm/l/mobx-tanstack-query)](https://github.com/js2me/mobx-tanstack-queryblob/master/LICENSE)  
-
 # MobX wrapper for [Tanstack Query Core](https://tanstack.com/query/latest) package  
-
-
 
 Current supporting [Queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) and [Mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)  
 
