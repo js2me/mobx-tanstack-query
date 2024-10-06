@@ -1,4 +1,4 @@
-import { postBuildScript } from 'exports-post-build-script';
+import { postBuildScript } from 'js2me-exports-post-build-script';
 
 postBuildScript({
   buildDir: 'dist',

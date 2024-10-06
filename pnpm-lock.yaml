@@ -24,12 +24,12 @@ importers:
       eslint:
         specifier: 8.57.0
         version: 8.57.0
-      exports-post-build-script:
-        specifier: github:js2me/exports-post-build-script
-        version: https://codeload.github.com/js2me/exports-post-build-script/tar.gz/c682f22989f4ae3449cd72b6c32cb65511590a00
       js2me-eslint-config:
         specifier: 1.0.4
         version: 1.0.4(eslint@8.57.0)(prettier@3.3.3)(typescript@5.4.5)
+      js2me-exports-post-build-script:
+        specifier: 1.0.0
+        version: 1.0.0
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -1326,10 +1326,6 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  exports-post-build-script@https://codeload.github.com/js2me/exports-post-build-script/tar.gz/c682f22989f4ae3449cd72b6c32cb65511590a00:
-    resolution: {tarball: https://codeload.github.com/js2me/exports-post-build-script/tar.gz/c682f22989f4ae3449cd72b6c32cb65511590a00}
-    version: 1.0.0
-
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -1643,6 +1639,9 @@ packages:
     peerDependencies:
       eslint: ^8.57.0
       prettier: ^3.3.3
+
+  js2me-exports-post-build-script@1.0.0:
+    resolution: {integrity: sha512-yLB3i3K0Y2OezIuTr6NfEc/Lwoo0Zdi2lmJQtBK1mxhXCROa5qIMtlXHZbpnRYDfos0/GrK0w8ZeKHidOGtJqQ==}
 
   jsesc@0.5.0:
     resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
@@ -3992,8 +3991,6 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  exports-post-build-script@https://codeload.github.com/js2me/exports-post-build-script/tar.gz/c682f22989f4ae3449cd72b6c32cb65511590a00: {}
-
   fast-deep-equal@3.1.3: {}
 
   fast-diff@1.3.0: {}
@@ -4321,6 +4318,8 @@ snapshots:
       - eslint-plugin-import-x
       - supports-color
       - typescript
+
+  js2me-exports-post-build-script@1.0.0: {}
 
   jsesc@0.5.0: {}
 
