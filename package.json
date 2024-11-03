@@ -1,16 +1,13 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "scripts": {
     "clean": "rimraf dist",
     "check": "eslint . --fix",
 
     "prebuild": "npm run clean && npm run check",
-    "build": "tsc",
-    "postbuild": "node ./post-build.mjs",
-    "prepub": "pnpm run build",
-    "pub": "cd dist && npm publish",
-    "postpub": "npm run clean"
+    "build": "tsc && node ./post-build.mjs",
+    "pub": "PUBLISH=true pnpm run build"
   },
   "keywords": [
     "mobx",
@@ -38,7 +35,7 @@
   "devDependencies": {
     "@types/node": "20.14.5",
     "eslint": "8.57.0",
-    "js2me-exports-post-build-script": "1.0.0",
+    "js2me-exports-post-build-script": "2.0.4",
     "js2me-eslint-config": "1.0.4",
     "typescript": "5.4.5"
   },
