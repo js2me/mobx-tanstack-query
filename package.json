@@ -4,10 +4,11 @@
   "scripts": {
     "clean": "rimraf dist",
     "check": "eslint . --fix",
-
     "prebuild": "npm run clean && npm run check",
     "build": "tsc && node ./post-build.mjs",
-    "pub": "PUBLISH=true pnpm run build"
+    "pub:patch": "PUBLISH=true PUBLISH_VERSION=patch pnpm run build",
+    "pub:minor": "PUBLISH=true PUBLISH_VERSION=minor pnpm run build",
+    "pub:major": "PUBLISH=true PUBLISH_VERSION=major pnpm run build"
   },
   "keywords": [
     "mobx",
@@ -35,7 +36,7 @@
   "devDependencies": {
     "@types/node": "20.14.5",
     "eslint": "8.57.0",
-    "js2me-exports-post-build-script": "2.0.4",
+    "js2me-exports-post-build-script": "2.0.10",
     "js2me-eslint-config": "1.0.4",
     "typescript": "5.4.5"
   },
