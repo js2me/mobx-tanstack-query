@@ -34,9 +34,9 @@ export interface MobxQueryConfig<
    * Dynamic query parameters, when result of this function changed query will be updated
    * (autorun -> setOptions)
    */
-  options?: () => Partial<
-    QueryObserverOptions<TData, TError, TData, TData, TQueryKey>
-  >;
+  options?: (
+    query: MobxQuery<TData, TError, TQueryKey>,
+  ) => Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
   resetOnDispose?: boolean;
 }
 
@@ -83,7 +83,7 @@ export class MobxQuery<
 
     const mergedOptions = {
       ...options,
-      ...getDynamicOptions?.(),
+      ...getDynamicOptions?.(this),
     };
 
     this.options = queryClient.defaultQueryOptions({
@@ -110,7 +110,7 @@ export class MobxQuery<
       this.disposer.add(
         autorun(() =>
           this.update(
-            getDynamicOptions() as Partial<
+            getDynamicOptions(this) as Partial<
               QueryObserverOptions<TData, TError, TQueryKey>
             >,
           ),
