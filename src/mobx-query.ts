@@ -9,7 +9,14 @@ import {
   QueryObserverResult,
 } from '@tanstack/query-core';
 import { Disposer, IDisposer } from 'disposer-util';
-import { action, autorun, makeObservable, observable, reaction } from 'mobx';
+import {
+  action,
+  autorun,
+  makeObservable,
+  observable,
+  reaction,
+  runInAction,
+} from 'mobx';
 
 export interface MobxQueryConfig<
   TData,
@@ -41,7 +48,7 @@ export class MobxQuery<
   private disposer: IDisposer;
   private queryClient: QueryClient;
 
-  result!: QueryObserverResult<TData, TError>;
+  private _result!: QueryObserverResult<TData, TError>;
   options: DefaultedQueryObserverOptions<
     TData,
     TError,
@@ -50,6 +57,7 @@ export class MobxQuery<
     TQueryKey
   >;
   queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
+  isResultRequsted: boolean;
 
   constructor({
     queryClient,
@@ -63,9 +71,11 @@ export class MobxQuery<
   }: MobxQueryConfig<TData, TError, TQueryKey>) {
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
+    this.isResultRequsted = false;
 
-    makeObservable<this, 'updateResult'>(this, {
-      result: observable.ref,
+    makeObservable<this, 'updateResult' | '_result'>(this, {
+      _result: observable.ref,
+      isResultRequsted: observable.ref,
       setData: action.bound,
       update: action.bound,
       updateResult: action.bound,
@@ -138,12 +148,21 @@ export class MobxQuery<
     this.queryObserver.setOptions(this.options);
   }
 
+  public result() {
+    if (!this.isResultRequsted) {
+      runInAction(() => {
+        this.isResultRequsted = true;
+      });
+    }
+    return this._result;
+  }
+
   /**
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult() {
     const nextResult = this.queryObserver.getOptimisticResult(this.options);
-    this.result = nextResult || {};
+    this._result = nextResult || {};
   }
 
   async reset() {
@@ -164,10 +183,10 @@ export class MobxQuery<
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
     this.disposer.add(
       reaction(
-        () => !this.result.error && this.result.isSuccess,
+        () => !this._result.error && this._result.isSuccess,
         (isDone) => {
           if (isDone) {
-            onDoneCallback(this.result.data!, void 0);
+            onDoneCallback(this._result.data!, void 0);
           }
         },
       ),
@@ -177,7 +196,7 @@ export class MobxQuery<
   onError(onErrorCallback: (error: TError, payload: void) => void): void {
     this.disposer.add(
       reaction(
-        () => this.result.error,
+        () => this._result.error,
         (error) => {
           if (error) {
             onErrorCallback(error, void 0);
