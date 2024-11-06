@@ -37,7 +37,16 @@ export interface MobxQueryConfig<
   options?: (
     query: MobxQuery<TData, TError, TQueryKey>,
   ) => Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
+
+  /**
+   * Reset query when dispose is called
+   */
   resetOnDispose?: boolean;
+
+  /**
+   * Enable query only if result is requested
+   */
+  enableOnDemand?: boolean;
 }
 
 export class MobxQuery<
@@ -49,6 +58,7 @@ export class MobxQuery<
   private queryClient: QueryClient;
 
   private _result!: QueryObserverResult<TData, TError>;
+
   options: DefaultedQueryObserverOptions<
     TData,
     TError,
@@ -57,7 +67,10 @@ export class MobxQuery<
     TQueryKey
   >;
   queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
+
   isResultRequsted: boolean;
+
+  private isEnabledOnResultDemand: boolean;
 
   constructor({
     queryClient,
@@ -67,11 +80,13 @@ export class MobxQuery<
     onError,
     disposer,
     resetOnDispose,
+    enableOnDemand,
     ...options
   }: MobxQueryConfig<TData, TError, TQueryKey>) {
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
     this.isResultRequsted = false;
+    this.isEnabledOnResultDemand = enableOnDemand ?? false;
 
     makeObservable<this, 'updateResult' | '_result'>(this, {
       _result: observable.ref,
@@ -142,6 +157,9 @@ export class MobxQuery<
       ...this.options,
       ...options,
     } as any);
+    this.options.enabled =
+      (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
+      this.options.enabled;
     this.options.queryHash =
       this.options.queryKeyHashFn?.(this.options.queryKey) ??
       this.options.queryHash;
