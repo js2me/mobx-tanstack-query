@@ -166,7 +166,7 @@ export class MobxQuery<
     this.queryObserver.setOptions(this.options);
   }
 
-  public result() {
+  public get result() {
     if (!this.isResultRequsted) {
       runInAction(() => {
         this.isResultRequsted = true;
