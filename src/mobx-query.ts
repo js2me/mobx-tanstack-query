@@ -11,7 +11,6 @@ import {
 import { Disposer, IDisposer } from 'disposer-util';
 import {
   action,
-  autorun,
   makeObservable,
   observable,
   reaction,
@@ -123,15 +122,37 @@ export class MobxQuery<
 
     if (getDynamicOptions) {
       this.disposer.add(
-        autorun(() =>
-          this.update(
+        reaction(
+          () =>
             getDynamicOptions(this) as Partial<
               QueryObserverOptions<TData, TError, TQueryKey>
             >,
-          ),
+          (dynamicOptions) => {
+            this.update(dynamicOptions);
+          },
         ),
       );
     }
+
+    if (this.isEnabledOnResultDemand) {
+      this.disposer.add(
+        reaction(
+          () => this.isResultRequsted,
+          (isRequested) => {
+            if (isRequested) {
+              this.update(
+                getDynamicOptions
+                  ? (getDynamicOptions(this) as Partial<
+                      QueryObserverOptions<TData, TError, TQueryKey>
+                    >)
+                  : {},
+              );
+            }
+          },
+        ),
+      );
+    }
+
     if (onDone) {
       this.onDone(onDone);
     }
