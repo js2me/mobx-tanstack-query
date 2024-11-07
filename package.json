@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "2.0.15",
+  "version": "3.0.0",
   "scripts": {
     "clean": "rimraf dist",
     "check": "eslint . --fix",
