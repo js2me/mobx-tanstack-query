@@ -11,7 +11,13 @@ import {
   QueryObserverResult,
 } from '@tanstack/query-core';
 import { Disposer, IDisposer } from 'disposer-util';
-import { action, autorun, makeObservable, observable, reaction } from 'mobx';
+import {
+  action,
+  reaction,
+  makeObservable,
+  observable,
+  runInAction,
+} from 'mobx';
 
 export interface MobxInfiniteQueryConfig<
   TData,
@@ -27,12 +33,25 @@ export interface MobxInfiniteQueryConfig<
   onError?: (error: TError, payload: void) => void;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
-   * (autorun -> setOptions)
+   * (reaction -> setOptions)
    */
-  options?: () => Partial<
+  options?: (
+    query: NoInfer<
+      MobxInfiniteQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
+    >,
+  ) => Partial<
     InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
   >;
+
+  /**
+   * Reset query when dispose is called
+   */
   resetOnDispose?: boolean;
+
+  /**
+   * Enable query only if result is requested
+   */
+  enableOnDemand?: boolean;
 }
 
 export class MobxInfiniteQuery<
@@ -43,7 +62,7 @@ export class MobxInfiniteQuery<
   private disposer: IDisposer;
   private queryClient: QueryClient;
 
-  result!: QueryObserverResult<TData, TError>;
+  _result!: QueryObserverResult<TData, TError>;
   options: DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
@@ -52,6 +71,10 @@ export class MobxInfiniteQuery<
     TQueryKey
   >;
   queryObserver: InfiniteQueryObserver<TData, TError, TData, TData, TQueryKey>;
+
+  isResultRequsted: boolean;
+
+  private isEnabledOnResultDemand: boolean;
 
   constructor({
     queryClient,
@@ -62,13 +85,16 @@ export class MobxInfiniteQuery<
     onError,
     disposer,
     resetOnDispose,
+    enableOnDemand,
     ...options
   }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
     this.queryClient = queryClient;
     this.disposer = disposer || new Disposer();
+    this.isResultRequsted = false;
+    this.isEnabledOnResultDemand = enableOnDemand ?? false;
 
     makeObservable<this, 'updateResult'>(this, {
-      result: observable.ref,
+      _result: observable.ref,
       setData: action.bound,
       update: action.bound,
       updateResult: action.bound,
@@ -76,7 +102,7 @@ export class MobxInfiniteQuery<
 
     const mergedOptions = {
       ...options,
-      ...getDynamicOptions?.(),
+      ...getDynamicOptions?.(this),
     };
 
     this.options = queryClient.defaultQueryOptions({
@@ -108,21 +134,40 @@ export class MobxInfiniteQuery<
 
     if (getDynamicOptions) {
       this.disposer.add(
-        autorun(() =>
-          this.update(
-            getDynamicOptions() as Partial<
-              InfiniteQueryObserverOptions<
-                TData,
-                TError,
-                TData,
-                TData,
-                TQueryKey
-              >
-            >,
-          ),
+        reaction(
+          () => getDynamicOptions(this),
+          (options) => {
+            this.update(options);
+          },
         ),
       );
     }
+
+    if (this.isEnabledOnResultDemand) {
+      this.disposer.add(
+        reaction(
+          () => this.isResultRequsted,
+          (isRequested) => {
+            if (isRequested) {
+              this.update(
+                getDynamicOptions
+                  ? (getDynamicOptions(this) as Partial<
+                      InfiniteQueryObserverOptions<
+                        TData,
+                        TError,
+                        TData,
+                        TData,
+                        TQueryKey
+                      >
+                    >)
+                  : {},
+              );
+            }
+          },
+        ),
+      );
+    }
+
     if (onDone) {
       this.onDone(onDone);
     }
@@ -166,10 +211,22 @@ export class MobxInfiniteQuery<
       TData,
       TQueryKey
     >;
+    this.options.enabled =
+      (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
+      this.options.enabled;
     this.options.queryHash =
       this.options.queryKeyHashFn?.(this.options.queryKey) ??
       this.options.queryHash;
     this.queryObserver.setOptions(this.options);
+  }
+
+  public get result() {
+    if (!this.isResultRequsted) {
+      runInAction(() => {
+        this.isResultRequsted = true;
+      });
+    }
+    return this._result;
   }
 
   /**
@@ -178,7 +235,7 @@ export class MobxInfiniteQuery<
   private updateResult() {
     const nextResult = this.queryObserver.getOptimisticResult(this.options);
 
-    this.result = nextResult || {};
+    this._result = nextResult || {};
   }
 
   async reset() {
@@ -199,10 +256,10 @@ export class MobxInfiniteQuery<
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
     this.disposer.add(
       reaction(
-        () => !this.result.error && this.result.isSuccess,
+        () => !this._result.error && this._result.isSuccess,
         (isDone) => {
           if (isDone) {
-            onDoneCallback(this.result.data!, void 0);
+            onDoneCallback(this._result.data!, void 0);
           }
         },
       ),
@@ -212,7 +269,7 @@ export class MobxInfiniteQuery<
   onError(onErrorCallback: (error: TError, payload: void) => void): void {
     this.disposer.add(
       reaction(
-        () => this.result.error,
+        () => this._result.error,
         (error) => {
           if (error) {
             onErrorCallback(error, void 0);

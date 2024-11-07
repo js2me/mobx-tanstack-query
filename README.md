@@ -35,7 +35,7 @@ const query = new MobxQuery({
   disposer?,
   ...options, // TanstackQuery.Query options  
   // Dynamic query parameters, when result of this function changed query will be updated
-  // (autorun -> setOptions)
+  // (reaction -> setOptions)
   options: () => ({
     ...options // TanstackQuery.Query options  
   })
@@ -125,7 +125,7 @@ const query = new MobxInfiniteQuery({
   disposer?,
   ...options, // TanstackInfiniteQuery.Query options  
   // Dynamic query parameters, when result of this function changed query will be updated
-  // (autorun -> setOptions)
+  // (reaction -> setOptions)
   options: () => ({
     ...options // TanstackInfiniteQuery.Query options  
   })

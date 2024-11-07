@@ -31,10 +31,12 @@ export interface MobxQueryConfig<
   onError?: (error: TError, payload: void) => void;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
-   * (autorun -> setOptions)
+   * (reaction -> setOptions)
    */
   options?: (
-    query: MobxQuery<TData, TError, TQueryKey>,
+    query: NoInfer<
+      MobxQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
+    >,
   ) => Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
 
   /**
@@ -87,13 +89,19 @@ export class MobxQuery<
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
 
-    makeObservable<this, 'updateResult' | '_result'>(this, {
-      _result: observable.ref,
-      isResultRequsted: observable.ref,
-      setData: action.bound,
-      update: action.bound,
-      updateResult: action.bound,
-    });
+    makeObservable<this, 'updateResult' | '_result'>(
+      this,
+      {
+        _result: observable.ref,
+        isResultRequsted: observable.ref,
+        setData: action.bound,
+        update: action.bound,
+        updateResult: action.bound,
+      },
+      {
+        deep: false,
+      },
+    );
 
     const mergedOptions = {
       ...options,
