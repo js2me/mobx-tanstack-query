@@ -6,7 +6,7 @@ import {
   MutationOptions,
   QueryClient,
 } from '@tanstack/query-core';
-import { Disposer, IDisposer } from 'disposer-util';
+import { IDisposer } from 'disposer-util';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
 export interface MobxMutationConfig<
@@ -20,6 +20,7 @@ export interface MobxMutationConfig<
   > {
   queryClient: QueryClient;
   disposer?: IDisposer;
+  abortController?: AbortController;
   resetOnDispose?: boolean;
   onInit?: (
     mutation: MobxMutation<TData, TVariables, TError, TContext>,
@@ -32,7 +33,7 @@ export class MobxMutation<
   TError = DefaultError,
   TContext = unknown,
 > {
-  private disposer: IDisposer;
+  private abortController: AbortController;
   private queryClient: QueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
@@ -44,11 +45,22 @@ export class MobxMutation<
     queryClient,
     onInit,
     disposer,
+    abortController: outerAbortController,
     resetOnDispose,
     ...options
   }: MobxMutationConfig<TData, TVariables, TError, TContext>) {
+    this.abortController = new AbortController();
     this.queryClient = queryClient;
-    this.disposer = disposer || new Disposer();
+
+    if (disposer) {
+      disposer.add(() => this.dispose());
+    }
+
+    if (outerAbortController) {
+      outerAbortController?.signal.addEventListener('abort', () =>
+        this.dispose(),
+      );
+    }
 
     makeObservable<this, 'updateResult'>(
       this,
@@ -70,10 +82,12 @@ export class MobxMutation<
 
     this.updateResult();
 
-    this.disposer.add(this.mutationObserver.subscribe(this.updateResult));
+    const subscription = this.mutationObserver.subscribe(this.updateResult);
+
+    this.abortController.signal.addEventListener('abort', subscription);
 
     if (resetOnDispose) {
-      this.disposer.add(() => {
+      this.abortController.signal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -103,32 +117,34 @@ export class MobxMutation<
   }
 
   onDone(onDoneCallback: (data: TData, payload: TVariables) => void): void {
-    this.disposer.add(
-      reaction(
-        () => !this.result.error && this.result.isSuccess,
-        (isDone) => {
-          if (isDone) {
-            onDoneCallback(this.result.data!, this.result.variables!);
-          }
-        },
-      ),
+    reaction(
+      () => !this.result.error && this.result.isSuccess,
+      (isDone) => {
+        if (isDone) {
+          onDoneCallback(this.result.data!, this.result.variables!);
+        }
+      },
+      {
+        signal: this.abortController.signal,
+      },
     );
   }
 
   onError(onErrorCallback: (error: TError, payload: TVariables) => void): void {
-    this.disposer.add(
-      reaction(
-        () => this.result.error,
-        (error) => {
-          if (error) {
-            onErrorCallback(error, this.result.variables!);
-          }
-        },
-      ),
+    reaction(
+      () => this.result.error,
+      (error) => {
+        if (error) {
+          onErrorCallback(error, this.result.variables!);
+        }
+      },
+      {
+        signal: this.abortController.signal,
+      },
     );
   }
 
   dispose() {
-    this.disposer.dispose();
+    this.abortController.abort();
   }
 }

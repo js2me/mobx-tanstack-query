@@ -10,7 +10,7 @@ import {
   QueryKey,
   QueryObserverResult,
 } from '@tanstack/query-core';
-import { Disposer, IDisposer } from 'disposer-util';
+import { IDisposer } from 'disposer-util';
 import {
   action,
   reaction,
@@ -29,6 +29,7 @@ export interface MobxInfiniteQueryConfig<
   queryClient: QueryClient;
   onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
   disposer?: IDisposer;
+  abortController?: AbortController;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
@@ -59,7 +60,7 @@ export class MobxInfiniteQuery<
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
 > {
-  private disposer: IDisposer;
+  private abortController: AbortController;
   private queryClient: QueryClient;
 
   _result!: QueryObserverResult<TData, TError>;
@@ -84,14 +85,25 @@ export class MobxInfiniteQuery<
     onDone,
     onError,
     disposer,
+    abortController: outerAbortController,
     resetOnDispose,
     enableOnDemand,
     ...options
   }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
+    this.abortController = new AbortController();
     this.queryClient = queryClient;
-    this.disposer = disposer || new Disposer();
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
+
+    if (disposer) {
+      disposer.add(() => this.dispose());
+    }
+
+    if (outerAbortController) {
+      outerAbortController?.signal.addEventListener('abort', () =>
+        this.dispose(),
+      );
+    }
 
     makeObservable<this, 'updateResult'>(this, {
       _result: observable.ref,
@@ -130,41 +142,45 @@ export class MobxInfiniteQuery<
 
     this.updateResult();
 
-    this.disposer.add(this.queryObserver.subscribe(this.updateResult));
+    const subscription = this.queryObserver.subscribe(this.updateResult);
+
+    this.abortController.signal.addEventListener('abort', subscription);
 
     if (getDynamicOptions) {
-      this.disposer.add(
-        reaction(
-          () => getDynamicOptions(this),
-          (options) => {
-            this.update(options);
-          },
-        ),
+      reaction(
+        () => getDynamicOptions(this),
+        (options) => {
+          this.update(options);
+        },
+        {
+          signal: this.abortController.signal,
+        },
       );
     }
 
     if (this.isEnabledOnResultDemand) {
-      this.disposer.add(
-        reaction(
-          () => this.isResultRequsted,
-          (isRequested) => {
-            if (isRequested) {
-              this.update(
-                getDynamicOptions
-                  ? (getDynamicOptions(this) as Partial<
-                      InfiniteQueryObserverOptions<
-                        TData,
-                        TError,
-                        TData,
-                        TData,
-                        TQueryKey
-                      >
-                    >)
-                  : {},
-              );
-            }
-          },
-        ),
+      reaction(
+        () => this.isResultRequsted,
+        (isRequested) => {
+          if (isRequested) {
+            this.update(
+              getDynamicOptions
+                ? (getDynamicOptions(this) as Partial<
+                    InfiniteQueryObserverOptions<
+                      TData,
+                      TError,
+                      TData,
+                      TData,
+                      TQueryKey
+                    >
+                  >)
+                : {},
+            );
+          }
+        },
+        {
+          signal: this.abortController.signal,
+        },
       );
     }
 
@@ -176,7 +192,7 @@ export class MobxInfiniteQuery<
     }
 
     if (resetOnDispose) {
-      this.disposer.add(() => {
+      this.abortController.signal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -254,33 +270,35 @@ export class MobxInfiniteQuery<
   }
 
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
-    this.disposer.add(
-      reaction(
-        () => !this._result.error && this._result.isSuccess,
-        (isDone) => {
-          if (isDone) {
-            onDoneCallback(this._result.data!, void 0);
-          }
-        },
-      ),
+    reaction(
+      () => !this._result.error && this._result.isSuccess,
+      (isDone) => {
+        if (isDone) {
+          onDoneCallback(this._result.data!, void 0);
+        }
+      },
+      {
+        signal: this.abortController.signal,
+      },
     );
   }
 
   onError(onErrorCallback: (error: TError, payload: void) => void): void {
-    this.disposer.add(
-      reaction(
-        () => this._result.error,
-        (error) => {
-          if (error) {
-            onErrorCallback(error, void 0);
-          }
-        },
-      ),
+    reaction(
+      () => this._result.error,
+      (error) => {
+        if (error) {
+          onErrorCallback(error, void 0);
+        }
+      },
+      {
+        signal: this.abortController.signal,
+      },
     );
   }
 
   dispose() {
-    this.disposer.dispose();
+    this.abortController.abort();
     this.queryObserver.destroy();
   }
 }
