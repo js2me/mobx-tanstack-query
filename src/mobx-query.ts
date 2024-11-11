@@ -26,6 +26,9 @@ export interface MobxQueryConfig<
   > {
   queryClient: QueryClient;
   onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
+  /**
+   * @deprecated use `abortSignal` instead
+   */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
@@ -80,6 +83,7 @@ export class MobxQuery<
     options: getDynamicOptions,
     onDone,
     onError,
+    // eslint-disable-next-line sonarjs/deprecation
     disposer,
     abortSignal: outerAbortSignal,
     resetOnDispose,

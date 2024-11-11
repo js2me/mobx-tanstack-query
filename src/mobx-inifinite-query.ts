@@ -28,6 +28,9 @@ export interface MobxInfiniteQueryConfig<
   > {
   queryClient: QueryClient;
   onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
+  /**
+   * @deprecated use `abortSignal` instead
+   */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
@@ -84,6 +87,7 @@ export class MobxInfiniteQuery<
 
     onDone,
     onError,
+    // eslint-disable-next-line sonarjs/deprecation
     disposer,
     abortSignal: outerAbortSignal,
     resetOnDispose,

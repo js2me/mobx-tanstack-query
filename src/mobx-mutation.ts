@@ -19,6 +19,9 @@ export interface MobxMutationConfig<
     '_defaulted'
   > {
   queryClient: QueryClient;
+  /**
+   * @deprecated use `abortSignal` instead
+   */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
   resetOnDispose?: boolean;
@@ -44,6 +47,7 @@ export class MobxMutation<
   constructor({
     queryClient,
     onInit,
+    // eslint-disable-next-line sonarjs/deprecation
     disposer,
     abortSignal: outerAbortSignal,
     resetOnDispose,
