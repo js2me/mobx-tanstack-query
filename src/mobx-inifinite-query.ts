@@ -29,7 +29,7 @@ export interface MobxInfiniteQueryConfig<
   queryClient: QueryClient;
   onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
   disposer?: IDisposer;
-  abortController?: AbortController;
+  abortSigna?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
@@ -85,7 +85,7 @@ export class MobxInfiniteQuery<
     onDone,
     onError,
     disposer,
-    abortController: outerAbortController,
+    abortSigna: outerAbortSignal,
     resetOnDispose,
     enableOnDemand,
     ...options
@@ -99,10 +99,8 @@ export class MobxInfiniteQuery<
       disposer.add(() => this.dispose());
     }
 
-    if (outerAbortController) {
-      outerAbortController?.signal.addEventListener('abort', () =>
-        this.dispose(),
-      );
+    if (outerAbortSignal) {
+      outerAbortSignal.addEventListener('abort', () => this.dispose());
     }
 
     makeObservable<this, 'updateResult'>(this, {

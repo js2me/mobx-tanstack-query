@@ -20,7 +20,7 @@ export interface MobxMutationConfig<
   > {
   queryClient: QueryClient;
   disposer?: IDisposer;
-  abortController?: AbortController;
+  abortSignal?: AbortSignal;
   resetOnDispose?: boolean;
   onInit?: (
     mutation: MobxMutation<TData, TVariables, TError, TContext>,
@@ -45,7 +45,7 @@ export class MobxMutation<
     queryClient,
     onInit,
     disposer,
-    abortController: outerAbortController,
+    abortSignal: outerAbortSignal,
     resetOnDispose,
     ...options
   }: MobxMutationConfig<TData, TVariables, TError, TContext>) {
@@ -56,10 +56,8 @@ export class MobxMutation<
       disposer.add(() => this.dispose());
     }
 
-    if (outerAbortController) {
-      outerAbortController?.signal.addEventListener('abort', () =>
-        this.dispose(),
-      );
+    if (outerAbortSignal) {
+      outerAbortSignal.addEventListener('abort', () => this.dispose());
     }
 
     makeObservable<this, 'updateResult'>(
