@@ -29,7 +29,7 @@ export interface MobxInfiniteQueryConfig<
   queryClient: QueryClient;
   onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
   disposer?: IDisposer;
-  abortSigna?: AbortSignal;
+  abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
@@ -85,7 +85,7 @@ export class MobxInfiniteQuery<
     onDone,
     onError,
     disposer,
-    abortSigna: outerAbortSignal,
+    abortSignal: outerAbortSignal,
     resetOnDispose,
     enableOnDemand,
     ...options
