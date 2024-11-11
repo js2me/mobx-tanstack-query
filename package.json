@@ -33,6 +33,9 @@
     "disposer-util": "^1.0.9",
     "mobx": ">=6.12.4"
   },
+  "dependencies": {
+    "with-abort-controller": "1.0.0"
+  },
   "devDependencies": {
     "@types/node": "20.14.5",
     "eslint": "8.57.0",

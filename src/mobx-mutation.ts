@@ -8,6 +8,7 @@ import {
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { action, makeObservable, observable, reaction } from 'mobx';
+import { WithAbortController } from 'with-abort-controller';
 
 export interface MobxMutationConfig<
   TData = unknown,
@@ -35,8 +36,7 @@ export class MobxMutation<
   TVariables = void,
   TError = DefaultError,
   TContext = unknown,
-> {
-  private abortController: AbortController;
+> extends WithAbortController {
   private queryClient: QueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
@@ -53,15 +53,11 @@ export class MobxMutation<
     resetOnDispose,
     ...options
   }: MobxMutationConfig<TData, TVariables, TError, TContext>) {
-    this.abortController = new AbortController();
+    super(outerAbortSignal);
     this.queryClient = queryClient;
 
     if (disposer) {
       disposer.add(() => this.dispose());
-    }
-
-    if (outerAbortSignal) {
-      outerAbortSignal.addEventListener('abort', () => this.dispose());
     }
 
     makeObservable<this, 'updateResult'>(
@@ -86,10 +82,10 @@ export class MobxMutation<
 
     const subscription = this.mutationObserver.subscribe(this.updateResult);
 
-    this.abortController.signal.addEventListener('abort', subscription);
+    this.abortSignal.addEventListener('abort', subscription);
 
     if (resetOnDispose) {
-      this.abortController.signal.addEventListener('abort', () => {
+      this.abortSignal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -127,7 +123,7 @@ export class MobxMutation<
         }
       },
       {
-        signal: this.abortController.signal,
+        signal: this.abortSignal,
       },
     );
   }
@@ -141,7 +137,7 @@ export class MobxMutation<
         }
       },
       {
-        signal: this.abortController.signal,
+        signal: this.abortSignal,
       },
     );
   }

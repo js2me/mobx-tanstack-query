@@ -18,6 +18,7 @@ import {
   observable,
   runInAction,
 } from 'mobx';
+import { WithAbortController } from 'with-abort-controller';
 
 export interface MobxInfiniteQueryConfig<
   TData,
@@ -62,8 +63,7 @@ export class MobxInfiniteQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
-> {
-  private abortController: AbortController;
+> extends WithAbortController {
   private queryClient: QueryClient;
 
   _result!: QueryObserverResult<TData, TError>;
@@ -94,17 +94,13 @@ export class MobxInfiniteQuery<
     enableOnDemand,
     ...options
   }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
-    this.abortController = new AbortController();
+    super(outerAbortSignal);
     this.queryClient = queryClient;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
 
     if (disposer) {
       disposer.add(() => this.dispose());
-    }
-
-    if (outerAbortSignal) {
-      outerAbortSignal.addEventListener('abort', () => this.dispose());
     }
 
     makeObservable<this, 'updateResult'>(this, {
@@ -146,7 +142,10 @@ export class MobxInfiniteQuery<
 
     const subscription = this.queryObserver.subscribe(this.updateResult);
 
-    this.abortController.signal.addEventListener('abort', subscription);
+    this.abortSignal.addEventListener('abort', () => {
+      subscription();
+      this.queryObserver.destroy();
+    });
 
     if (getDynamicOptions) {
       reaction(
@@ -155,7 +154,7 @@ export class MobxInfiniteQuery<
           this.update(options);
         },
         {
-          signal: this.abortController.signal,
+          signal: this.abortSignal,
         },
       );
     }
@@ -181,7 +180,7 @@ export class MobxInfiniteQuery<
           }
         },
         {
-          signal: this.abortController.signal,
+          signal: this.abortSignal,
         },
       );
     }
@@ -194,7 +193,7 @@ export class MobxInfiniteQuery<
     }
 
     if (resetOnDispose) {
-      this.abortController.signal.addEventListener('abort', () => {
+      this.abortSignal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -280,7 +279,7 @@ export class MobxInfiniteQuery<
         }
       },
       {
-        signal: this.abortController.signal,
+        signal: this.abortSignal,
       },
     );
   }
@@ -294,13 +293,12 @@ export class MobxInfiniteQuery<
         }
       },
       {
-        signal: this.abortController.signal,
+        signal: this.abortSignal,
       },
     );
   }
 
   dispose() {
     this.abortController.abort();
-    this.queryObserver.destroy();
   }
 }
