@@ -9,6 +9,7 @@ import {
   QueryObserverResult,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
+import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
   makeObservable,
@@ -16,7 +17,6 @@ import {
   reaction,
   runInAction,
 } from 'mobx';
-import { WithAbortController } from 'with-abort-controller';
 
 export interface MobxQueryConfig<
   TData,
@@ -59,7 +59,8 @@ export class MobxQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
-> extends WithAbortController {
+> {
+  protected abortController: AbortController;
   private queryClient: QueryClient;
 
   private _result!: QueryObserverResult<TData, TError>;
@@ -90,7 +91,7 @@ export class MobxQuery<
     enableOnDemand,
     ...options
   }: MobxQueryConfig<TData, TError, TQueryKey>) {
-    super(outerAbortSignal);
+    this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
@@ -138,7 +139,7 @@ export class MobxQuery<
 
     const subscription = this.queryObserver.subscribe(this.updateResult);
 
-    this.abortSignal.addEventListener('abort', () => {
+    this.abortController.signal.addEventListener('abort', () => {
       subscription();
       this.queryObserver.destroy();
     });
@@ -153,7 +154,7 @@ export class MobxQuery<
           this.update(dynamicOptions);
         },
         {
-          signal: this.abortSignal,
+          signal: this.abortController.signal,
         },
       );
     }
@@ -173,7 +174,7 @@ export class MobxQuery<
           }
         },
         {
-          signal: this.abortSignal,
+          signal: this.abortController.signal,
         },
       );
     }
@@ -186,7 +187,7 @@ export class MobxQuery<
     }
 
     if (resetOnDispose) {
-      this.abortSignal.addEventListener('abort', () => {
+      this.abortController.signal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -253,7 +254,7 @@ export class MobxQuery<
         }
       },
       {
-        signal: this.abortSignal,
+        signal: this.abortController.signal,
       },
     );
   }
@@ -267,7 +268,7 @@ export class MobxQuery<
         }
       },
       {
-        signal: this.abortSignal,
+        signal: this.abortController.signal,
       },
     );
   }

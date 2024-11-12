@@ -19,7 +19,7 @@
   ],
   "author": "js2me",
   "license": "MIT",
-  "description": "",
+  "description": "MobX wrappers for Tanstack Query (Core)",
   "bugs": {
     "url": "https://github.com/js2me/mobx-tanstack-query/issues"
   },
@@ -34,7 +34,7 @@
     "mobx": ">=6.12.4"
   },
   "dependencies": {
-    "with-abort-controller": "1.0.0"
+    "linked-abort-controller": "1.0.1"
   },
   "devDependencies": {
     "@types/node": "20.14.5",

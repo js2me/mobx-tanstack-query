@@ -11,6 +11,7 @@ import {
   QueryObserverResult,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
+import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
   reaction,
@@ -18,7 +19,6 @@ import {
   observable,
   runInAction,
 } from 'mobx';
-import { WithAbortController } from 'with-abort-controller';
 
 export interface MobxInfiniteQueryConfig<
   TData,
@@ -63,7 +63,8 @@ export class MobxInfiniteQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
-> extends WithAbortController {
+> {
+  protected abortController: AbortController;
   private queryClient: QueryClient;
 
   _result!: QueryObserverResult<TData, TError>;
@@ -94,7 +95,7 @@ export class MobxInfiniteQuery<
     enableOnDemand,
     ...options
   }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
-    super(outerAbortSignal);
+    this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
@@ -142,7 +143,7 @@ export class MobxInfiniteQuery<
 
     const subscription = this.queryObserver.subscribe(this.updateResult);
 
-    this.abortSignal.addEventListener('abort', () => {
+    this.abortController.signal.addEventListener('abort', () => {
       subscription();
       this.queryObserver.destroy();
     });
@@ -154,7 +155,7 @@ export class MobxInfiniteQuery<
           this.update(options);
         },
         {
-          signal: this.abortSignal,
+          signal: this.abortController.signal,
         },
       );
     }
@@ -180,7 +181,7 @@ export class MobxInfiniteQuery<
           }
         },
         {
-          signal: this.abortSignal,
+          signal: this.abortController.signal,
         },
       );
     }
@@ -193,7 +194,7 @@ export class MobxInfiniteQuery<
     }
 
     if (resetOnDispose) {
-      this.abortSignal.addEventListener('abort', () => {
+      this.abortController.signal.addEventListener('abort', () => {
         this.reset();
       });
     }
@@ -279,7 +280,7 @@ export class MobxInfiniteQuery<
         }
       },
       {
-        signal: this.abortSignal,
+        signal: this.abortController.signal,
       },
     );
   }
@@ -293,7 +294,7 @@ export class MobxInfiniteQuery<
         }
       },
       {
-        signal: this.abortSignal,
+        signal: this.abortController.signal,
       },
     );
   }
