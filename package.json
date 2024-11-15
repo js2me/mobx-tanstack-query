@@ -34,7 +34,7 @@
     "mobx": ">=6.12.4"
   },
   "dependencies": {
-    "linked-abort-controller": "1.0.1"
+    "linked-abort-controller": "1.0.2"
   },
   "devDependencies": {
     "@types/node": "20.14.5",
