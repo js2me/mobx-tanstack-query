@@ -1,6 +1,7 @@
 import {
   DefaultedQueryObserverOptions,
   DefaultError,
+  hashKey,
   QueryClient,
   QueryFilters,
   QueryKey,
@@ -123,9 +124,8 @@ export class MobxQuery<
       ...mergedOptions,
       queryKey: (mergedOptions.queryKey ?? []) as TQueryKey,
     });
-    this.options.queryHash = this.options.queryKeyHashFn!(
-      this.options.queryKey,
-    );
+
+    this.options.queryHash = this.createQueryHash(this.options.queryKey);
 
     // Tracking props visit should be done in MobX, by default.
     this.options.notifyOnChangeProps =
@@ -195,6 +195,14 @@ export class MobxQuery<
     onInit?.(this);
   }
 
+  protected createQueryHash(queryKey: any) {
+    if (this.options.queryKeyHashFn) {
+      return this.options.queryKeyHashFn(queryKey);
+    }
+
+    return hashKey(queryKey);
+  }
+
   setData(data: TData) {
     this.queryClient.setQueryData<TData>(this.options.queryKey, data);
   }
@@ -207,9 +215,7 @@ export class MobxQuery<
     this.options.enabled =
       (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
       this.options.enabled;
-    this.options.queryHash =
-      this.options.queryKeyHashFn?.(this.options.queryKey) ??
-      this.options.queryHash;
+    this.options.queryHash = this.createQueryHash(this.options.queryKey);
     this.queryObserver.setOptions(this.options);
   }
 

@@ -3,6 +3,7 @@ import {
   DefaultError,
   FetchNextPageOptions,
   FetchPreviousPageOptions,
+  hashKey,
   InfiniteQueryObserver,
   InfiniteQueryObserverOptions,
   QueryClient,
@@ -127,9 +128,7 @@ export class MobxInfiniteQuery<
       TQueryKey
     >;
 
-    this.options.queryHash = this.options.queryKeyHashFn!(
-      this.options.queryKey,
-    );
+    this.options.queryHash = this.createQueryHash(this.options.queryKey);
 
     // Tracking props visit should be done in MobX, by default.
     this.options.notifyOnChangeProps =
@@ -202,6 +201,14 @@ export class MobxInfiniteQuery<
     onInit?.(this);
   }
 
+  protected createQueryHash(queryKey: any) {
+    if (this.options.queryKeyHashFn) {
+      return this.options.queryKeyHashFn(queryKey);
+    }
+
+    return hashKey(queryKey);
+  }
+
   setData(data: TData) {
     this.queryClient.setQueryData<TData>(this.options.queryKey, data);
   }
@@ -232,9 +239,7 @@ export class MobxInfiniteQuery<
     this.options.enabled =
       (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
       this.options.enabled;
-    this.options.queryHash =
-      this.options.queryKeyHashFn?.(this.options.queryKey) ??
-      this.options.queryHash;
+    this.options.queryHash = this.createQueryHash(this.options.queryKey);
     this.queryObserver.setOptions(this.options);
   }
 
