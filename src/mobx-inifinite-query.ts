@@ -10,6 +10,7 @@ import {
   QueryFilters,
   QueryKey,
   InfiniteQueryObserverResult,
+  InfiniteData,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -30,8 +31,8 @@ export interface MobxInfiniteQueryConfig<
     InfiniteQueryObserverOptions<
       TData,
       TError,
-      TData,
-      TData,
+      InfiniteData<TData>,
+      InfiniteData<TData>,
       TQueryKey,
       TPageParam
     >
@@ -45,7 +46,7 @@ export interface MobxInfiniteQueryConfig<
    */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
-  onDone?: (data: TData, payload: void) => void;
+  onDone?: (data: InfiniteData<TData>, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
@@ -64,8 +65,8 @@ export interface MobxInfiniteQueryConfig<
     InfiniteQueryObserverOptions<
       TData,
       TError,
-      TData,
-      TData,
+      InfiniteData<TData>,
+      InfiniteData<TData>,
       TQueryKey,
       TPageParam
     >
@@ -91,20 +92,20 @@ export class MobxInfiniteQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  _result!: InfiniteQueryObserverResult<TData, TError>;
+  _result!: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
   options: DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
-    TData,
-    TData,
+    InfiniteData<TData>,
+    InfiniteData<TData>,
     TQueryKey,
     TPageParam
   >;
   queryObserver: InfiniteQueryObserver<
     TData,
     TError,
-    TData,
-    TData,
+    InfiniteData<TData>,
+    InfiniteData<TData>,
     TQueryKey,
     TPageParam
   >;
@@ -154,8 +155,8 @@ export class MobxInfiniteQuery<
     }) as DefaultedInfiniteQueryObserverOptions<
       TData,
       TError,
-      TData,
-      TData,
+      InfiniteData<TData>,
+      InfiniteData<TData>,
       TQueryKey,
       TPageParam
     >;
@@ -202,8 +203,8 @@ export class MobxInfiniteQuery<
                     InfiniteQueryObserverOptions<
                       TData,
                       TError,
-                      TData,
-                      TData,
+                      InfiniteData<TData>,
+                      InfiniteData<TData>,
                       TQueryKey,
                       TPageParam
                     >
@@ -259,8 +260,8 @@ export class MobxInfiniteQuery<
       InfiniteQueryObserverOptions<
         TData,
         TError,
-        TData,
-        TData,
+        InfiniteData<TData>,
+        InfiniteData<TData>,
         TQueryKey,
         TPageParam
       >
@@ -272,8 +273,8 @@ export class MobxInfiniteQuery<
     } as any) as DefaultedInfiniteQueryObserverOptions<
       TData,
       TError,
-      TData,
-      TData,
+      InfiniteData<TData>,
+      InfiniteData<TData>,
       TQueryKey,
       TPageParam
     >;
@@ -317,7 +318,9 @@ export class MobxInfiniteQuery<
     });
   }
 
-  onDone(onDoneCallback: (data: TData, payload: void) => void): void {
+  onDone(
+    onDoneCallback: (data: InfiniteData<TData>, payload: void) => void,
+  ): void {
     reaction(
       () => !this._result.error && this._result.isSuccess,
       (isDone) => {
