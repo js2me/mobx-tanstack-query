@@ -7,5 +7,6 @@ module.exports = {
       'error',
       { ignore: Object.keys(packageJson.peerDependencies) },
     ],
+    'unicorn/prevent-abbreviations': 'off'
   },
 };

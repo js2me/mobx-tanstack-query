@@ -25,11 +25,21 @@ export interface MobxInfiniteQueryConfig<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
 > extends Partial<
-    InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    InfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TData,
+      TData,
+      TQueryKey,
+      TPageParam
+    >
   > {
   queryClient: QueryClient;
-  onInit?: (query: MobxInfiniteQuery<TData, TError, TQueryKey>) => void;
+  onInit?: (
+    query: MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>,
+  ) => void;
   /**
    * @deprecated use `abortSignal` instead
    */
@@ -43,10 +53,22 @@ export interface MobxInfiniteQueryConfig<
    */
   options?: (
     query: NoInfer<
-      MobxInfiniteQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
+      MobxInfiniteQuery<
+        NoInfer<TData>,
+        NoInfer<TError>,
+        NoInfer<TQueryKey>,
+        NoInfer<TPageParam>
+      >
     >,
   ) => Partial<
-    InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    InfiniteQueryObserverOptions<
+      TData,
+      TError,
+      TData,
+      TData,
+      TQueryKey,
+      TPageParam
+    >
   >;
 
   /**
@@ -64,6 +86,7 @@ export class MobxInfiniteQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
+  TPageParam = unknown,
 > {
   protected abortController: AbortController;
   private queryClient: QueryClient;
@@ -74,9 +97,17 @@ export class MobxInfiniteQuery<
     TError,
     TData,
     TData,
-    TQueryKey
+    TQueryKey,
+    TPageParam
   >;
-  queryObserver: InfiniteQueryObserver<TData, TError, TData, TData, TQueryKey>;
+  queryObserver: InfiniteQueryObserver<
+    TData,
+    TError,
+    TData,
+    TData,
+    TQueryKey,
+    TPageParam
+  >;
 
   isResultRequsted: boolean;
 
@@ -95,7 +126,7 @@ export class MobxInfiniteQuery<
     resetOnDispose,
     enableOnDemand,
     ...options
-  }: MobxInfiniteQueryConfig<TData, TError, TQueryKey>) {
+  }: MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>) {
     this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
     this.isResultRequsted = false;
@@ -125,7 +156,8 @@ export class MobxInfiniteQuery<
       TError,
       TData,
       TData,
-      TQueryKey
+      TQueryKey,
+      TPageParam
     >;
 
     this.options.queryHash = this.createQueryHash(this.options.queryKey);
@@ -172,7 +204,8 @@ export class MobxInfiniteQuery<
                       TError,
                       TData,
                       TData,
-                      TQueryKey
+                      TQueryKey,
+                      TPageParam
                     >
                   >)
                 : {},
@@ -223,7 +256,14 @@ export class MobxInfiniteQuery<
 
   update(
     options: Partial<
-      InfiniteQueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+      InfiniteQueryObserverOptions<
+        TData,
+        TError,
+        TData,
+        TData,
+        TQueryKey,
+        TPageParam
+      >
     >,
   ) {
     this.options = this.queryClient.defaultQueryOptions({
@@ -234,7 +274,8 @@ export class MobxInfiniteQuery<
       TError,
       TData,
       TData,
-      TQueryKey
+      TQueryKey,
+      TPageParam
     >;
     this.options.enabled =
       (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
