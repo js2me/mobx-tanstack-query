@@ -9,7 +9,7 @@ import {
   QueryClient,
   QueryFilters,
   QueryKey,
-  QueryObserverResult,
+  InfiniteQueryObserverResult,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -91,7 +91,7 @@ export class MobxInfiniteQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  _result!: QueryObserverResult<TData, TError>;
+  _result!: InfiniteQueryObserverResult<TData, TError>;
   options: DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
