@@ -7,7 +7,6 @@ import {
   InfiniteQueryObserver,
   InfiniteQueryObserverOptions,
   QueryClient,
-  QueryFilters,
   QueryKey,
   InfiniteQueryObserverResult,
   InfiniteData,
@@ -310,12 +309,8 @@ export class MobxInfiniteQuery<
     });
   }
 
-  async invalidate(filters: Omit<QueryFilters, 'queryKey' | 'exact'> = {}) {
-    await this.queryClient.invalidateQueries({
-      ...filters,
-      queryKey: this.options.queryKey,
-      exact: true,
-    });
+  invalidate() {
+    this.queryObserver.getCurrentQuery().invalidate();
   }
 
   onDone(

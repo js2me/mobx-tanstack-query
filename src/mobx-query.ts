@@ -3,7 +3,6 @@ import {
   DefaultError,
   hashKey,
   QueryClient,
-  QueryFilters,
   QueryKey,
   QueryObserver,
   QueryObserverOptions,
@@ -243,12 +242,8 @@ export class MobxQuery<
     });
   }
 
-  async invalidate(filters: Omit<QueryFilters, 'queryKey' | 'exact'> = {}) {
-    await this.queryClient.invalidateQueries({
-      ...filters,
-      queryKey: this.options.queryKey,
-      exact: true,
-    });
+  invalidate() {
+    this.queryObserver.getCurrentQuery().invalidate();
   }
 
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
