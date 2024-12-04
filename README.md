@@ -1,13 +1,33 @@
-# MobX wrapper for [Tanstack Query Core](https://tanstack.com/query/latest) package  
+<img src="assets/logo.png" align="right" height="156" alt="logo" />
 
-Current supporting [Queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) and [Mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)  
+# mobx-tanstack-query  
+
+_**MobX** wrapper for [**Tanstack Query Core**](https://tanstack.com/query/latest) package_
 
 
-# Usage  
+## What package supports    
 
-First of needs to create `queryClient` using `tanstack-query` core package   
+### [**Queries**](https://tanstack.com/query/latest/docs/framework/react/guides/queries) -> [**MobxQuery**](src/mobx-query.ts)  
+
+### [**Mutations**](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) -> [**MobxMutation**](src/mobx-mutation.ts)  
+
+### [**InfiniteQueries**](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) -> [**MobxInfiniteQuery**](src/mobx-infinite-query.ts)  
+
+
+
+
+## Usage  
+
+1. **Install dependencies**  
+
+```bash
+pnpm add @tanstack/query-core mobx-tanstack-query
+```
+
+2. **Create** [**QueryClient instance**](https://tanstack.com/query/v5/docs/reference/QueryClient)  
 
 ```ts
+// @/shared/lib/tanstack-query/query-client.ts
 import { hashKey, QueryClient } from '@tanstack/query-core';
 
 const queryClient = new QueryClient({
@@ -22,113 +42,40 @@ const queryClient = new QueryClient({
     },
   },
 });
-```  
+```
 
-## MobxQuery  
-
+3. **Use it**  
 ```ts
-import { MobxQuery } from "mobx-tanstack-query";  
-
-
-const query = new MobxQuery({
+const petsListQuery = new MobxQuery({
   queryClient,
-  disposer?,
-  ...options, // TanstackQuery.Query options  
-  // Dynamic query parameters, when result of this function changed query will be updated
-  // (reaction -> setOptions)
-  options: () => ({
-    ...options // TanstackQuery.Query options  
-  })
-})
+  queryKey: ['pets'],
+  queryFn: async ({ signal, queryKey }) => {
+    const response = await petsApi.fetchPets({ signal });
+    return response.data;
+  },
+});
 
-
-class YammyModel {
-  listQuery = new MobxQuery({
-    queryClient,
-    disposer: this.disposer,
-    enabled: false,
-    queryKey: ['yammy'],
-    queryFn: async () => {
-      const response = await yammiApi.list(this.params);
-      return response.data;
-    },
-    onInit: (query) => {
-      this.disposer.add(
-        reaction(
-          () => this.params,
-          debounce(() => {
-            query.result.refetch();
-          }, 200),
-        ),
-      );
-    },
-  });
-}
-
-yammyModel.listQuery.update({ enabled: true })
-```
-
-
-## MobxMutation  
-
-```ts
-import { MobxMutation } from "mobx-tanstack-query";  
-
-class YammyModel {
-  createMutation = new MobxMutation({
-    queryClient,
-    disposer: this.disposer,
-    mutationFn: async ({ kek }: { kek: string }) => {
-      const response = await yammyApi.create(kek);
-      return response.data;
-    },
-    onMutate: () => {
-      // on start actions
-    },
-    onError: (error) => {
-      // on error actions
-      this.rootStore.notifications.push({
-        type: 'alert',
-        title: 'Failed to create yammy',
-        description: apiLib.getResponseErrorDetailedText(error),
-      });
-    },
-    onSuccess: (_, payload) => {
-      // on success actions
-      this.rootStore.notifications.push({
-        type: 'success',
-        title: 'Yammy created successfully',
-      });
-      queryClient.resetQueries({
-        queryKey: ['yammy'],
-        exact: false,
-      });
-    },
-    onSettled: () => {
-      // on finished actions
-    },
-  });
-}
-
-yammyModel.createMutation.mutate({ kek: 'M&M' })
-```
-
-
-## MobxInfiniteQuery  
-
-```ts
-import { MobxInfiniteQuery } from "mobx-tanstack-query";  
-
-
-const query = new MobxInfiniteQuery({
+const addPetsMutation = new MobxMutation({
   queryClient,
-  disposer?,
-  ...options, // TanstackInfiniteQuery.Query options  
-  // Dynamic query parameters, when result of this function changed query will be updated
-  // (reaction -> setOptions)
-  options: () => ({
-    ...options // TanstackInfiniteQuery.Query options  
-  })
-})
+  mutationFn: async (payload: { petName: string }) => {
+    const response = await petsApi.createPet(payload);
+    return response.data;
+  },
+  onSuccess: (data) => {
+    rootStore.notifications.push({
+      type: 'success',
+      title: `Pet created successfully with name ${data.name}`,
+    });
+    petsListQuery.invalidate();
+  },
+  onError: (error) => {
+    rootStore.notifications.push({
+      type: 'danger',
+      title: 'Failed to create pet',
+    });
+  }
+});
 
+addPetsMutation.mutate({ petName: 'fluffy' });
 ```
+

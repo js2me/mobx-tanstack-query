@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/node": "20.14.5",
     "eslint": "8.57.0",
-    "js2me-exports-post-build-script": "2.0.10",
+    "js2me-exports-post-build-script": "2.0.17",
     "js2me-eslint-config": "1.0.4",
     "typescript": "5.4.5"
   },

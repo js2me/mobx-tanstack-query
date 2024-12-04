@@ -22,6 +22,8 @@ import {
   runInAction,
 } from 'mobx';
 
+import { MobxQueryInvalidateParams } from './mobx-query';
+
 export interface MobxInfiniteQueryConfig<
   TData,
   TError = DefaultError,
@@ -314,8 +316,12 @@ export class MobxInfiniteQuery<
     });
   }
 
-  invalidate() {
-    this.queryObserver.getCurrentQuery().invalidate();
+  invalidate(options?: MobxQueryInvalidateParams) {
+    this.queryClient.invalidateQueries({
+      exact: true,
+      queryKey: this.options.queryKey,
+      ...options,
+    });
   }
 
   onDone(

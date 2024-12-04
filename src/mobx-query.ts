@@ -2,6 +2,7 @@ import {
   DefaultedQueryObserverOptions,
   DefaultError,
   hashKey,
+  InvalidateQueryFilters,
   QueryClient,
   QueryKey,
   QueryObserver,
@@ -18,6 +19,9 @@ import {
   reaction,
   runInAction,
 } from 'mobx';
+
+export interface MobxQueryInvalidateParams
+  extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
 
 export interface MobxQueryConfig<
   TData,
@@ -247,8 +251,12 @@ export class MobxQuery<
     });
   }
 
-  invalidate() {
-    this.queryObserver.getCurrentQuery().invalidate();
+  invalidate(params?: MobxQueryInvalidateParams) {
+    this.queryClient.invalidateQueries({
+      exact: true,
+      queryKey: this.options.queryKey,
+      ...params,
+    });
   }
 
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
