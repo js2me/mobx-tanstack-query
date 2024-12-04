@@ -20,6 +20,7 @@ import {
   makeObservable,
   observable,
   runInAction,
+  computed,
 } from 'mobx';
 
 import { MobxQueryInvalidateParams } from './mobx-query';
@@ -184,10 +185,12 @@ export class MobxInfiniteQuery<
     });
 
     if (getDynamicOptions) {
+      const computedOptions = computed(() => getDynamicOptions(this));
+
       reaction(
-        () => getDynamicOptions(this),
-        (options) => {
-          this.update(options);
+        () => computedOptions.get(),
+        (dynamicOptions) => {
+          this.update(dynamicOptions);
         },
         {
           signal: this.abortController.signal,
