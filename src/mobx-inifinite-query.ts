@@ -20,7 +20,6 @@ import {
   makeObservable,
   observable,
   runInAction,
-  autorun,
 } from 'mobx';
 
 import { MobxQueryInvalidateParams } from './mobx-query';
@@ -185,10 +184,10 @@ export class MobxInfiniteQuery<
     });
 
     if (getDynamicOptions) {
-      autorun(
-        () => {
-          const dynamicOptions = getDynamicOptions(this);
-          this.update(dynamicOptions);
+      reaction(
+        () => getDynamicOptions(this),
+        (options) => {
+          this.update(options);
         },
         {
           signal: this.abortController.signal,
