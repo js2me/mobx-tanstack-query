@@ -94,7 +94,7 @@ export class MobxInfiniteQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  _result!: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
+  _result: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
   options: DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
@@ -132,6 +132,7 @@ export class MobxInfiniteQuery<
   }: MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>) {
     this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
+    this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
 

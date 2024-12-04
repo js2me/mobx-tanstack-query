@@ -68,7 +68,7 @@ export class MobxQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  private _result!: QueryObserverResult<TData, TError>;
+  private _result: QueryObserverResult<TData, TError>;
 
   options: DefaultedQueryObserverOptions<
     TData,
@@ -98,6 +98,7 @@ export class MobxQuery<
   }: MobxQueryConfig<TData, TError, TQueryKey>) {
     this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
+    this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
 

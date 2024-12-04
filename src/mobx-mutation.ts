@@ -43,7 +43,7 @@ export class MobxMutation<
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
   mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;
 
-  result!: MutationObserverResult<TData, TError, TVariables, TContext>;
+  result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
   constructor({
     queryClient,
@@ -56,6 +56,7 @@ export class MobxMutation<
   }: MobxMutationConfig<TData, TVariables, TError, TContext>) {
     this.abortController = new LinkedAbortController(outerAbortSignal);
     this.queryClient = queryClient;
+    this.result = undefined as any;
 
     if (disposer) {
       disposer.add(() => this.dispose());
