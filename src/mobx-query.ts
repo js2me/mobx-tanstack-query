@@ -7,6 +7,7 @@ import {
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
+  RefetchOptions,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -192,6 +193,10 @@ export class MobxQuery<
     }
 
     onInit?.(this);
+  }
+
+  async refetch(options?: RefetchOptions) {
+    return await this.queryObserver.refetch(options);
   }
 
   protected createQueryHash(queryKey: any) {

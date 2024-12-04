@@ -10,6 +10,7 @@ import {
   QueryKey,
   InfiniteQueryObserverResult,
   InfiniteData,
+  RefetchOptions,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -300,6 +301,10 @@ export class MobxInfiniteQuery<
     const nextResult = this.queryObserver.getOptimisticResult(this.options);
 
     this._result = nextResult || {};
+  }
+
+  async refetch(options?: RefetchOptions) {
+    return await this.queryObserver.refetch(options);
   }
 
   async reset() {
