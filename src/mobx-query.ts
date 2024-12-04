@@ -251,8 +251,8 @@ export class MobxQuery<
     });
   }
 
-  invalidate(params?: MobxQueryInvalidateParams) {
-    this.queryClient.invalidateQueries({
+  async invalidate(params?: MobxQueryInvalidateParams) {
+    await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
       ...params,

@@ -316,8 +316,8 @@ export class MobxInfiniteQuery<
     });
   }
 
-  invalidate(options?: MobxQueryInvalidateParams) {
-    this.queryClient.invalidateQueries({
+  async invalidate(options?: MobxQueryInvalidateParams) {
+    await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
       ...options,
