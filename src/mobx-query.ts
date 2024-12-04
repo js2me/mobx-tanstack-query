@@ -14,7 +14,7 @@ import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
-  computed,
+  autorun,
   makeObservable,
   observable,
   reaction,
@@ -151,12 +151,10 @@ export class MobxQuery<
     });
 
     if (getDynamicOptions) {
-      const computedOptions = computed(() => getDynamicOptions(this));
-
-      reaction(
-        () => computedOptions.get(),
-        (dynamicOptions) => {
-          this.update(dynamicOptions as any);
+      autorun(
+        () => {
+          const dynamicOptions = getDynamicOptions(this) as any;
+          this.update(dynamicOptions);
         },
         {
           signal: this.abortController.signal,
