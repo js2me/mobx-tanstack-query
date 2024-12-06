@@ -140,12 +140,13 @@ export class MobxInfiniteQuery<
       disposer.add(() => this.dispose());
     }
 
-    makeObservable<this, 'updateResult'>(this, {
-      _result: observable.ref,
-      setData: action.bound,
-      update: action.bound,
-      updateResult: action.bound,
-    });
+    observable.ref(this, '_result');
+    observable.ref(this, 'isResultRequsted');
+    action.bound(this, 'setData');
+    action.bound(this, 'update');
+    action.bound(this, 'updateResult');
+
+    makeObservable(this);
 
     const mergedOptions = {
       ...options,

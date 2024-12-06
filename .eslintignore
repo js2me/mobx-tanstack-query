@@ -16,3 +16,4 @@ jsconfig.json
 .eslintrc.cjs
 post-build.mjs
 coverage
+vitest.config.ts

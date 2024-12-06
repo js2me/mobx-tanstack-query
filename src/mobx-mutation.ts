@@ -62,14 +62,10 @@ export class MobxMutation<
       disposer.add(() => this.dispose());
     }
 
-    makeObservable<this, 'updateResult'>(
-      this,
-      {
-        result: observable.ref,
-        updateResult: action.bound,
-      },
-      { deep: false },
-    );
+    observable.ref(this, 'result');
+    action.bound(this, 'updateResult');
+
+    makeObservable(this);
 
     this.mutationOptions = this.queryClient.defaultMutationOptions(options);
 
