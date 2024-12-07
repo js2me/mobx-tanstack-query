@@ -4,6 +4,7 @@ import {
   hashKey,
   InvalidateQueryFilters,
   QueryClient,
+  QueryFilters,
   QueryKey,
   QueryObserver,
   QueryObserverOptions,
@@ -22,6 +23,9 @@ import {
 
 export interface MobxQueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
+
+export interface MobxQueryResetParams
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
 export interface MobxQueryConfig<
   TData,
@@ -239,10 +243,11 @@ export class MobxQuery<
     this._result = nextResult || {};
   }
 
-  async reset() {
+  async reset(params?: MobxQueryResetParams) {
     await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
+      ...params,
     });
   }
 

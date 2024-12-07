@@ -22,7 +22,7 @@ import {
   runInAction,
 } from 'mobx';
 
-import { MobxQueryInvalidateParams } from './mobx-query';
+import { MobxQueryInvalidateParams, MobxQueryResetParams } from './mobx-query';
 
 export interface MobxInfiniteQueryConfig<
   TData,
@@ -311,10 +311,11 @@ export class MobxInfiniteQuery<
     return await this.queryObserver.refetch(options);
   }
 
-  async reset() {
+  async reset(params?: MobxQueryResetParams) {
     await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
+      ...params,
     });
   }
 
