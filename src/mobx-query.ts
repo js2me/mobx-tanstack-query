@@ -11,6 +11,7 @@ import {
   QueryObserverResult,
   RefetchOptions,
   SetDataOptions,
+  Updater,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -212,10 +213,14 @@ export class MobxQuery<
   }
 
   setData(
-    data: TData | ((input: TData | undefined) => TData),
+    updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
     options?: SetDataOptions,
   ) {
-    this.queryClient.setQueryData<TData>(this.options.queryKey, data, options);
+    this.queryClient.setQueryData<TData>(
+      this.options.queryKey,
+      updater,
+      options,
+    );
   }
 
   update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
