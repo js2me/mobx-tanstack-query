@@ -11,6 +11,7 @@ import {
   InfiniteQueryObserverResult,
   InfiniteData,
   RefetchOptions,
+  SetDataOptions,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -247,8 +248,17 @@ export class MobxInfiniteQuery<
     return hashKey(queryKey);
   }
 
-  setData(data: TData) {
-    this.queryClient.setQueryData<TData>(this.options.queryKey, data);
+  setData(
+    data:
+      | InfiniteData<TData>
+      | ((input: InfiniteData<TData> | undefined) => InfiniteData<TData>),
+    options?: SetDataOptions,
+  ) {
+    this.queryClient.setQueryData<InfiniteData<TData>>(
+      this.options.queryKey,
+      data,
+      options,
+    );
   }
 
   fetchNextPage(options?: FetchNextPageOptions | undefined) {

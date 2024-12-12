@@ -10,6 +10,7 @@ import {
   QueryObserverOptions,
   QueryObserverResult,
   RefetchOptions,
+  SetDataOptions,
 } from '@tanstack/query-core';
 import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
@@ -210,8 +211,11 @@ export class MobxQuery<
     return hashKey(queryKey);
   }
 
-  setData(data: TData) {
-    this.queryClient.setQueryData<TData>(this.options.queryKey, data);
+  setData(
+    data: TData | ((input: TData | undefined) => TData),
+    options?: SetDataOptions,
+  ) {
+    this.queryClient.setQueryData<TData>(this.options.queryKey, data, options);
   }
 
   update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
