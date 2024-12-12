@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "3.1.21",
+  "version": "3.1.22",
   "scripts": {
     "clean": "rimraf dist",
     "check": "eslint . --fix && pnpm test:coverage",
