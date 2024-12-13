@@ -29,14 +29,41 @@ export interface MobxQueryInvalidateParams
 export interface MobxQueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
+export interface MobxQueryDynamicOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> extends Partial<
+    Omit<
+      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
+      'queryFn' | 'enabled' | 'queryKeyHashFn'
+    >
+  > {
+  enabled?: boolean;
+}
+
 export interface MobxQueryConfig<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
-    QueryObserverOptions<TData, TError, TData, TData, TQueryKey>
+    Omit<
+      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
+      'queryKey'
+    >
   > {
   queryClient: QueryClient;
+  /**
+   * TanStack Query manages query caching for you based on query keys.
+   * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
+   * As long as the query key is serializable, and unique to the query's data, you can use it!
+   *
+   * **Important:** If you define it as a function then it will be reactively updates query origin key every time
+   * when observable values inside the function changes
+   *
+   * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
+   */
+  queryKey?: TQueryKey | (() => TQueryKey);
   onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
   /**
    * @deprecated use `abortSignal` instead
@@ -53,7 +80,7 @@ export interface MobxQueryConfig<
     query: NoInfer<
       MobxQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
     >,
-  ) => Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
+  ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
 
   /**
    * Reset query when dispose is called
@@ -100,6 +127,7 @@ export class MobxQuery<
     abortSignal: outerAbortSignal,
     resetOnDispose,
     enableOnDemand,
+    queryKey: queryKeyOrDynamicQueryKey,
     ...options
   }: MobxQueryConfig<TData, TError, TQueryKey>) {
     this.abortController = new LinkedAbortController(outerAbortSignal);
@@ -124,6 +152,26 @@ export class MobxQuery<
       ...options,
       ...getDynamicOptions?.(this),
     };
+
+    if (queryKeyOrDynamicQueryKey) {
+      if (typeof queryKeyOrDynamicQueryKey === 'function') {
+        mergedOptions.queryKey = queryKeyOrDynamicQueryKey();
+
+        reaction(
+          () => queryKeyOrDynamicQueryKey(),
+          (queryKey) => {
+            this.update({
+              queryKey,
+            });
+          },
+          {
+            signal: this.abortController.signal,
+          },
+        );
+      } else {
+        mergedOptions.queryKey = queryKeyOrDynamicQueryKey;
+      }
+    }
 
     this.options = queryClient.defaultQueryOptions({
       ...mergedOptions,
