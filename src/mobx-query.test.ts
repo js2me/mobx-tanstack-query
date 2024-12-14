@@ -150,6 +150,73 @@ describe('MobxQuery', () => {
     });
   });
 
+  describe('"enabled" reactive parameter', () => {
+    it('should be reactive after change queryKey', () => {
+      const mobxQuery = new MobxQueryMock({
+        queryKey: ['test', 0] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      mobxQuery.update({ queryKey: ['test', 1] as const });
+
+      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 100);
+    });
+
+    it('should be reactive dependent on another query (runs before declartion)', () => {
+      const disabledMobxQuery = new MobxQueryMock({
+        queryKey: ['test', 0] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      disabledMobxQuery.update({ queryKey: ['test', 1] as const });
+
+      const dependentMobxQuery = new MobxQueryMock({
+        options: () => ({
+          enabled: !!disabledMobxQuery.options.enabled,
+          queryKey: [...disabledMobxQuery.options.queryKey, 'dependent'],
+        }),
+        queryFn: ({ queryKey }) => queryKey,
+      });
+
+      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+        'test',
+        1,
+        'dependent',
+      ]);
+    });
+
+    it('should be reactive dependent on another query (runs after declaration)', () => {
+      const tempDisabledMobxQuery = new MobxQueryMock({
+        queryKey: ['test', 0] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      const dependentMobxQuery = new MobxQueryMock({
+        options: () => ({
+          enabled: !!tempDisabledMobxQuery.options.enabled,
+          queryKey: [...tempDisabledMobxQuery.options.queryKey, 'dependent'],
+        }),
+        queryFn: ({ queryKey }) => queryKey,
+      });
+
+      tempDisabledMobxQuery.update({ queryKey: ['test', 1] as const });
+
+      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
+      // результат с 0 потому что options.enabled у первой квери - это функция и
+      // !!tempDisabledMobxQuery.options.enabled будет всегда true
+      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+        'test',
+        0,
+        'dependent',
+      ]);
+    });
+  });
+
   describe('"options" reactive parameter', () => {
     it('"options.queryKey" should updates query', async () => {
       const boxCounter = observable.box(0);
