@@ -42,6 +42,18 @@ export interface MobxQueryDynamicOptions<
   enabled?: boolean;
 }
 
+export interface MobxQueryOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> extends DefaultedQueryObserverOptions<
+    TData,
+    TError,
+    TData,
+    TData,
+    TQueryKey
+  > {}
+
 export interface MobxQueryConfig<
   TData,
   TError = DefaultError,
@@ -103,13 +115,7 @@ export class MobxQuery<
 
   private _result: QueryObserverResult<TData, TError>;
 
-  options: DefaultedQueryObserverOptions<
-    TData,
-    TError,
-    TData,
-    TData,
-    TQueryKey
-  >;
+  options: MobxQueryOptions<TData, TError, TQueryKey>;
   queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
 
   isResultRequsted: boolean;
@@ -140,7 +146,7 @@ export class MobxQuery<
       disposer.add(() => this.dispose());
     }
 
-    observable.ref(this, '_result');
+    observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
     action.bound(this, 'setData');
     action.bound(this, 'update');
@@ -188,14 +194,9 @@ export class MobxQuery<
 
     this.queryObserver = new QueryObserver(queryClient, this.options);
 
-    this.updateResult();
+    this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
     const subscription = this.queryObserver.subscribe(this.updateResult);
-
-    this.abortController.signal.addEventListener('abort', () => {
-      subscription();
-      this.queryObserver.destroy();
-    });
 
     if (getDynamicOptions) {
       reaction(
@@ -239,11 +240,14 @@ export class MobxQuery<
       this.onError(onError);
     }
 
-    if (resetOnDispose) {
-      this.abortController.signal.addEventListener('abort', () => {
+    this.abortController.signal.addEventListener('abort', () => {
+      subscription();
+      this.queryObserver.destroy();
+
+      if (resetOnDispose) {
         this.reset();
-      });
-    }
+      }
+    });
 
     onInit?.(this);
   }
@@ -264,7 +268,7 @@ export class MobxQuery<
     updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
     options?: SetDataOptions,
   ) {
-    this.queryClient.setQueryData<TData>(
+    return this.queryClient.setQueryData<TData>(
       this.options.queryKey,
       updater,
       options,
@@ -295,13 +299,12 @@ export class MobxQuery<
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  private updateResult() {
-    const nextResult = this.queryObserver.getOptimisticResult(this.options);
-    this._result = nextResult || {};
+  private updateResult(result: QueryObserverResult<TData, TError>) {
+    this._result = result;
   }
 
   async reset(params?: MobxQueryResetParams) {
-    await this.queryClient.resetQueries({
+    return await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
       ...params,
@@ -309,7 +312,7 @@ export class MobxQuery<
   }
 
   async invalidate(params?: MobxQueryInvalidateParams) {
-    await this.queryClient.invalidateQueries({
+    return await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
       ...params,

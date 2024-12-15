@@ -74,7 +74,7 @@ class MobxQueryMock<
   setData(
     updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
     options?: SetDataOptions | undefined,
-  ): void {
+  ): TData | undefined {
     this.spies.setData(updater, options);
     return super.setData(updater, options);
   }
