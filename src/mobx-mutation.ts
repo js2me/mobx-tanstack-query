@@ -6,30 +6,10 @@ import {
   MutationOptions,
   QueryClient,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
-export interface MobxMutationConfig<
-  TData = unknown,
-  TVariables = void,
-  TError = DefaultError,
-  TContext = unknown,
-> extends Omit<
-    MutationObserverOptions<TData, TError, TVariables, TContext>,
-    '_defaulted'
-  > {
-  queryClient: QueryClient;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
-  abortSignal?: AbortSignal;
-  resetOnDispose?: boolean;
-  onInit?: (
-    mutation: MobxMutation<TData, TVariables, TError, TContext>,
-  ) => void;
-}
+import { MobxMutationConfig } from './mobx-mutation.types';
 
 export class MobxMutation<
   TData = unknown,
