@@ -42,7 +42,7 @@ export class MobxMutation<
       disposer.add(() => this.dispose());
     }
 
-    observable.ref(this, 'result');
+    observable.deep(this, 'result');
     action.bound(this, 'updateResult');
 
     makeObservable(this);
@@ -56,17 +56,17 @@ export class MobxMutation<
       TContext
     >(queryClient, this.mutationOptions);
 
-    this.updateResult();
+    this.updateResult(this.mutationObserver.getCurrentResult());
 
     const subscription = this.mutationObserver.subscribe(this.updateResult);
 
-    this.abortController.signal.addEventListener('abort', subscription);
+    this.abortController.signal.addEventListener('abort', () => {
+      subscription();
 
-    if (resetOnDispose) {
-      this.abortController.signal.addEventListener('abort', () => {
+      if (resetOnDispose) {
         this.reset();
-      });
-    }
+      }
+    });
 
     onInit?.(this);
   }
@@ -76,19 +76,15 @@ export class MobxMutation<
     options?: MutationOptions<TData, TError, TVariables, TContext>,
   ) {
     await this.mutationObserver.mutate(variables, options);
-
     return this.result;
-  }
-
-  reset() {
-    this.mutationObserver.reset();
   }
 
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  private updateResult() {
-    const nextResult = this.mutationObserver.getCurrentResult();
+  private updateResult(
+    nextResult: MutationObserverResult<TData, TError, TVariables, TContext>,
+  ) {
     this.result = nextResult || {};
   }
 
@@ -118,6 +114,10 @@ export class MobxMutation<
         signal: this.abortController.signal,
       },
     );
+  }
+
+  reset() {
+    this.mutationObserver.reset();
   }
 
   dispose() {
