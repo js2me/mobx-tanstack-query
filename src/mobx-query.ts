@@ -1,19 +1,14 @@
 import {
-  DefaultedQueryObserverOptions,
   DefaultError,
   hashKey,
-  InvalidateQueryFilters,
   QueryClient,
-  QueryFilters,
   QueryKey,
   QueryObserver,
-  QueryObserverOptions,
   QueryObserverResult,
   RefetchOptions,
   SetDataOptions,
   Updater,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
@@ -23,87 +18,14 @@ import {
   runInAction,
 } from 'mobx';
 
-export interface MobxQueryInvalidateParams
-  extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
-
-export interface MobxQueryResetParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
-
-export interface MobxQueryDynamicOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-> extends Partial<
-    Omit<
-      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
-      'queryFn' | 'enabled' | 'queryKeyHashFn'
-    >
-  > {
-  enabled?: boolean;
-}
-
-export interface MobxQueryOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-> extends DefaultedQueryObserverOptions<
-    TData,
-    TError,
-    TData,
-    TData,
-    TQueryKey
-  > {}
-
-export interface MobxQueryConfig<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-> extends Partial<
-    Omit<
-      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
-      'queryKey'
-    >
-  > {
-  queryClient: QueryClient;
-  /**
-   * TanStack Query manages query caching for you based on query keys.
-   * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
-   * As long as the query key is serializable, and unique to the query's data, you can use it!
-   *
-   * **Important:** If you define it as a function then it will be reactively updates query origin key every time
-   * when observable values inside the function changes
-   *
-   * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
-   */
-  queryKey?: TQueryKey | (() => TQueryKey);
-  onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
-  abortSignal?: AbortSignal;
-  onDone?: (data: TData, payload: void) => void;
-  onError?: (error: TError, payload: void) => void;
-  /**
-   * Dynamic query parameters, when result of this function changed query will be updated
-   * (reaction -> setOptions)
-   */
-  options?: (
-    query: NoInfer<
-      MobxQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
-    >,
-  ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
-
-  /**
-   * Reset query when dispose is called
-   */
-  resetOnDispose?: boolean;
-
-  /**
-   * Enable query only if result is requested
-   */
-  enableOnDemand?: boolean;
-}
+import {
+  MobxQueryConfig,
+  MobxQueryDynamicOptions,
+  MobxQueryInvalidateParams,
+  MobxQueryOptions,
+  MobxQueryResetParams,
+  MobxQueryUpdateOptions,
+} from './mobx-query.types';
 
 export class MobxQuery<
   TData,
@@ -113,7 +35,7 @@ export class MobxQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  private _result: QueryObserverResult<TData, TError>;
+  protected _result: QueryObserverResult<TData, TError>;
 
   options: MobxQueryOptions<TData, TError, TQueryKey>;
   queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
@@ -121,6 +43,8 @@ export class MobxQuery<
   isResultRequsted: boolean;
 
   private isEnabledOnResultDemand: boolean;
+
+  private _originEnabled: MobxQueryOptions<TData, TError, TQueryKey>['enabled'];
 
   constructor({
     queryClient,
@@ -179,12 +103,10 @@ export class MobxQuery<
       }
     }
 
-    this.options = queryClient.defaultQueryOptions({
+    this.options = this.createOptions({
       ...mergedOptions,
       queryKey: (mergedOptions.queryKey ?? []) as TQueryKey,
     });
-
-    this.options.queryHash = this.createQueryHash(this.options.queryKey);
 
     // Tracking props visit should be done in MobX, by default.
     this.options.notifyOnChangeProps =
@@ -199,18 +121,9 @@ export class MobxQuery<
     const subscription = this.queryObserver.subscribe(this.updateResult);
 
     if (getDynamicOptions) {
-      reaction(
-        () =>
-          getDynamicOptions(this) as Partial<
-            QueryObserverOptions<TData, TError, TQueryKey>
-          >,
-        (dynamicOptions) => {
-          this.update(dynamicOptions);
-        },
-        {
-          signal: this.abortController.signal,
-        },
-      );
+      reaction(() => getDynamicOptions(this), this.update, {
+        signal: this.abortController.signal,
+      });
     }
 
     if (this.isEnabledOnResultDemand) {
@@ -218,13 +131,7 @@ export class MobxQuery<
         () => this.isResultRequsted,
         (isRequested) => {
           if (isRequested) {
-            this.update(
-              getDynamicOptions
-                ? (getDynamicOptions(this) as Partial<
-                    QueryObserverOptions<TData, TError, TQueryKey>
-                  >)
-                : {},
-            );
+            this.update(getDynamicOptions ? getDynamicOptions(this) : {});
           }
         },
         {
@@ -243,6 +150,7 @@ export class MobxQuery<
     this.abortController.signal.addEventListener('abort', () => {
       subscription();
       this.queryObserver.destroy();
+      this.isResultRequsted = false;
 
       if (resetOnDispose) {
         this.reset();
@@ -256,9 +164,12 @@ export class MobxQuery<
     return await this.queryObserver.refetch(options);
   }
 
-  protected createQueryHash(queryKey: any) {
-    if (this.options.queryKeyHashFn) {
-      return this.options.queryKeyHashFn(queryKey);
+  protected createQueryHash(
+    queryKey: any,
+    options: MobxQueryOptions<TData, TError, TQueryKey>,
+  ) {
+    if (options.queryKeyHashFn) {
+      return options.queryKeyHashFn(queryKey);
     }
 
     return hashKey(queryKey);
@@ -275,15 +186,39 @@ export class MobxQuery<
     );
   }
 
-  update(options: Partial<QueryObserverOptions<TData, TError, TQueryKey>>) {
-    this.options = this.queryClient.defaultQueryOptions({
+  private checkIsEnabled() {
+    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
+      return false;
+    }
+
+    return this._originEnabled;
+  }
+
+  private createOptions(
+    optionsUpdate:
+      | Partial<MobxQueryOptions<TData, TError, TQueryKey>>
+      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
+      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
+  ) {
+    const options = this.queryClient.defaultQueryOptions({
       ...this.options,
-      ...options,
-    } as any);
-    this.options.enabled =
-      (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
-      this.options.enabled;
-    this.options.queryHash = this.createQueryHash(this.options.queryKey);
+      ...optionsUpdate,
+    } as any) as MobxQueryOptions<TData, TError, TQueryKey>;
+    if ('enabled' in optionsUpdate) {
+      this._originEnabled = options.enabled;
+    }
+    options.enabled = this.checkIsEnabled();
+    options.queryHash = this.createQueryHash(options.queryKey, options);
+
+    return options;
+  }
+
+  update(
+    options:
+      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
+      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
+  ) {
+    this.options = this.createOptions(options);
     this.queryObserver.setOptions(this.options);
   }
 

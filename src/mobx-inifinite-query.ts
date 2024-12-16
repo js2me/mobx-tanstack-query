@@ -1,11 +1,9 @@
 import {
-  DefaultedInfiniteQueryObserverOptions,
   DefaultError,
   FetchNextPageOptions,
   FetchPreviousPageOptions,
   hashKey,
   InfiniteQueryObserver,
-  InfiniteQueryObserverOptions,
   QueryClient,
   QueryKey,
   InfiniteQueryObserverResult,
@@ -14,7 +12,6 @@ import {
   SetDataOptions,
   Updater,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
@@ -24,94 +21,14 @@ import {
   runInAction,
 } from 'mobx';
 
-import { MobxQueryInvalidateParams, MobxQueryResetParams } from './mobx-query';
-
-export interface MobxInfiniteQueryDynamicOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> extends Partial<
-    Omit<
-      InfiniteQueryObserverOptions<
-        TData,
-        TError,
-        InfiniteData<TData>,
-        InfiniteData<TData>,
-        TQueryKey,
-        TPageParam
-      >,
-      'queryFn' | 'enabled' | 'queryKeyHashFn'
-    >
-  > {
-  enabled?: boolean;
-}
-
-export interface MobxInfiniteQueryConfig<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> extends Partial<
-    Omit<
-      InfiniteQueryObserverOptions<
-        TData,
-        TError,
-        InfiniteData<TData>,
-        InfiniteData<TData>,
-        TQueryKey,
-        TPageParam
-      >,
-      'queryKey'
-    >
-  > {
-  queryClient: QueryClient;
-  /**
-   * TanStack Query manages query caching for you based on query keys.
-   * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
-   * As long as the query key is serializable, and unique to the query's data, you can use it!
-   *
-   * **Important:** If you define it as a function then it will be reactively updates query origin key every time
-   * when observable values inside the function changes
-   *
-   * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
-   */
-  queryKey?: TQueryKey | (() => TQueryKey);
-  onInit?: (
-    query: MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>,
-  ) => void;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
-  abortSignal?: AbortSignal;
-  onDone?: (data: InfiniteData<TData>, payload: void) => void;
-  onError?: (error: TError, payload: void) => void;
-  /**
-   * Dynamic query parameters, when result of this function changed query will be updated
-   * (reaction -> setOptions)
-   */
-  options?: (
-    query: NoInfer<
-      MobxInfiniteQuery<
-        NoInfer<TData>,
-        NoInfer<TError>,
-        NoInfer<TQueryKey>,
-        NoInfer<TPageParam>
-      >
-    >,
-  ) => MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
-
-  /**
-   * Reset query when dispose is called
-   */
-  resetOnDispose?: boolean;
-
-  /**
-   * Enable query only if result is requested
-   */
-  enableOnDemand?: boolean;
-}
+import {
+  MobxInfiniteQueryConfig,
+  MobxInfiniteQueryDynamicOptions,
+  MobxInfiniteQueryInvalidateParams,
+  MobxInfiniteQueryOptions,
+  MobxInfiniteQueryResetParams,
+  MobxInfiniteQueryUpdateOptions,
+} from './mobx-inifinite-query.types';
 
 export class MobxInfiniteQuery<
   TData,
@@ -122,15 +39,8 @@ export class MobxInfiniteQuery<
   protected abortController: AbortController;
   private queryClient: QueryClient;
 
-  _result: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
-  options: DefaultedInfiniteQueryObserverOptions<
-    TData,
-    TError,
-    InfiniteData<TData>,
-    InfiniteData<TData>,
-    TQueryKey,
-    TPageParam
-  >;
+  protected _result: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
+  options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
   queryObserver: InfiniteQueryObserver<
     TData,
     TError,
@@ -144,11 +54,17 @@ export class MobxInfiniteQuery<
 
   private isEnabledOnResultDemand: boolean;
 
+  private _originEnabled: MobxInfiniteQueryOptions<
+    TData,
+    TError,
+    TQueryKey,
+    TPageParam
+  >['enabled'];
+
   constructor({
     queryClient,
     onInit,
     options: getDynamicOptions,
-
     onDone,
     onError,
     // eslint-disable-next-line sonarjs/deprecation
@@ -202,19 +118,10 @@ export class MobxInfiniteQuery<
       }
     }
 
-    this.options = queryClient.defaultQueryOptions({
+    this.options = this.createOptions({
       ...mergedOptions,
       queryKey: (mergedOptions.queryKey ?? []) as TQueryKey,
-    }) as DefaultedInfiniteQueryObserverOptions<
-      TData,
-      TError,
-      InfiniteData<TData>,
-      InfiniteData<TData>,
-      TQueryKey,
-      TPageParam
-    >;
-
-    this.options.queryHash = this.createQueryHash(this.options.queryKey);
+    });
 
     // Tracking props visit should be done in MobX, by default.
     this.options.notifyOnChangeProps =
@@ -224,25 +131,14 @@ export class MobxInfiniteQuery<
 
     this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
 
-    this.updateResult();
+    this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
     const subscription = this.queryObserver.subscribe(this.updateResult);
 
-    this.abortController.signal.addEventListener('abort', () => {
-      subscription();
-      this.queryObserver.destroy();
-    });
-
     if (getDynamicOptions) {
-      reaction(
-        () => getDynamicOptions(this),
-        (options) => {
-          this.update(options);
-        },
-        {
-          signal: this.abortController.signal,
-        },
-      );
+      reaction(() => getDynamicOptions(this), this.update, {
+        signal: this.abortController.signal,
+      });
     }
 
     if (this.isEnabledOnResultDemand) {
@@ -250,20 +146,7 @@ export class MobxInfiniteQuery<
         () => this.isResultRequsted,
         (isRequested) => {
           if (isRequested) {
-            this.update(
-              getDynamicOptions
-                ? (getDynamicOptions(this) as Partial<
-                    InfiniteQueryObserverOptions<
-                      TData,
-                      TError,
-                      InfiniteData<TData>,
-                      InfiniteData<TData>,
-                      TQueryKey,
-                      TPageParam
-                    >
-                  >)
-                : {},
-            );
+            this.update(getDynamicOptions ? getDynamicOptions(this) : {});
           }
         },
         {
@@ -279,18 +162,24 @@ export class MobxInfiniteQuery<
       this.onError(onError);
     }
 
-    if (resetOnDispose) {
-      this.abortController.signal.addEventListener('abort', () => {
+    this.abortController.signal.addEventListener('abort', () => {
+      subscription();
+      this.queryObserver.destroy();
+
+      if (resetOnDispose) {
         this.reset();
-      });
-    }
+      }
+    });
 
     onInit?.(this);
   }
 
-  protected createQueryHash(queryKey: any) {
-    if (this.options.queryKeyHashFn) {
-      return this.options.queryKeyHashFn(queryKey);
+  protected createQueryHash(
+    queryKey: any,
+    options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
+  ) {
+    if (options.queryKeyHashFn) {
+      return options.queryKeyHashFn(queryKey);
     }
 
     return hashKey(queryKey);
@@ -310,6 +199,14 @@ export class MobxInfiniteQuery<
     );
   }
 
+  private checkIsEnabled() {
+    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
+      return false;
+    }
+
+    return this._originEnabled;
+  }
+
   fetchNextPage(options?: FetchNextPageOptions | undefined) {
     return this.queryObserver.fetchNextPage(options);
   }
@@ -318,33 +215,31 @@ export class MobxInfiniteQuery<
     return this.queryObserver.fetchPreviousPage(options);
   }
 
-  update(
-    options: Partial<
-      InfiniteQueryObserverOptions<
-        TData,
-        TError,
-        InfiniteData<TData>,
-        InfiniteData<TData>,
-        TQueryKey,
-        TPageParam
-      >
-    >,
+  private createOptions(
+    optionsUpdate:
+      | Partial<MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
+      | MobxInfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
+      | MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
   ) {
-    this.options = this.queryClient.defaultQueryOptions({
+    const options = this.queryClient.defaultQueryOptions({
       ...this.options,
-      ...options,
-    } as any) as DefaultedInfiniteQueryObserverOptions<
-      TData,
-      TError,
-      InfiniteData<TData>,
-      InfiniteData<TData>,
-      TQueryKey,
-      TPageParam
-    >;
-    this.options.enabled =
-      (!this.isEnabledOnResultDemand || this.isResultRequsted) &&
-      this.options.enabled;
-    this.options.queryHash = this.createQueryHash(this.options.queryKey);
+      ...optionsUpdate,
+    } as any) as MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+    if ('enabled' in optionsUpdate) {
+      this._originEnabled = options.enabled;
+    }
+    options.enabled = this.checkIsEnabled();
+    options.queryHash = this.createQueryHash(options.queryKey, options);
+
+    return options;
+  }
+
+  update(
+    options:
+      | MobxInfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
+      | MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+  ) {
+    this.options = this.createOptions(options);
     this.queryObserver.setOptions(this.options);
   }
 
@@ -360,9 +255,12 @@ export class MobxInfiniteQuery<
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  private updateResult() {
-    const nextResult = this.queryObserver.getOptimisticResult(this.options);
-
+  private updateResult(
+    nextResult: InfiniteQueryObserverResult<
+      InfiniteData<TData, unknown>,
+      TError
+    >,
+  ) {
     this._result = nextResult || {};
   }
 
@@ -370,7 +268,7 @@ export class MobxInfiniteQuery<
     return await this.queryObserver.refetch(options);
   }
 
-  async reset(params?: MobxQueryResetParams) {
+  async reset(params?: MobxInfiniteQueryResetParams) {
     await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
@@ -378,7 +276,7 @@ export class MobxInfiniteQuery<
     });
   }
 
-  async invalidate(options?: MobxQueryInvalidateParams) {
+  async invalidate(options?: MobxInfiniteQueryInvalidateParams) {
     await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,

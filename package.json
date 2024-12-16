@@ -49,7 +49,7 @@
     "@vitejs/plugin-react-swc": "3.7.2",
     "@vitest/coverage-istanbul": "2.1.6",
     "eslint": "8.57.0",
-    "js2me-eslint-config": "1.0.5",
+    "js2me-eslint-config": "1.0.6",
     "js2me-exports-post-build-script": "2.0.17",
     "jsdom": "25.0.1",
     "typescript": "5.4.5",
