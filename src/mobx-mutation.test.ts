@@ -1,4 +1,5 @@
 import { DefaultError, QueryClient } from '@tanstack/query-core';
+import { reaction } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MobxMutation } from './mobx-mutation';
@@ -92,5 +93,71 @@ describe('MobxMutation', () => {
       status: 'success',
       variables: undefined,
     });
+  });
+
+  it('should change mutation status (success)', async () => {
+    const mobxMutation = new MobxMutationMock({
+      mutationKey: ['test'],
+      mutationFn: async () => {
+        return 'OK';
+      },
+    });
+
+    const statuses: (typeof mobxMutation)['result']['status'][] = [];
+
+    reaction(
+      () => mobxMutation.result.status,
+      (status) => {
+        statuses.push(status);
+      },
+      {
+        fireImmediately: true,
+      },
+    );
+
+    await mobxMutation.mutate();
+
+    expect(statuses).toStrictEqual(['idle', 'pending', 'success']);
+  });
+
+  it('should change mutation status (failure)', async () => {
+    const mobxMutation = new MobxMutationMock({
+      mutationKey: ['test'],
+      mutationFn: async () => {
+        throw new Error('BAD');
+      },
+    });
+
+    const statuses: (typeof mobxMutation)['result']['status'][] = [];
+
+    reaction(
+      () => mobxMutation.result.status,
+      (status) => {
+        statuses.push(status);
+      },
+      {
+        fireImmediately: true,
+      },
+    );
+
+    try {
+      await mobxMutation.mutate();
+      // eslint-disable-next-line no-empty
+    } catch {}
+
+    expect(statuses).toStrictEqual(['idle', 'pending', 'error']);
+  });
+
+  it('should throw exception', async () => {
+    const mobxMutation = new MobxMutationMock({
+      mutationKey: ['test'],
+      mutationFn: async () => {
+        throw new Error('BAD');
+      },
+    });
+
+    expect(async () => {
+      await mobxMutation.mutate();
+    }).rejects.toThrowError('BAD');
   });
 });
