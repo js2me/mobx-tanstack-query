@@ -2,7 +2,6 @@ import {
   DefaultError,
   QueryClient,
   QueryKey,
-  QueryObserverOptions,
   QueryObserverResult,
   RefetchOptions,
   SetDataOptions,
@@ -12,7 +11,12 @@ import { observable, reaction, runInAction, when } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MobxQuery } from './mobx-query';
-import { MobxQueryConfig, MobxQueryInvalidateParams } from './mobx-query.types';
+import {
+  MobxQueryConfig,
+  MobxQueryDynamicOptions,
+  MobxQueryInvalidateParams,
+  MobxQueryUpdateOptions,
+} from './mobx-query.types';
 
 class MobxQueryMock<
   TData,
@@ -67,9 +71,9 @@ class MobxQueryMock<
   }
 
   update(
-    options: Partial<
-      QueryObserverOptions<TData, TError, TQueryKey, TData, QueryKey, never>
-    >,
+    options:
+      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
+      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
   ): void {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
@@ -190,7 +194,7 @@ describe('MobxQuery', () => {
   describe('"enabled" reactive parameter', () => {
     it('should be reactive after change queryKey', async () => {
       const mobxQuery = new MobxQueryMock({
-        queryKey: ['test', 0] as const,
+        queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });
@@ -207,7 +211,7 @@ describe('MobxQuery', () => {
 
     it('should be reactive dependent on another query (runs before declartion)', async () => {
       const disabledMobxQuery = new MobxQueryMock({
-        queryKey: ['test', 0] as const,
+        queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });
@@ -238,7 +242,7 @@ describe('MobxQuery', () => {
 
     it('should be reactive dependent on another query (runs after declaration)', async () => {
       const tempDisabledMobxQuery = new MobxQueryMock({
-        queryKey: ['test', 0] as const,
+        queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });

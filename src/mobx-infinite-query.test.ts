@@ -311,6 +311,7 @@ describe('MobxInfiniteQuery', () => {
 
     mobxQuery.dispose();
   });
+
   it('should call queryFn after fetchNextPage call (x3 times)', async () => {
     const mobxQuery = new MobxInfiniteQueryMock({
       queryKey: ['test'],
@@ -407,5 +408,88 @@ describe('MobxInfiniteQuery', () => {
     });
 
     mobxQuery.dispose();
+  });
+
+  describe('"enabled" reactive parameter', () => {
+    it.skip('should be reactive after change queryKey', async () => {
+      const mobxQuery = new MobxInfiniteQueryMock({
+        queryKey: ['test', 0 as number] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      mobxQuery.update({ queryKey: ['test', 1] as const });
+
+      await when(() => !mobxQuery._rawResult.isFetching);
+
+      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 100);
+
+      mobxQuery.dispose();
+    });
+
+    it.skip('should be reactive dependent on another query (runs before declartion)', async () => {
+      const disabledMobxQuery = new MobxInfiniteQueryMock({
+        queryKey: ['test', 0 as number] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      disabledMobxQuery.update({ queryKey: ['test', 1] as const });
+
+      const dependentMobxQuery = new MobxInfiniteQueryMock({
+        options: () => ({
+          enabled: !!disabledMobxQuery.options.enabled,
+          queryKey: [...disabledMobxQuery.options.queryKey, 'dependent'],
+        }),
+        queryFn: ({ queryKey }) => queryKey,
+      });
+
+      await when(() => !disabledMobxQuery._rawResult.isLoading);
+      await when(() => !dependentMobxQuery._rawResult.isLoading);
+
+      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+        'test',
+        1,
+        'dependent',
+      ]);
+
+      disabledMobxQuery.dispose();
+      dependentMobxQuery.dispose();
+    });
+
+    it.skip('should be reactive dependent on another query (runs after declaration)', async () => {
+      const tempDisabledMobxQuery = new MobxInfiniteQueryMock({
+        queryKey: ['test', 0 as number] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+      });
+
+      const dependentMobxQuery = new MobxInfiniteQueryMock({
+        options: () => ({
+          enabled: !!tempDisabledMobxQuery.options.enabled,
+          queryKey: [...tempDisabledMobxQuery.options.queryKey, 'dependent'],
+        }),
+        queryFn: ({ queryKey }) => queryKey,
+      });
+
+      tempDisabledMobxQuery.update({ queryKey: ['test', 1] as const });
+
+      await when(() => !tempDisabledMobxQuery._rawResult.isLoading);
+      await when(() => !dependentMobxQuery._rawResult.isLoading);
+
+      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
+      // результат с 0 потому что options.enabled у первой квери - это функция и
+      // !!tempDisabledMobxQuery.options.enabled будет всегда true
+      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+        'test',
+        0,
+        'dependent',
+      ]);
+
+      tempDisabledMobxQuery.dispose();
+      dependentMobxQuery.dispose();
+    });
   });
 });

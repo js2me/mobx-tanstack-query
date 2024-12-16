@@ -30,12 +30,6 @@ export interface MobxQueryDynamicOptions<
   enabled?: boolean;
 }
 
-export type MobxQueryUpdateOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-> = Partial<QueryObserverOptions<TData, TError, TQueryKey>>;
-
 export interface MobxQueryOptions<
   TData,
   TError = DefaultError,
@@ -47,6 +41,12 @@ export interface MobxQueryOptions<
     TData,
     TQueryKey
   > {}
+
+export type MobxQueryUpdateOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> = Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
 
 export interface MobxQueryConfig<
   TData,

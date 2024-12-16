@@ -54,6 +54,22 @@ export interface MobxInfiniteQueryOptions<
     TPageParam
   > {}
 
+export interface MobxInfiniteQueryUpdateOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> extends Partial<
+    InfiniteQueryObserverOptions<
+      TData,
+      TError,
+      InfiniteData<TData>,
+      InfiniteData<TData>,
+      TQueryKey,
+      TPageParam
+    >
+  > {}
+
 export interface MobxInfiniteQueryConfig<
   TData,
   TError = DefaultError,
@@ -119,19 +135,3 @@ export interface MobxInfiniteQueryConfig<
    */
   enableOnDemand?: boolean;
 }
-
-export interface MobxInfiniteQueryUpdateOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> extends Partial<
-    InfiniteQueryObserverOptions<
-      TData,
-      TError,
-      InfiniteData<TData>,
-      InfiniteData<TData>,
-      TQueryKey,
-      TPageParam
-    >
-  > {}
