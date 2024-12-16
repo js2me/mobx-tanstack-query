@@ -85,7 +85,7 @@ export class MobxInfiniteQuery<
       disposer.add(() => this.dispose());
     }
 
-    observable.ref(this, '_result');
+    observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
     action.bound(this, 'setData');
     action.bound(this, 'update');
