@@ -20,7 +20,7 @@ class MobxQueryMock<
   TQueryKey extends QueryKey = any,
 > extends MobxQuery<TData, TError, TQueryKey> {
   spies = {
-    queryFn: vi.fn(),
+    queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
     update: vi.fn(),
     dispose: vi.fn(),
@@ -37,11 +37,14 @@ class MobxQueryMock<
       ...options,
       queryClient: new QueryClient({}),
       // @ts-ignore
-      queryFn: vi.fn(options.queryFn),
+      queryFn: vi.fn((...args: any[]) => {
+        // @ts-ignore
+        const result = options.queryFn?.(...args);
+        return result;
+      }),
     });
 
-    // @ts-ignore
-    this.spies.queryFn = this.options.queryFn;
+    this.spies.queryFn = this.options.queryFn as any;
 
     this.onDone(this.spies.onDone);
     this.onError(this.spies.onError);
@@ -69,8 +72,7 @@ class MobxQueryMock<
     >,
   ): void {
     const result = super.update(options);
-    this.spies.update.mockReturnValue(result);
-    this.spies.update(options);
+    this.spies.update.mockReturnValue(result)(options);
     return result;
   }
 
@@ -79,15 +81,13 @@ class MobxQueryMock<
     options?: SetDataOptions | undefined,
   ): TData | undefined {
     const result = super.setData(updater, options);
-    this.spies.setData.mockReturnValue(result);
-    this.spies.setData(updater, options);
+    this.spies.setData.mockReturnValue(result)(updater, options);
     return result;
   }
 
   dispose(): void {
     const result = super.dispose();
-    this.spies.dispose.mockReturnValue(result);
-    this.spies.dispose();
+    this.spies.dispose.mockReturnValue(result)();
     return result;
   }
 }
@@ -151,6 +151,8 @@ describe('MobxQuery', () => {
         queryKey: () => ['test', boxCounter.get()] as const,
       });
 
+      await when(() => !mobxQuery._rawResult.isLoading);
+
       runInAction(() => {
         boxCounter.set(1);
       });
@@ -159,6 +161,7 @@ describe('MobxQuery', () => {
 
       expect(mobxQuery.spies.queryFn).toBeCalledTimes(2);
       expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 0);
+      expect(mobxQuery.spies.queryFn).nthReturnedWith(2, 1);
 
       mobxQuery.dispose();
     });
