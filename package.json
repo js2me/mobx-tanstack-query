@@ -39,7 +39,8 @@
     "mobx": ">=6.12.4"
   },
   "dependencies": {
-    "linked-abort-controller": "1.0.2"
+    "linked-abort-controller": "1.0.2",
+    "rimraf": "6.0.1"
   },
   "devDependencies": {
     "@testing-library/react": "16.0.1",
