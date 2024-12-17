@@ -20,11 +20,239 @@ _**MobX** wrapper for [**Tanstack Query Core**](https://tanstack.com/query/lates
 
 ## What package supports    
 
-### [**Queries**](https://tanstack.com/query/latest/docs/framework/react/guides/queries) -> [**MobxQuery**](src/mobx-query.ts)  
+# [**Queries**](https://tanstack.com/query/latest/docs/framework/react/guides/queries) -> [**MobxQuery**](src/mobx-query.ts)  
 
-### [**Mutations**](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) -> [**MobxMutation**](src/mobx-mutation.ts)  
+Class wrapper for [@tanstack-query/core queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) with MobX reactivity  
 
-### [**InfiniteQueries**](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) -> [**MobxInfiniteQuery**](src/mobx-infinite-query.ts)  
+#### Usage  
+
+Create an instance of MobxQuery with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
+```ts
+const query = new MobxQuery({
+  queryClient,
+  abortSignal, // Helps you to automatically clean up query  
+  queryKey: ['pets'],
+  queryFn: async ({ signal, queryKey }) => {
+    const response = await petsApi.fetchPets({ signal });
+    return response.data;
+  },
+});  
+```  
+
+### Features  
+
+#### `enableOnDemand` option  
+Query will be disabled until you request result for this query  
+Example:  
+```ts
+const query = new MobxQuery({
+  //...
+  enableOnDemand: true
+});
+// happens nothing
+query.result.data; // from this code line query starts fetching data
+```
+
+#### dynamic `options`   
+Options which can be dynamically updated for this query   
+
+```ts
+const query = new MobxQuery({
+  // ...
+  options: () => ({
+    enabled: this.myObservableValue > 10,
+    queryKey: ['foo', 'bar', this.myObservableValue] as const,
+  }),
+  queryFn: ({ queryKey }) => {
+    const myObservableValue = queryKey[2];
+  }
+});
+```
+
+#### dynamic `queryKey`  
+Works the same as dynamic `options` option but only for `queryKey`   
+```ts
+const query = new MobxQuery({
+  // ...
+  queryKey: () => ['foo', 'bar', this.myObservableValue] as const,
+  queryFn: ({ queryKey }) => {
+    const myObservableValue = queryKey[2];
+  }
+});
+```  
+P.S. you can combine it with dynamic (out of box) `enabled` property   
+```ts
+const query = new MobxQuery({
+  // ...
+  queryKey: () => ['foo', 'bar', this.myObservableValue] as const,
+  enabled: ({ queryKey }) => queryKey[2] > 10,
+  queryFn: ({ queryKey }) => {
+    const myObservableValue = queryKey[2];
+  }
+});
+```  
+
+#### method `update()`   
+
+Update options for query (Uses [QueryObserver](https://tanstack.com/query/latest/docs/reference/QueriesObserver).setOptions)  
+
+#### hook `onDone()`  
+
+Subscribe when query has been successfully fetched data  
+
+#### hook `onError()`  
+
+Subscribe when query has been failed fetched data  
+
+#### method `invalidate()`  
+
+Invalidate current query  (Uses [queryClient.invalidateQueries](https://tanstack.com/query/latest/docs/reference/QueryClient/#queryclientinvalidatequeries))  
+
+#### method `reset()`  
+
+Reset current query  (Uses [queryClient.resetQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries))  
+
+#### method `setData()`  
+
+Set data for current query  (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))  
+
+#### property `isResultRequsted`  
+Any time when you trying to get access to `result` property this field sets as `true`  
+This field is needed for `enableOnDemand` option    
+This property if **observable**  
+
+#### property `result`  
+
+**Observable** query result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))   
+
+
+
+### About `enabled`  
+All queries are `enabled` (docs can be found [here](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery)) by default, but you can set `enabled` as `false` or use dynamic value like `({ queryKey }) => !!queryKey[1]`   
+You can use `update` method to update value for this property or use dynamic options construction (`options: () => ({ enabled: !!this.observableValue })`)   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# [**Mutations**](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) -> [**MobxMutation**](src/mobx-mutation.ts)  
+
+Class wrapper for [@tanstack-query/core mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with MobX reactivity  
+
+#### Usage  
+
+Create an instance of MobxMutation with [`mutationFn`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) parameter
+```ts
+const mutation = new MobxMutation({
+  queryClient,
+  abortSignal, // Helps you to automatically clean up mutation  
+  mutationFn: async ({ signal, queryKey }) => {
+    const response = await petsApi.createPet({ name: 'Fluffy' }, { signal });
+    return response.data;
+  },
+});  
+```  
+
+### Features
+
+### method `mutate(variables, options?)`  
+
+Runs the mutation. (Works the as `mutate` function in [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))  
+
+#### hook `onDone()`  
+
+Subscribe when mutation has been successfully finished  
+
+#### hook `onError()`  
+
+Subscribe when mutation has been finished with failure  
+
+#### method `reset()`  
+
+Reset current mutation  
+
+#### property `result`  
+
+**Observable** mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# [**InfiniteQueries**](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) -> [**MobxInfiniteQuery**](src/mobx-infinite-query.ts)  
+
+[_See docs for MobxQuery_](https://github.com/js2me/mobx-tanstack-query?tab=readme-ov-file#queries---mobxquery)  
 
 
 
@@ -74,6 +302,7 @@ const addPetsMutation = new MobxMutation({
     const response = await petsApi.createPet(payload);
     return response.data;
   },
+
   onSuccess: (data) => {
     rootStore.notifications.push({
       type: 'success',
