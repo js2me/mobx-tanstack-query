@@ -3,10 +3,11 @@
   "version": "3.1.32",
   "scripts": {
     "clean": "rimraf dist",
-    "check": "eslint . --fix && pnpm test:coverage",
+    "check": "eslint . --fix",
     "prebuild": "npm run clean && npm run check",
     "build": "tsc && node ./post-build.mjs",
     "pub": "PUBLISH=true pnpm run build",
+    "prepublish": "pnpm test",
     "pub:patch": "PUBLISH=true PUBLISH_VERSION=patch pnpm run build",
     "pub:minor": "PUBLISH=true PUBLISH_VERSION=minor pnpm run build",
     "pub:major": "PUBLISH=true PUBLISH_VERSION=major pnpm run build",

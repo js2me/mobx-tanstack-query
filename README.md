@@ -2,12 +2,13 @@
 
 # mobx-tanstack-query  
 
-[![NPM version][npm-image]][npm-url] [![build status][github-actions-image]][github-actions-url] [![npm download][download-image]][download-url] [![bundle size][bundlephobia-image]][bundlephobia-url]
+[![NPM version][npm-image]][npm-url] [![test status][github-test-actions-image]][github-actions-url] [![build status][github-build-actions-image]][github-actions-url] [![npm download][download-image]][download-url] [![bundle size][bundlephobia-image]][bundlephobia-url]
 
 
 [npm-image]: http://img.shields.io/npm/v/mobx-tanstack-query.svg
 [npm-url]: http://npmjs.org/package/mobx-tanstack-query
-[github-actions-image]: https://github.com/js2me/mobx-tanstack-query/workflows/Build/badge.svg
+[github-test-actions-image]: https://github.com/js2me/mobx-tanstack-query/workflows/Test/badge.svg
+[github-build-actions-image]: https://github.com/js2me/mobx-tanstack-query/workflows/Build/badge.svg
 [github-actions-url]: https://github.com/js2me/mobx-tanstack-query/actions
 [download-image]: https://img.shields.io/npm/dm/mobx-tanstack-query.svg
 [download-url]: https://npmjs.org/package/mobx-tanstack-query
