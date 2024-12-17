@@ -2,6 +2,16 @@
 
 # mobx-tanstack-query  
 
+[npm-image]: http://img.shields.io/npm/v/mobx-tanstack-query.svg
+[npm-url]: http://npmjs.org/package/mobx-tanstack-query
+[github-actions-image]: https://github.com/js2me/mobx-tanstack-query/workflows/Build/badge.svg
+[github-actions-url]: https://github.com/js2me/mobx-tanstack-query/actions
+[download-image]: https://img.shields.io/npm/dm/mobx-tanstack-query.svg
+[download-url]: https://npmjs.org/package/mobx-tanstack-query
+[bundlephobia-url]: https://bundlephobia.com/result?p=mobx-tanstack-query
+[bundlephobia-image]: https://badgen.net/bundlephobia/minzip/mobx-tanstack-query
+
+
 _**MobX** wrapper for [**Tanstack Query Core**](https://tanstack.com/query/latest) package_
 
 
