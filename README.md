@@ -2,6 +2,9 @@
 
 # mobx-tanstack-query  
 
+[![NPM version][npm-image]][npm-url] [![build status][github-actions-image]][github-actions-url] [![npm download][download-image]][download-url] [![bundle size][bundlephobia-image]][bundlephobia-url]
+
+
 [npm-image]: http://img.shields.io/npm/v/mobx-tanstack-query.svg
 [npm-url]: http://npmjs.org/package/mobx-tanstack-query
 [github-actions-image]: https://github.com/js2me/mobx-tanstack-query/workflows/Build/badge.svg
