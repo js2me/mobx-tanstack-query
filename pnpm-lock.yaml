@@ -15,14 +15,11 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
       linked-abort-controller:
-        specifier: 1.0.2
+        specifier: '>=1.0.2'
         version: 1.0.2
       mobx:
         specifier: '>=6.12.4'
         version: 6.13.3
-      rimraf:
-        specifier: 6.0.1
-        version: 6.0.1
     devDependencies:
       '@testing-library/react':
         specifier: 16.0.1
@@ -54,6 +51,9 @@ importers:
       jsdom:
         specifier: 25.0.1
         version: 25.0.1
+      rimraf:
+        specifier: 6.0.1
+        version: 6.0.1
       typescript:
         specifier: 5.4.5
         version: 5.4.5
