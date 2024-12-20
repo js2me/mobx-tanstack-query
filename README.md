@@ -308,18 +308,30 @@ pnpm add @tanstack/query-core mobx-tanstack-query
 // @/shared/lib/tanstack-query/query-client.ts
 import { hashKey, QueryClient } from '@tanstack/query-core';
 
-const queryClient = new QueryClient({
+const MAX_FAILURE_COUNT = 3;
+
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       throwOnError: true,
-      staleTime: Infinity,
       queryKeyHashFn: hashKey,
+      refetchOnWindowFocus: 'always',
+      refetchOnReconnect: 'always',
+      staleTime: 5 * 60 * 1000,
+      retry: (failureCount, error) => {
+        if ('status' in error && Number(error.status) >= 500) {
+          return MAX_FAILURE_COUNT - failureCount > 0;
+        }
+        return false;
+      },
     },
     mutations: {
       throwOnError: true,
     },
   },
 });
+
+queryClient.mount(); // enable all subscriptions for online\offline and window focus/blur
 ```
 
 3. **Use it**  
