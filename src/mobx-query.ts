@@ -33,7 +33,7 @@ export class MobxQuery<
   TQueryKey extends QueryKey = any,
 > {
   protected abortController: AbortController;
-  private queryClient: QueryClient;
+  protected queryClient: QueryClient;
 
   protected _result: QueryObserverResult<TData, TError>;
 

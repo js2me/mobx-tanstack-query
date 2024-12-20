@@ -37,7 +37,7 @@ export class MobxInfiniteQuery<
   TPageParam = unknown,
 > {
   protected abortController: AbortController;
-  private queryClient: QueryClient;
+  protected queryClient: QueryClient;
 
   protected _result: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
   options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;

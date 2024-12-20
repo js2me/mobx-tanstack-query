@@ -18,7 +18,7 @@ export class MobxMutation<
   TContext = unknown,
 > {
   protected abortController: AbortController;
-  private queryClient: QueryClient;
+  protected queryClient: QueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
   mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;
