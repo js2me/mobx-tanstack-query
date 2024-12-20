@@ -133,6 +133,42 @@ All queries are `enabled` (docs can be found [here](https://tanstack.com/query/l
 You can use `update` method to update value for this property or use dynamic options construction (`options: () => ({ enabled: !!this.observableValue })`)   
 
 
+### About `refetchOnWindowFocus` and `refetchOnReconnect`  
+
+They **will not work if** you will not call `mount()` method manually of your `QueryClient` instance which you send for your queries, all other cases dependents on query `stale` time and `enabled` properties.  
+Example:  
+
+```ts
+import { hashKey, QueryClient } from '@tanstack/query-core';
+
+const MAX_FAILURE_COUNT = 3;
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      throwOnError: true,
+      queryKeyHashFn: hashKey,
+      refetchOnWindowFocus: 'always',
+      refetchOnReconnect: 'always',
+      staleTime: 5 * 60 * 1000,
+      retry: (failureCount, error) => {
+        if ('status' in error && Number(error.status) >= 500) {
+          return MAX_FAILURE_COUNT - failureCount > 0;
+        }
+        return false;
+      },
+    },
+    mutations: {
+      throwOnError: true,
+    },
+  },
+});
+
+queryClient.mount(); // enable all subscriptions for online\offline and window focus/blur
+```
+
+
+
 
 
 
