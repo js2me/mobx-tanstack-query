@@ -5,7 +5,7 @@ import { MobxMutationConfig } from '../mobx-mutation.types';
 
 import { queryClient } from './query-client';
 
-export const creatMutation = <
+export const createMutation = <
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
