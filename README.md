@@ -294,7 +294,7 @@ Reset current mutation
 
 
 
-## Usage  
+# Usage   
 
 1. **Install dependencies**  
 
@@ -370,3 +370,59 @@ const addPetsMutation = new MobxMutation({
 addPetsMutation.mutate({ petName: 'fluffy' });
 ```
 
+
+# Another usage or `mobx-tanstack-query/preset`  
+
+This sub folder is contains already configured [instance of QueryClient](src/preset/query-client.ts) with [this configuration](src/preset/configs/default-query-client-config.ts) and needed to reduce your boilerplate with more compact way.  
+Every parameter in configuration you can override using this construction  
+```ts
+import { queryClient } from "mobx-tanstack-query/preset";
+
+const defaultOptions = queryClient.getDefaultOptions();
+defaultOptions.queries!.refetchOnMount = true;
+queryClient.setDefaultOptions({ ...defaultOptions })
+```  
+P.S. Overriding default options should be written before start whole application  
+
+
+### `createQuery(queryFn, otherOptionsWithoutFn?)`  
+
+This is alternative for `new MobxQuery()`. Example:  
+
+```ts
+import { createQuery } from "mobx-tanstack-query/preset";
+
+const query = createQuery(async ({ signal, queryKey }) => {
+  const response = await petsApi.fetchPets({ signal });
+  return response.data;
+}, {
+  queryKey: ['pets'],
+})
+```
+
+### `createMutation(mutationFn, otherOptionsWithoutFn?)`  
+
+This is alternative for `new MobxMutation()`. Example:  
+
+```ts
+import { createMutation } from "mobx-tanstack-query/preset";
+
+const mutation = createMutation(async (payload: { petName: string }) => {
+  const response = await petsApi.createPet(payload);
+  return response.data;
+})
+```
+
+
+### `createInfiniteQuery(queryFn, otherOptionsWithoutFn?)`  
+
+This is alternative for `new MobxInfiniteQuery()`. Example:  
+
+```ts
+import { createInfiniteQuery } from "mobx-tanstack-query/preset";
+
+const query = createInfiniteQuery(async ({ signal, queryKey }) => {
+  const response = await petsApi.fetchPets({ signal });
+  return response.data;
+})
+```
