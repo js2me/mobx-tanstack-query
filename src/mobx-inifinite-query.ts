@@ -242,6 +242,9 @@ export class MobxInfiniteQuery<
       | MobxInfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
       | MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
   ) {
+    if (this.abortController.signal.aborted) {
+      return;
+    }
     this.options = this.createOptions(options);
     this.queryObserver.setOptions(this.options);
   }

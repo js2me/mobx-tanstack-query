@@ -220,6 +220,9 @@ export class MobxQuery<
       | MobxQueryUpdateOptions<TData, TError, TQueryKey>
       | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
   ) {
+    if (this.abortController.signal.aborted) {
+      return;
+    }
     this.options = this.createOptions(options);
     this.queryObserver.setOptions(this.options);
   }

@@ -712,5 +712,51 @@ describe('MobxQuery', () => {
 
       expect(query.spies.queryFn).toBeCalledTimes(3);
     });
+    it('dynamic enabled + dynamic refetchInterval (+enabledOnDemand)', async () => {
+      const abortController = new AbortController();
+      const counter = observable.box(0);
+
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          runInAction(() => {
+            counter.set(counter.get() + 1);
+          });
+          return 10;
+        },
+        enableOnDemand: true,
+        options: () => ({
+          enabled: counter.get() < 100,
+          queryKey: ['test', counter.get()],
+        }),
+        abortSignal: abortController.signal,
+        refetchInterval: (query) => (query.isDisabled() ? false : 10),
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(0);
+
+      query.result.data;
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(10);
+
+      query.result.data;
+      query.result.isLoading;
+      await waitAsync(50);
+      expect(query.spies.queryFn).toBeCalledTimes(15);
+      abortController.abort();
+
+      query.result.data;
+      query.result.data;
+      query.result.isLoading;
+
+      await waitAsync(100);
+
+      query.result.data;
+      query.result.isLoading;
+
+      expect(query.spies.queryFn).toBeCalledTimes(15);
+    });
   });
 });
