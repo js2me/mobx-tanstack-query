@@ -60,6 +60,9 @@ importers:
       vitest:
         specifier: 2.1.4
         version: 2.1.4(@types/node@20.14.5)(jsdom@25.0.1)
+      yammies:
+        specifier: 2.0.10
+        version: 2.0.10
 
 packages:
 
@@ -2398,6 +2401,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.0.9:
+    resolution: {integrity: sha512-Aooyr6MXU6HpvvWXKoVoXwKMs/KyVakWwg7xQfv5/S/RIgJMy0Ifa45H9qqYy7pTCszrHzP21Uk4PZq2HpEM8Q==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
@@ -3127,6 +3135,9 @@ packages:
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
+
+  yammies@2.0.10:
+    resolution: {integrity: sha512-cO2ByV6tuhFNLRftUBH+uVxg7mvK7aEtXCvrAb9wSQ7fPi1c1XmHH0t10qJ1LPztNMxe+j8E//OwOuRXeQMJBg==}
 
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
@@ -5878,6 +5889,8 @@ snapshots:
 
   nanoid@3.3.8: {}
 
+  nanoid@5.0.9: {}
+
   natural-compare@1.4.0: {}
 
   node-releases@2.0.18: {}
@@ -6674,5 +6687,9 @@ snapshots:
   xmlchars@2.2.0: {}
 
   yallist@3.1.1: {}
+
+  yammies@2.0.10:
+    dependencies:
+      nanoid: 5.0.9
 
   yocto-queue@0.1.0: {}

@@ -10,6 +10,7 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul', // or 'v8'
       include: ['src'],
+      exclude: ['src/preset'],
       reporter: [
         'text',
         'text-summary',

@@ -9,6 +9,7 @@ import {
 } from '@tanstack/query-core';
 import { observable, reaction, runInAction, when } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
+import { waitAsync } from 'yammies/async';
 
 import { MobxQuery } from './mobx-query';
 import {
@@ -531,6 +532,185 @@ describe('MobxQuery', () => {
 
         mobxQuery.dispose();
       });
+    });
+  });
+
+  describe('scenarios', () => {
+    it('query with refetchInterval(number) should be stopped after inner abort', async () => {
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        refetchInterval: 10,
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+      query.dispose();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('query with refetchInterval(number) should be stopped after outer abort', async () => {
+      const abortController = new AbortController();
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        abortSignal: abortController.signal,
+        refetchInterval: 10,
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+
+      abortController.abort();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        refetchInterval: () => 10,
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+
+      query.dispose();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('query with refetchInterval(fn) should be stopped after outer abort', async () => {
+      const abortController = new AbortController();
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        abortSignal: abortController.signal,
+        refetchInterval: () => 10,
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+
+      abortController.abort();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        refetchInterval: (query) => (query.isActive() ? 10 : false),
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+      query.dispose();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('query with refetchInterval(condition-fn) should be stopped after outer abort', async () => {
+      const abortController = new AbortController();
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(10);
+          return 10;
+        },
+        enabled: true,
+        abortSignal: abortController.signal,
+        refetchInterval: (query) => (query.isActive() ? 10 : false),
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+
+      abortController.abort();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(5);
+    });
+    it('dynamic enabled + dynamic refetchInterval', async () => {
+      const abortController = new AbortController();
+      const counter = observable.box(0);
+
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          runInAction(() => {
+            counter.set(counter.get() + 1);
+          });
+          await waitAsync(10);
+          return 10;
+        },
+        options: () => ({
+          enabled: counter.get() < 3,
+          queryKey: ['test', counter.get()],
+        }),
+        abortSignal: abortController.signal,
+        refetchInterval: (query) => (query.isDisabled() ? false : 10),
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(3);
+
+      abortController.abort();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(3);
+    });
+    it('dynamic enabled + dynamic refetchInterval(refetchInterval is fixed)', async () => {
+      const abortController = new AbortController();
+      const counter = observable.box(0);
+
+      const query = new MobxQueryMock({
+        queryFn: async () => {
+          runInAction(() => {
+            counter.set(counter.get() + 1);
+          });
+          await waitAsync(10);
+          return 10;
+        },
+        options: () => ({
+          enabled: counter.get() < 3,
+          queryKey: ['test', counter.get()],
+        }),
+        abortSignal: abortController.signal,
+        refetchInterval: () => 10,
+      });
+
+      await waitAsync(100);
+      expect(query.spies.queryFn).toBeCalledTimes(3);
+
+      abortController.abort();
+
+      await waitAsync(100);
+
+      expect(query.spies.queryFn).toBeCalledTimes(3);
     });
   });
 });
