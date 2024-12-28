@@ -164,7 +164,10 @@ export class MobxInfiniteQuery<
 
     this.abortController.signal.addEventListener('abort', () => {
       subscription();
+
+      this.queryObserver.getCurrentQuery().destroy();
       this.queryObserver.destroy();
+      this.isResultRequsted = false;
 
       if (resetOnDispose) {
         this.reset();
