@@ -18,6 +18,7 @@ import {
   runInAction,
 } from 'mobx';
 
+import { MobxQueryClient } from './mobx-query-client';
 import {
   MobxQueryConfig,
   MobxQueryDynamicOptions,
@@ -33,7 +34,7 @@ export class MobxQuery<
   TQueryKey extends QueryKey = any,
 > {
   protected abortController: AbortController;
-  protected queryClient: QueryClient;
+  protected queryClient: QueryClient | MobxQueryClient;
 
   protected _result: QueryObserverResult<TData, TError>;
 
@@ -65,6 +66,11 @@ export class MobxQuery<
     this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = enableOnDemand ?? false;
+
+    if (queryClient instanceof MobxQueryClient && enableOnDemand == null) {
+      this.isEnabledOnResultDemand =
+        queryClient.queryFeatures.enableOnDemand ?? false;
+    }
 
     if (disposer) {
       disposer.add(() => this.dispose());
@@ -154,7 +160,11 @@ export class MobxQuery<
       this.queryObserver.destroy();
       this.isResultRequsted = false;
 
-      if (resetOnDispose) {
+      if (
+        resetOnDispose ||
+        (queryClient instanceof MobxQueryClient &&
+          queryClient.queryFeatures.resetOnDispose)
+      ) {
         this.reset();
       }
     });

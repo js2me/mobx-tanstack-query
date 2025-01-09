@@ -1,5 +1,5 @@
-import { QueryClient } from '@tanstack/query-core';
+import { MobxQueryClient } from '../mobx-query-client';
 
 import { defaultQueryClientConfig } from './configs';
 
-export const queryClient = new QueryClient(defaultQueryClientConfig);
+export const queryClient = new MobxQueryClient(defaultQueryClientConfig);

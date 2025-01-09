@@ -6,6 +6,14 @@ import {
 import { IDisposer } from 'disposer-util';
 
 import type { MobxMutation } from './mobx-mutation';
+import { MobxQueryClient } from './mobx-query-client';
+
+export interface MobxMutationFeatures {
+  /**
+   * Reset mutation when dispose is called
+   */
+  resetOnDispose?: boolean;
+}
 
 export interface MobxMutationConfig<
   TData = unknown,
@@ -13,16 +21,16 @@ export interface MobxMutationConfig<
   TError = DefaultError,
   TContext = unknown,
 > extends Omit<
-    MutationObserverOptions<TData, TError, TVariables, TContext>,
-    '_defaulted'
-  > {
-  queryClient: QueryClient;
+      MutationObserverOptions<TData, TError, TVariables, TContext>,
+      '_defaulted'
+    >,
+    MobxMutationFeatures {
+  queryClient: QueryClient | MobxQueryClient;
   /**
    * @deprecated use `abortSignal` instead
    */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
-  resetOnDispose?: boolean;
   onInit?: (
     mutation: MobxMutation<TData, TVariables, TError, TContext>,
   ) => void;

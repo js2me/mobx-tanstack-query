@@ -9,7 +9,9 @@ import {
 import { IDisposer } from 'disposer-util';
 
 import { MobxInfiniteQuery } from './mobx-inifinite-query';
+import { MobxQueryClient } from './mobx-query-client';
 import {
+  MobxQueryFeatures,
   MobxQueryInvalidateParams,
   MobxQueryResetParams,
 } from './mobx-query.types';
@@ -76,19 +78,20 @@ export interface MobxInfiniteQueryConfig<
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
 > extends Partial<
-    Omit<
-      InfiniteQueryObserverOptions<
-        TData,
-        TError,
-        InfiniteData<TData>,
-        InfiniteData<TData>,
-        TQueryKey,
-        TPageParam
-      >,
-      'queryKey'
-    >
-  > {
-  queryClient: QueryClient;
+      Omit<
+        InfiniteQueryObserverOptions<
+          TData,
+          TError,
+          InfiniteData<TData>,
+          InfiniteData<TData>,
+          TQueryKey,
+          TPageParam
+        >,
+        'queryKey'
+      >
+    >,
+    MobxQueryFeatures {
+  queryClient: QueryClient | MobxQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
    * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
@@ -124,14 +127,4 @@ export interface MobxInfiniteQueryConfig<
       >
     >,
   ) => MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
-
-  /**
-   * Reset query when dispose is called
-   */
-  resetOnDispose?: boolean;
-
-  /**
-   * Enable query only if result is requested
-   */
-  enableOnDemand?: boolean;
 }

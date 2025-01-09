@@ -1,4 +1,6 @@
-import { QueryClientConfig, hashKey } from '@tanstack/query-core';
+import { hashKey } from '@tanstack/query-core';
+
+import { MobxQueryClientConfig } from '../../mobx-query-client';
 
 const MAX_FAILURE_COUNT = 3;
 
@@ -21,4 +23,4 @@ export const defaultQueryClientConfig = {
       throwOnError: true,
     },
   },
-} satisfies QueryClientConfig;
+} satisfies MobxQueryClientConfig;

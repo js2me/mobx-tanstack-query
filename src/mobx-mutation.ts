@@ -10,6 +10,7 @@ import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
 import { MobxMutationConfig } from './mobx-mutation.types';
+import { MobxQueryClient } from './mobx-query-client';
 
 export class MobxMutation<
   TData = unknown,
@@ -18,7 +19,7 @@ export class MobxMutation<
   TContext = unknown,
 > {
   protected abortController: AbortController;
-  protected queryClient: QueryClient;
+  protected queryClient: QueryClient | MobxQueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
   mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;
@@ -38,7 +39,7 @@ export class MobxMutation<
     this.queryClient = queryClient;
     this.result = undefined as any;
 
-    if (disposer) {
+    if (this.queryClient && disposer) {
       disposer.add(() => this.dispose());
     }
 
@@ -63,7 +64,11 @@ export class MobxMutation<
     this.abortController.signal.addEventListener('abort', () => {
       subscription();
 
-      if (resetOnDispose) {
+      if (
+        resetOnDispose ||
+        (queryClient instanceof MobxQueryClient &&
+          queryClient.mutationFeatures.resetOnDispose)
+      ) {
         this.reset();
       }
     });

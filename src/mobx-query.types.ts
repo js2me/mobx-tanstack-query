@@ -10,6 +10,7 @@ import {
 import { IDisposer } from 'disposer-util';
 
 import type { MobxQuery } from './mobx-query';
+import { MobxQueryClient } from './mobx-query-client';
 
 export interface MobxQueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
@@ -48,17 +49,30 @@ export type MobxQueryUpdateOptions<
   TQueryKey extends QueryKey = QueryKey,
 > = Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
 
+export interface MobxQueryFeatures {
+  /**
+   * Reset query when dispose is called
+   */
+  resetOnDispose?: boolean;
+
+  /**
+   * Enable query only if result is requested
+   */
+  enableOnDemand?: boolean;
+}
+
 export interface MobxQueryConfig<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
-    Omit<
-      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
-      'queryKey'
-    >
-  > {
-  queryClient: QueryClient;
+      Omit<
+        QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
+        'queryKey'
+      >
+    >,
+    MobxQueryFeatures {
+  queryClient: QueryClient | MobxQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
    * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
@@ -87,14 +101,4 @@ export interface MobxQueryConfig<
       MobxQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
     >,
   ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
-
-  /**
-   * Reset query when dispose is called
-   */
-  resetOnDispose?: boolean;
-
-  /**
-   * Enable query only if result is requested
-   */
-  enableOnDemand?: boolean;
 }
