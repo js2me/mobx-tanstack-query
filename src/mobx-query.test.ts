@@ -7,6 +7,7 @@ import {
   SetDataOptions,
   Updater,
 } from '@tanstack/query-core';
+import { LinkedAbortController } from 'linked-abort-controller';
 import { observable, reaction, runInAction, when } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 import { waitAsync } from 'yammies/async';
@@ -757,6 +758,328 @@ describe('MobxQuery', () => {
       query.result.isLoading;
 
       expect(query.spies.queryFn).toBeCalledTimes(15);
+    });
+
+    it('after abort identical (by query key) query another query should work', async () => {
+      const abortController1 = new LinkedAbortController();
+      const abortController2 = new LinkedAbortController();
+      const mobxQuery1 = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(5);
+          return 'bar';
+        },
+        abortSignal: abortController1.signal,
+        queryKey: ['test'] as const,
+      });
+      const mobxQuery2 = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(5);
+          return 'foo';
+        },
+        abortSignal: abortController2.signal,
+        queryKey: ['test'] as const,
+      });
+      abortController1.abort();
+
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
+      expect(mobxQuery2.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery2.result.promise,
+        refetch: mobxQuery2.result.refetch,
+        status: 'pending',
+      });
+      await waitAsync(10);
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
+      expect(mobxQuery2.result).toStrictEqual({
+        data: 'foo',
+        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'idle',
+        isError: false,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: false,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: true,
+        promise: mobxQuery2.result.promise,
+        refetch: mobxQuery2.result.refetch,
+        status: 'success',
+      });
+      await waitAsync(10);
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
+    });
+
+    it('after abort identical (by query key) query another query should work (with resetOnDestroy option)', async () => {
+      const abortController1 = new LinkedAbortController();
+      const abortController2 = new LinkedAbortController();
+      const mobxQuery1 = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(5);
+          return 'bar';
+        },
+        abortSignal: abortController1.signal,
+        queryKey: ['test'] as const,
+        resetOnDestroy: true,
+      });
+      const mobxQuery2 = new MobxQueryMock({
+        queryFn: async () => {
+          await waitAsync(5);
+          return 'foo';
+        },
+        abortSignal: abortController2.signal,
+        queryKey: ['test'] as const,
+        resetOnDestroy: true,
+      });
+      abortController1.abort();
+
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
+      expect(mobxQuery2.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery2.result.promise,
+        refetch: mobxQuery2.result.refetch,
+        status: 'pending',
+      });
+      await waitAsync(10);
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
+      expect(mobxQuery2.result).toStrictEqual({
+        data: 'foo',
+        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'idle',
+        isError: false,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: false,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: true,
+        promise: mobxQuery2.result.promise,
+        refetch: mobxQuery2.result.refetch,
+        status: 'success',
+      });
+      await waitAsync(10);
+      expect(mobxQuery1.result).toStrictEqual({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 0,
+        errorUpdatedAt: 0,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: false,
+        isFetchedAfterMount: false,
+        isFetching: true,
+        isInitialLoading: true,
+        isLoading: true,
+        isLoadingError: false,
+        isPaused: false,
+        isPending: true,
+        isPlaceholderData: false,
+        isRefetchError: false,
+        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        promise: mobxQuery1.result.promise,
+        refetch: mobxQuery1.result.refetch,
+        status: 'pending',
+      });
     });
   });
 });

@@ -61,34 +61,37 @@ export class MobxInfiniteQuery<
     TQueryKey,
     TPageParam
   >['enabled'];
+  private _observerSubscription?: VoidFunction;
 
-  constructor({
-    queryClient,
-    onInit,
-    options: getDynamicOptions,
-    onDone,
-    onError,
-    // eslint-disable-next-line sonarjs/deprecation
-    disposer,
-    abortSignal: outerAbortSignal,
-    resetOnDispose,
-    enableOnDemand,
-    queryKey: queryKeyOrDynamicQueryKey,
-    ...options
-  }: MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>) {
-    this.abortController = new LinkedAbortController(outerAbortSignal);
+  constructor(
+    protected config: MobxInfiniteQueryConfig<
+      TData,
+      TError,
+      TQueryKey,
+      TPageParam
+    >,
+  ) {
+    const {
+      queryClient,
+      queryKey: queryKeyOrDynamicQueryKey,
+      ...restOptions
+    } = config;
+    this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
     this.isResultRequsted = false;
-    this.isEnabledOnResultDemand = enableOnDemand ?? false;
+    this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
 
-    if (queryClient instanceof MobxQueryClient && enableOnDemand == null) {
+    if (
+      queryClient instanceof MobxQueryClient &&
+      config.enableOnDemand == null
+    ) {
       this.isEnabledOnResultDemand =
         queryClient.queryFeatures.enableOnDemand ?? false;
     }
 
-    if (disposer) {
-      disposer.add(() => this.dispose());
+    if (config.disposer) {
+      config.disposer.add(() => this.dispose());
     }
 
     observable.deep(this, '_result');
@@ -99,39 +102,33 @@ export class MobxInfiniteQuery<
 
     makeObservable(this);
 
-    const mergedOptions = {
-      ...options,
-      ...getDynamicOptions?.(this),
-    };
-
-    if (queryKeyOrDynamicQueryKey) {
-      if (typeof queryKeyOrDynamicQueryKey === 'function') {
-        mergedOptions.queryKey = queryKeyOrDynamicQueryKey();
-
-        reaction(
-          () => queryKeyOrDynamicQueryKey(),
-          (queryKey) => {
-            this.update({
-              queryKey,
-            });
-          },
-          {
-            signal: this.abortController.signal,
-          },
-        );
-      } else {
-        mergedOptions.queryKey = queryKeyOrDynamicQueryKey;
-      }
-    }
-
     this.options = this.createOptions({
-      ...mergedOptions,
-      queryKey: (mergedOptions.queryKey ?? []) as TQueryKey,
+      ...restOptions,
+      ...config.options?.(this),
     });
+
+    if (typeof queryKeyOrDynamicQueryKey === 'function') {
+      this.options.queryKey = queryKeyOrDynamicQueryKey();
+
+      reaction(
+        () => queryKeyOrDynamicQueryKey(),
+        (queryKey) => {
+          this.update({
+            queryKey,
+          });
+        },
+        {
+          signal: this.abortController.signal,
+        },
+      );
+    } else {
+      this.options.queryKey =
+        queryKeyOrDynamicQueryKey ?? this.options.queryKey ?? [];
+    }
 
     // Tracking props visit should be done in MobX, by default.
     this.options.notifyOnChangeProps =
-      options.notifyOnChangeProps ??
+      restOptions.notifyOnChangeProps ??
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
@@ -139,10 +136,12 @@ export class MobxInfiniteQuery<
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    const subscription = this.queryObserver.subscribe(this.updateResult);
+    this._observerSubscription = this.queryObserver.subscribe(
+      this.updateResult,
+    );
 
-    if (getDynamicOptions) {
-      reaction(() => getDynamicOptions(this), this.update, {
+    if (config.options) {
+      reaction(() => config.options!(this), this.update, {
         signal: this.abortController.signal,
       });
     }
@@ -152,7 +151,7 @@ export class MobxInfiniteQuery<
         () => this.isResultRequsted,
         (isRequested) => {
           if (isRequested) {
-            this.update(getDynamicOptions ? getDynamicOptions(this) : {});
+            this.update(config.options ? config.options(this) : {});
           }
         },
         {
@@ -161,30 +160,16 @@ export class MobxInfiniteQuery<
       );
     }
 
-    if (onDone) {
-      this.onDone(onDone);
+    if (config.onDone) {
+      this.onDone(config.onDone);
     }
-    if (onError) {
-      this.onError(onError);
+    if (config.onError) {
+      this.onError(config.onError);
     }
 
-    this.abortController.signal.addEventListener('abort', () => {
-      subscription();
+    this.abortController.signal.addEventListener('abort', this.handleAbort);
 
-      this.queryObserver.getCurrentQuery().destroy();
-      this.queryObserver.destroy();
-      this.isResultRequsted = false;
-
-      if (
-        resetOnDispose ||
-        (queryClient instanceof MobxQueryClient &&
-          queryClient.queryFeatures.resetOnDispose)
-      ) {
-        this.reset();
-      }
-    });
-
-    onInit?.(this);
+    this.config.onInit?.(this);
   }
 
   protected createQueryHash(
@@ -330,7 +315,37 @@ export class MobxInfiniteQuery<
     );
   }
 
-  dispose() {
+  protected handleAbort = () => {
+    this._observerSubscription?.();
+
+    this.queryObserver.getCurrentQuery().destroy();
+    this.queryObserver.destroy();
+    this.isResultRequsted = false;
+
+    let isNeedToReset =
+      this.config.resetOnDestroy || this.config.resetOnDispose;
+
+    if (this.queryClient instanceof MobxQueryClient && !isNeedToReset) {
+      isNeedToReset =
+        this.queryClient.queryFeatures.resetOnDestroy ||
+        this.queryClient.queryFeatures.resetOnDispose;
+    }
+
+    if (isNeedToReset) {
+      this.reset();
+    }
+
+    delete this._observerSubscription;
+  };
+
+  destroy() {
     this.abortController.abort();
+  }
+
+  /**
+   * @deprecated use `destroy`
+   */
+  dispose() {
+    this.destroy();
   }
 }

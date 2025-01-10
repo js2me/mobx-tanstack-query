@@ -26,21 +26,18 @@ export class MobxMutation<
 
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
-  constructor({
-    queryClient,
-    onInit,
-    // eslint-disable-next-line sonarjs/deprecation
-    disposer,
-    abortSignal: outerAbortSignal,
-    resetOnDispose,
-    ...options
-  }: MobxMutationConfig<TData, TVariables, TError, TContext>) {
-    this.abortController = new LinkedAbortController(outerAbortSignal);
+  private _observerSubscription?: VoidFunction;
+
+  constructor(
+    protected config: MobxMutationConfig<TData, TVariables, TError, TContext>,
+  ) {
+    const { queryClient, ...restOptions } = config;
+    this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
 
-    if (this.queryClient && disposer) {
-      disposer.add(() => this.dispose());
+    if (config.disposer) {
+      config.disposer.add(() => this.dispose());
     }
 
     observable.deep(this, 'result');
@@ -48,7 +45,7 @@ export class MobxMutation<
 
     makeObservable(this);
 
-    this.mutationOptions = this.queryClient.defaultMutationOptions(options);
+    this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
 
     this.mutationObserver = new MutationObserver<
       TData,
@@ -59,13 +56,15 @@ export class MobxMutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    const subscription = this.mutationObserver.subscribe(this.updateResult);
+    this._observerSubscription = this.mutationObserver.subscribe(
+      this.updateResult,
+    );
 
     this.abortController.signal.addEventListener('abort', () => {
-      subscription();
+      this._observerSubscription?.();
 
       if (
-        resetOnDispose ||
+        config.resetOnDispose ||
         (queryClient instanceof MobxQueryClient &&
           queryClient.mutationFeatures.resetOnDispose)
       ) {
@@ -73,7 +72,7 @@ export class MobxMutation<
       }
     });
 
-    onInit?.(this);
+    config.onInit?.(this);
   }
 
   async mutate(
@@ -124,6 +123,25 @@ export class MobxMutation<
   reset() {
     this.mutationObserver.reset();
   }
+
+  protected handleAbort = () => {
+    this._observerSubscription?.();
+
+    let isNeedToReset =
+      this.config.resetOnDestroy || this.config.resetOnDispose;
+
+    if (this.queryClient instanceof MobxQueryClient && !isNeedToReset) {
+      isNeedToReset =
+        this.queryClient.mutationFeatures.resetOnDestroy ||
+        this.queryClient.mutationFeatures.resetOnDispose;
+    }
+
+    if (isNeedToReset) {
+      this.reset();
+    }
+
+    delete this._observerSubscription;
+  };
 
   dispose() {
     this.abortController.abort();

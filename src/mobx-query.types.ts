@@ -52,8 +52,15 @@ export type MobxQueryUpdateOptions<
 export interface MobxQueryFeatures {
   /**
    * Reset query when dispose is called
+   *
+   * @deprecated Please use 'resetOnDestroy'
    */
   resetOnDispose?: boolean;
+
+  /**
+   * Reset query when destroy or abort signal is called
+   */
+  resetOnDestroy?: boolean;
 
   /**
    * Enable query only if result is requested

@@ -11,8 +11,15 @@ import { MobxQueryClient } from './mobx-query-client';
 export interface MobxMutationFeatures {
   /**
    * Reset mutation when dispose is called
+   *
+   * @deprecated Please use 'resetOnDestroy'
    */
   resetOnDispose?: boolean;
+
+  /**
+   * Reset mutation when destroy or abort signal is called
+   */
+  resetOnDestroy?: boolean;
 }
 
 export interface MobxMutationConfig<
