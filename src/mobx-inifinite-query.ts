@@ -36,7 +36,8 @@ export class MobxInfiniteQuery<
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
   TPageParam = unknown,
-> {
+> implements Disposable
+{
   protected abortController: AbortController;
   protected queryClient: QueryClient | MobxQueryClient;
 
@@ -346,6 +347,10 @@ export class MobxInfiniteQuery<
    * @deprecated use `destroy`
    */
   dispose() {
+    this.destroy();
+  }
+
+  [Symbol.dispose](): void {
     this.destroy();
   }
 }

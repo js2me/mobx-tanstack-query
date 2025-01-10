@@ -32,7 +32,8 @@ export class MobxQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
-> {
+> implements Disposable
+{
   protected abortController: AbortController;
   protected queryClient: QueryClient | MobxQueryClient;
 
@@ -306,6 +307,10 @@ export class MobxQuery<
    * @deprecated use `destroy`
    */
   dispose() {
+    this.destroy();
+  }
+
+  [Symbol.dispose](): void {
     this.destroy();
   }
 }

@@ -17,7 +17,8 @@ export class MobxMutation<
   TVariables = void,
   TError = DefaultError,
   TContext = unknown,
-> {
+> implements Disposable
+{
   protected abortController: AbortController;
   protected queryClient: QueryClient | MobxQueryClient;
 
@@ -143,7 +144,18 @@ export class MobxMutation<
     delete this._observerSubscription;
   };
 
-  dispose() {
+  destroy() {
     this.abortController.abort();
+  }
+
+  /**
+   * @deprecated use `destroy`
+   */
+  dispose() {
+    this.destroy();
+  }
+
+  [Symbol.dispose](): void {
+    this.destroy();
   }
 }
