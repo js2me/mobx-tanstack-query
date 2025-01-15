@@ -50,8 +50,8 @@ export interface MobxInfiniteQueryOptions<
 > extends DefaultedInfiniteQueryObserverOptions<
     TData,
     TError,
-    InfiniteData<TData>,
-    InfiniteData<TData>,
+    InfiniteData<TData, TPageParam>,
+    InfiniteData<TData, TPageParam>,
     TQueryKey,
     TPageParam
   > {}

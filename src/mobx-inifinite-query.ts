@@ -41,13 +41,16 @@ export class MobxInfiniteQuery<
   protected abortController: AbortController;
   protected queryClient: QueryClient | MobxQueryClient;
 
-  protected _result: InfiniteQueryObserverResult<InfiniteData<TData>, TError>;
+  protected _result: InfiniteQueryObserverResult<
+    InfiniteData<TData, TPageParam>,
+    TError
+  >;
   options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
   queryObserver: InfiniteQueryObserver<
     TData,
     TError,
-    InfiniteData<TData>,
-    InfiniteData<TData>,
+    InfiniteData<TData, TPageParam>,
+    InfiniteData<TData, TPageParam>,
     TQueryKey,
     TPageParam
   >;
@@ -186,12 +189,12 @@ export class MobxInfiniteQuery<
 
   setData(
     updater: Updater<
-      NoInfer<InfiniteData<TData>> | undefined,
-      NoInfer<InfiniteData<TData>> | undefined
+      NoInfer<InfiniteData<TData, TPageParam>> | undefined,
+      NoInfer<InfiniteData<TData, TPageParam>> | undefined
     >,
     options?: SetDataOptions,
   ) {
-    this.queryClient.setQueryData<InfiniteData<TData>>(
+    this.queryClient.setQueryData<InfiniteData<TData, TPageParam>>(
       this.options.queryKey,
       updater,
       options,
@@ -259,7 +262,7 @@ export class MobxInfiniteQuery<
    */
   private updateResult(
     nextResult: InfiniteQueryObserverResult<
-      InfiniteData<TData, unknown>,
+      InfiniteData<TData, TPageParam>,
       TError
     >,
   ) {
@@ -287,7 +290,10 @@ export class MobxInfiniteQuery<
   }
 
   onDone(
-    onDoneCallback: (data: InfiniteData<TData>, payload: void) => void,
+    onDoneCallback: (
+      data: InfiniteData<TData, TPageParam>,
+      payload: void,
+    ) => void,
   ): void {
     reaction(
       () => !this._result.error && this._result.isSuccess,
