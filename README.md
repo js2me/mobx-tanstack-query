@@ -380,8 +380,8 @@ import { queryClient } from "mobx-tanstack-query/preset";
 
 const defaultOptions = queryClient.getDefaultOptions();
 defaultOptions.queries!.refetchOnMount = true;
-queryClient.setDefaultOptions({ ...defaultOptions })
-```  
+queryClient.setDefaultOptions({ ...defaultOptions })─────────────────────────────────────────────────────────────────────────────────────────────────────────(js2me@js2me-B560-HD3:pts/9)─┐
+└─(12:51:47 on master)──>                                                     
 P.S. Overriding default options should be written before start whole application  
 
 
@@ -426,3 +426,13 @@ const query = createInfiniteQuery(async ({ signal, queryKey }) => {
   return response.data;
 })
 ```
+
+
+## Project examples  
+
+- **HTTP Status Codes**  
+Simple usage `MobX` Tanstack queries to fetch JSON data from GitHub  
+_Links_:  
+  - Source: https://github.com/js2me/http-status-codes  
+  - GitHub Pages: https://js2me.github.io/http-status-codes/#/  
+
