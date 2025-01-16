@@ -111,7 +111,7 @@ export interface MobxInfiniteQueryConfig<
    */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
-  onDone?: (data: InfiniteData<TData>, payload: void) => void;
+  onDone?: (data: InfiniteData<TData, TPageParam>, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
