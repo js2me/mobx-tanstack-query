@@ -95,7 +95,10 @@ export class MobxMutation<
 
   onDone(onDoneCallback: (data: TData, payload: TVariables) => void): void {
     reaction(
-      () => !this.result.error && this.result.isSuccess,
+      () => {
+        const { error, isSuccess } = this.result;
+        return isSuccess && !error;
+      },
       (isDone) => {
         if (isDone) {
           onDoneCallback(this.result.data!, this.result.variables!);

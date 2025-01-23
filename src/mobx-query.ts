@@ -250,7 +250,10 @@ export class MobxQuery<
 
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {
     reaction(
-      () => !this._result.error && this._result.isSuccess,
+      () => {
+        const { error, isSuccess, fetchStatus } = this._result;
+        return isSuccess && !error && fetchStatus === 'idle';
+      },
       (isDone) => {
         if (isDone) {
           onDoneCallback(this._result.data!, void 0);
