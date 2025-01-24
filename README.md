@@ -380,8 +380,10 @@ import { queryClient } from "mobx-tanstack-query/preset";
 
 const defaultOptions = queryClient.getDefaultOptions();
 defaultOptions.queries!.refetchOnMount = true;
-queryClient.setDefaultOptions({ ...defaultOptions })─────────────────────────────────────────────────────────────────────────────────────────────────────────(js2me@js2me-B560-HD3:pts/9)─┐
-└─(12:51:47 on master)──>                                                     
+queryClient.setDefaultOptions({ ...defaultOptions })
+```
+
+
 P.S. Overriding default options should be written before start whole application  
 
 
