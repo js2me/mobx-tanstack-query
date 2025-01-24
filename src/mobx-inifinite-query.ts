@@ -230,6 +230,7 @@ export class MobxInfiniteQuery<
     if ('enabled' in optionsUpdate) {
       this._originEnabled = options.enabled;
     }
+    options.structuralSharing = options.structuralSharing ?? false;
     options.enabled = this.checkIsEnabled();
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
