@@ -29,7 +29,7 @@ import {
   MobxInfiniteQueryResetParams,
   MobxInfiniteQueryUpdateOptions,
 } from './mobx-inifinite-query.types';
-import { MobxQueryClient } from './mobx-query-client';
+import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
 
 export class MobxInfiniteQuery<
   TData,
@@ -66,6 +66,7 @@ export class MobxInfiniteQuery<
     TPageParam
   >['enabled'];
   private _observerSubscription?: VoidFunction;
+  private hooks?: MobxQueryClientHooks;
 
   constructor(
     protected config: MobxInfiniteQueryConfig<
@@ -85,6 +86,8 @@ export class MobxInfiniteQuery<
     this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
+    this.hooks =
+      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
     if (
       queryClient instanceof MobxQueryClient &&
@@ -174,6 +177,7 @@ export class MobxInfiniteQuery<
     this.abortController.signal.addEventListener('abort', this.handleAbort);
 
     this.config.onInit?.(this);
+    this.hooks?.onInfiniteQueryInit?.(this);
   }
 
   protected createQueryHash(
@@ -351,6 +355,7 @@ export class MobxInfiniteQuery<
 
   destroy() {
     this.abortController.abort();
+    this.hooks?.onInfiniteQueryDestroy?.(this);
   }
 
   /**

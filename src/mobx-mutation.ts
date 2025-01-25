@@ -10,7 +10,7 @@ import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
 import { MobxMutationConfig } from './mobx-mutation.types';
-import { MobxQueryClient } from './mobx-query-client';
+import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
 
 export class MobxMutation<
   TData = unknown,
@@ -28,6 +28,7 @@ export class MobxMutation<
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
   private _observerSubscription?: VoidFunction;
+  private hooks?: MobxQueryClientHooks;
 
   constructor(
     protected config: MobxMutationConfig<TData, TVariables, TError, TContext>,
@@ -47,6 +48,8 @@ export class MobxMutation<
     makeObservable(this);
 
     this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
+    this.hooks =
+      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
     this.mutationObserver = new MutationObserver<
       TData,
@@ -74,6 +77,7 @@ export class MobxMutation<
     });
 
     config.onInit?.(this);
+    this.hooks?.onMutationInit?.(this);
   }
 
   async mutate(
@@ -149,6 +153,7 @@ export class MobxMutation<
 
   destroy() {
     this.abortController.abort();
+    this.hooks?.onMutationDestroy?.(this);
   }
 
   /**

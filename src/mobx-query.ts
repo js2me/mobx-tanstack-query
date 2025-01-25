@@ -18,7 +18,7 @@ import {
   runInAction,
 } from 'mobx';
 
-import { MobxQueryClient } from './mobx-query-client';
+import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
 import {
   MobxQueryConfig,
   MobxQueryDynamicOptions,
@@ -48,6 +48,7 @@ export class MobxQuery<
 
   private _originEnabled: MobxQueryOptions<TData, TError, TQueryKey>['enabled'];
   private _observerSubscription?: VoidFunction;
+  private hooks?: MobxQueryClientHooks;
 
   constructor(protected config: MobxQueryConfig<TData, TError, TQueryKey>) {
     const {
@@ -60,6 +61,8 @@ export class MobxQuery<
     this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
+    this.hooks =
+      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
     if (
       queryClient instanceof MobxQueryClient &&
@@ -149,6 +152,7 @@ export class MobxQuery<
     this.abortController.signal.addEventListener('abort', this.handleAbort);
 
     this.config.onInit?.(this);
+    this.hooks?.onQueryInit?.(this);
   }
 
   async refetch(options?: RefetchOptions) {
@@ -305,6 +309,7 @@ export class MobxQuery<
 
   destroy() {
     this.abortController.abort();
+    this.hooks?.onQueryDestroy?.(this);
   }
 
   /**
