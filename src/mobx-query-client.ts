@@ -35,8 +35,11 @@ export interface MobxQueryClientConfig
 }
 
 export class MobxQueryClient extends QueryClient {
+  hooks?: MobxQueryClientHooks;
+
   constructor(private config: MobxQueryClientConfig = {}) {
     super(config);
+    this.hooks = config.hooks;
   }
 
   setDefaultOptions(
@@ -55,10 +58,6 @@ export class MobxQueryClient extends QueryClient {
 
   get queryFeatures(): MobxQueryFeatures {
     return this.getDefaultOptions().queries ?? {};
-  }
-
-  get hooks(): MobxQueryClientHooks | undefined {
-    return this.config.hooks;
   }
 
   get mutationFeatures(): MobxMutationFeatures {
