@@ -149,11 +149,11 @@ export class MobxMutation<
     }
 
     delete this._observerSubscription;
+    this.hooks?.onMutationDestroy?.(this);
   };
 
   destroy() {
     this.abortController.abort();
-    this.hooks?.onMutationDestroy?.(this);
   }
 
   /**

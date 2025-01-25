@@ -351,11 +351,11 @@ export class MobxInfiniteQuery<
     }
 
     delete this._observerSubscription;
+    this.hooks?.onInfiniteQueryDestroy?.(this);
   };
 
   destroy() {
     this.abortController.abort();
-    this.hooks?.onInfiniteQueryDestroy?.(this);
   }
 
   /**

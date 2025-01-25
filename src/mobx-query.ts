@@ -305,11 +305,12 @@ export class MobxQuery<
     }
 
     delete this._observerSubscription;
+
+    this.hooks?.onQueryDestroy?.(this);
   };
 
   destroy() {
     this.abortController.abort();
-    this.hooks?.onQueryDestroy?.(this);
   }
 
   /**
