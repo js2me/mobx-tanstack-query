@@ -72,6 +72,18 @@ export interface MobxInfiniteQueryUpdateOptions<
     >
   > {}
 
+export type MobxInfiniteQueryConfigFromFn<
+  T extends (...args: any[]) => any,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = MobxInfiniteQueryConfig<
+  ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
+  TError,
+  TQueryKey,
+  TPageParam
+>;
+
 export interface MobxInfiniteQueryConfig<
   TData,
   TError = DefaultError,
@@ -128,3 +140,55 @@ export interface MobxInfiniteQueryConfig<
     >,
   ) => MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
 }
+
+export type InferInfiniteQuery<
+  T extends
+    | MobxInfiniteQueryConfig<any, any, any, any>
+    | MobxInfiniteQuery<any, any, any>,
+  TInferValue extends
+    | 'data'
+    | 'key'
+    | 'page-param'
+    | 'error'
+    | 'query'
+    | 'config',
+> =
+  T extends MobxInfiniteQueryConfig<
+    infer TData,
+    infer TError,
+    infer TQueryKey,
+    infer TPageParam
+  >
+    ? TInferValue extends 'config'
+      ? T
+      : TInferValue extends 'data'
+        ? TData
+        : TInferValue extends 'key'
+          ? TQueryKey
+          : TInferValue extends 'page-param'
+            ? TPageParam
+            : TInferValue extends 'error'
+              ? TError
+              : TInferValue extends 'query'
+                ? MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>
+                : never
+    : T extends MobxInfiniteQuery<
+          infer TData,
+          infer TError,
+          infer TQueryKey,
+          infer TPageParam
+        >
+      ? TInferValue extends 'config'
+        ? MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'key'
+            ? TQueryKey
+            : TInferValue extends 'page-param'
+              ? TPageParam
+              : TInferValue extends 'error'
+                ? TError
+                : TInferValue extends 'query'
+                  ? T
+                  : never
+      : never;

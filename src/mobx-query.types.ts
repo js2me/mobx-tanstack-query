@@ -68,6 +68,16 @@ export interface MobxQueryFeatures {
   enableOnDemand?: boolean;
 }
 
+export type MobxQueryConfigFromFn<
+  T extends (...args: any[]) => any,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> = MobxQueryConfig<
+  ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
+  TError,
+  TQueryKey
+>;
+
 export interface MobxQueryConfig<
   TData,
   TError = DefaultError,
@@ -109,3 +119,33 @@ export interface MobxQueryConfig<
     >,
   ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
 }
+
+export type InferQuery<
+  T extends MobxQueryConfig<any, any, any> | MobxQuery<any, any, any>,
+  TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',
+> =
+  T extends MobxQueryConfig<infer TData, infer TError, infer TQueryKey>
+    ? TInferValue extends 'config'
+      ? T
+      : TInferValue extends 'data'
+        ? TData
+        : TInferValue extends 'key'
+          ? TQueryKey
+          : TInferValue extends 'error'
+            ? TError
+            : TInferValue extends 'query'
+              ? MobxQuery<TData, TError, TQueryKey>
+              : never
+    : T extends MobxQuery<infer TData, infer TError, infer TQueryKey>
+      ? TInferValue extends 'config'
+        ? MobxQueryConfig<TData, TError, TQueryKey>
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'key'
+            ? TQueryKey
+            : TInferValue extends 'error'
+              ? TError
+              : TInferValue extends 'query'
+                ? T
+                : never
+      : never;

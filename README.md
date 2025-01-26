@@ -289,9 +289,37 @@ Reset current mutation
 
 # [**InfiniteQueries**](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) -> [**MobxInfiniteQuery**](src/mobx-infinite-query.ts)  
 
+# [**QueryClient**](https://tanstack.com/query/latest/docs/reference/QueryClient) -> [**MobxQueryClient**](src/mobx-query-client.ts)   
+
+This is the same entity as `QueryClient` from **@tanstack-query/core** package, but has a bit improvenments like `hooks` and configurations for Mobx* like entities   
+
+
 [_See docs for MobxQuery_](https://github.com/js2me/mobx-tanstack-query?tab=readme-ov-file#queries---mobxquery)  
 
 
+
+
+# `InferQuery`, `InferMutation`, `InferInfiniteQuery` types   
+
+This types are needed to infer some other types from mutations\configs.   
+
+```ts
+type MyData = InferMutation<typeof myMutation, 'data'>
+type MyVariables = InferMutation<typeof myMutation, 'variables'>
+type MyConfig = InferMutation<typeof myMutation, 'config'>
+```
+
+# `MobxQueryConfigFromFn`, `MobxMutationConfigFromFn`, `MobxInfiniteQueryConfigFromFn`   
+
+This types are needed to create configuration types from your functions of your http client  
+
+```ts
+const myApi = {
+  createApple: (name: string): Promise<AppleDC> => ... 
+}
+
+type Config = MobxMutationConfigFromFn<typeof myApi.createApple>
+```
 
 
 # Usage   
