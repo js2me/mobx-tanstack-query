@@ -287,14 +287,38 @@ Reset current mutation
 
 
 
+
+
+
+
+
 # [**InfiniteQueries**](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) -> [**MobxInfiniteQuery**](src/mobx-infinite-query.ts)  
+
+[_See docs for MobxQuery_](https://github.com/js2me/mobx-tanstack-query?tab=readme-ov-file#queries---mobxquery)  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # [**QueryClient**](https://tanstack.com/query/latest/docs/reference/QueryClient) -> [**MobxQueryClient**](src/mobx-query-client.ts)   
 
 This is the same entity as `QueryClient` from **@tanstack-query/core** package, but has a bit improvenments like `hooks` and configurations for Mobx* like entities   
 
 
-[_See docs for MobxQuery_](https://github.com/js2me/mobx-tanstack-query?tab=readme-ov-file#queries---mobxquery)  
+
+
+
 
 
 
