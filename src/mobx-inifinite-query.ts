@@ -50,7 +50,7 @@ export class MobxInfiniteQuery<
     TData,
     TError,
     InfiniteData<TData, TPageParam>,
-    InfiniteData<TData, TPageParam>,
+    TData,
     TQueryKey,
     TPageParam
   >;

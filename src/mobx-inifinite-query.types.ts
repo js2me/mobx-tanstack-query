@@ -32,7 +32,7 @@ export interface MobxInfiniteQueryDynamicOptions<
         TData,
         TError,
         InfiniteData<TData>,
-        InfiniteData<TData>,
+        TData,
         TQueryKey,
         TPageParam
       >,
@@ -51,7 +51,7 @@ export interface MobxInfiniteQueryOptions<
     TData,
     TError,
     InfiniteData<TData, TPageParam>,
-    InfiniteData<TData, TPageParam>,
+    TData,
     TQueryKey,
     TPageParam
   > {}
@@ -66,7 +66,7 @@ export interface MobxInfiniteQueryUpdateOptions<
       TData,
       TError,
       InfiniteData<TData>,
-      InfiniteData<TData>,
+      TData,
       TQueryKey,
       TPageParam
     >
@@ -95,7 +95,7 @@ export interface MobxInfiniteQueryConfig<
           TData,
           TError,
           InfiniteData<TData>,
-          InfiniteData<TData>,
+          TData,
           TQueryKey,
           TPageParam
         >,
