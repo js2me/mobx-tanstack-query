@@ -139,6 +139,7 @@ export class MobxQuery<
         },
         {
           signal: this.abortController.signal,
+          fireImmediately: true,
         },
       );
     }

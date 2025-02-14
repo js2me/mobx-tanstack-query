@@ -163,6 +163,7 @@ export class MobxInfiniteQuery<
         },
         {
           signal: this.abortController.signal,
+          fireImmediately: true,
         },
       );
     }
