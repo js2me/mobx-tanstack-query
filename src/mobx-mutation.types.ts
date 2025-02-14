@@ -49,7 +49,7 @@ export type MobxMutationConfigFromFn<
   TContext = unknown,
 > = MobxMutationConfig<
   ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
-  Parameters<T>,
+  Parameters<T>[0],
   TError,
   TContext
 >;
