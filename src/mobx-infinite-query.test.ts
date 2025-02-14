@@ -117,11 +117,11 @@ describe('MobxInfiniteQuery', () => {
 
     expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
     expect(mobxQuery.spies.queryFn).toBeCalledWith({
+      ...mobxQuery.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
-      signal: mobxQuery.spies.queryFn.mock.calls[0][0].signal,
     });
 
     mobxQuery.dispose();
@@ -136,11 +136,11 @@ describe('MobxInfiniteQuery', () => {
 
     expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
     expect(mobxQuery.spies.queryFn).toBeCalledWith({
+      ...mobxQuery.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: 0,
       queryKey: ['test'],
-      signal: mobxQuery.spies.queryFn.mock.calls[0][0].signal,
     });
 
     mobxQuery.dispose();
@@ -155,11 +155,11 @@ describe('MobxInfiniteQuery', () => {
 
     expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
     expect(mobxQuery.spies.queryFn).toBeCalledWith({
+      ...mobxQuery.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
-      signal: mobxQuery.spies.queryFn.mock.calls[0][0].signal,
     });
 
     mobxQuery.dispose();
@@ -174,11 +174,11 @@ describe('MobxInfiniteQuery', () => {
 
     expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
     expect(mobxQuery.spies.queryFn).toBeCalledWith({
+      ...mobxQuery.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
-      signal: mobxQuery.spies.queryFn.mock.calls[0][0].signal,
     });
 
     await when(() => !mobxQuery.result.isLoading);
