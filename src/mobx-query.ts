@@ -25,6 +25,7 @@ import {
   MobxQueryInvalidateParams,
   MobxQueryOptions,
   MobxQueryResetParams,
+  MobxQueryStartParams,
   MobxQueryUpdateOptions,
 } from './mobx-query.types';
 
@@ -311,6 +312,15 @@ export class MobxQuery<
 
   destroy() {
     this.abortController.abort();
+  }
+
+  async start(params?: MobxQueryStartParams<TData, TError, TQueryKey>) {
+    const options: MobxQueryUpdateOptions<TData, TError, TQueryKey> = {
+      enabled: true,
+      ...params,
+    };
+    this.update(options);
+    return await this.refetch();
   }
 
   /**

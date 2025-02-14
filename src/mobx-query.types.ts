@@ -120,6 +120,14 @@ export interface MobxQueryConfig<
   ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
 }
 
+export interface MobxQueryStartParams<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> extends Partial<
+    Omit<MobxQueryUpdateOptions<TData, TError, TQueryKey>, 'enabled'>
+  > {}
+
 export type InferQuery<
   T extends MobxQueryConfig<any, any, any> | MobxQuery<any, any, any>,
   TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',

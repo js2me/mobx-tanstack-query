@@ -93,6 +93,10 @@ const query = new MobxQuery({
 });
 ```  
 
+#### method `start(params)`   
+
+Enable query if it is disabled then fetch the query.    
+
 #### method `update()`   
 
 Update options for query (Uses [QueryObserver](https://tanstack.com/query/latest/docs/reference/QueriesObserver).setOptions)  

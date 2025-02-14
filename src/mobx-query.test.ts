@@ -9,7 +9,7 @@ import {
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { observable, reaction, runInAction, when } from 'mobx';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, test, vi } from 'vitest';
 import { waitAsync } from 'yammies/async';
 
 import { MobxQuery } from './mobx-query';
@@ -533,6 +533,26 @@ describe('MobxQuery', () => {
 
         mobxQuery.dispose();
       });
+    });
+  });
+
+  describe('"start" method', () => {
+    test('should call once queryFn', async () => {
+      const querySpyFn = vi.fn();
+      const mobxQuery = new MobxQueryMock({
+        queryKey: ['test'],
+        queryFn: querySpyFn,
+        enabled: false,
+      });
+
+      await mobxQuery.start();
+
+      await when(() => !mobxQuery._rawResult.isLoading);
+
+      expect(mobxQuery.result.isFetched).toBeTruthy();
+      expect(querySpyFn).toBeCalledTimes(1);
+
+      mobxQuery.dispose();
     });
   });
 
