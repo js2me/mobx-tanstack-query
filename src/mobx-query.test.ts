@@ -19,6 +19,7 @@ import {
   MobxQueryInvalidateParams,
   MobxQueryUpdateOptions,
 } from './mobx-query.types';
+import { createQuery } from './preset';
 
 class MobxQueryMock<
   TData,
@@ -1100,6 +1101,27 @@ describe('MobxQuery', () => {
         refetch: mobxQuery1.result.refetch,
         status: 'pending',
       });
+    });
+
+    it('options is not reactive when updating after creating #10', () => {
+      const enabled = observable.box(false);
+
+      const queryFnSpy = vi.fn();
+      const getDynamicOptionsSpy = vi.fn();
+
+      createQuery(queryFnSpy, {
+        options: () => {
+          getDynamicOptionsSpy();
+          return {
+            enabled: enabled.get(),
+          };
+        },
+      });
+
+      enabled.set(true);
+
+      expect(queryFnSpy).toBeCalledTimes(1);
+      expect(getDynamicOptionsSpy).toBeCalledTimes(3);
     });
   });
 });
