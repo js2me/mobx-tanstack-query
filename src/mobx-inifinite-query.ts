@@ -110,6 +110,7 @@ export class MobxInfiniteQuery<
     makeObservable(this);
 
     this.options = this.createOptions({
+      ...(this.queryClient.getDefaultOptions().queries as any),
       ...restOptions,
       ...config.options?.(this),
     });

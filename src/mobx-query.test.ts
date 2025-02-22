@@ -13,6 +13,7 @@ import { describe, expect, it, test, vi } from 'vitest';
 import { waitAsync } from 'yammies/async';
 
 import { MobxQuery } from './mobx-query';
+import { MobxQueryClient } from './mobx-query-client';
 import {
   MobxQueryConfig,
   MobxQueryDynamicOptions,
@@ -39,10 +40,11 @@ class MobxQueryMock<
 
   constructor(
     options: Omit<MobxQueryConfig<TData, TError, TQueryKey>, 'queryClient'>,
+    queryClient?: QueryClient,
   ) {
     super({
       ...options,
-      queryClient: new QueryClient({}),
+      queryClient: queryClient ?? new QueryClient({}),
       // @ts-ignore
       queryFn: vi.fn((...args: any[]) => {
         // @ts-ignore
@@ -195,6 +197,27 @@ describe('MobxQuery', () => {
   });
 
   describe('"enabled" reactive parameter', () => {
+    it('should work', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            enabled: false,
+          },
+        },
+      });
+      const mobxQuery = new MobxQueryMock(
+        {
+          queryKey: ['test', 0 as number] as const,
+          queryFn: () => 100,
+        },
+        queryClient,
+      );
+
+      expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+
+      mobxQuery.dispose();
+    });
+
     it('should be reactive after change queryKey', async () => {
       const mobxQuery = new MobxQueryMock({
         queryKey: ['test', 0 as number] as const,
