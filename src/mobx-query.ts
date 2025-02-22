@@ -86,7 +86,7 @@ export class MobxQuery<
     makeObservable(this);
 
     this.options = this.createOptions({
-      ...(this.queryClient.getDefaultOptions().queries as any),
+      // ...(this.queryClient.getDefaultOptions().queries as any),
       ...restOptions,
       ...config.options?.(this),
     });

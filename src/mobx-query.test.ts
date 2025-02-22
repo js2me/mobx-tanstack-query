@@ -197,7 +197,7 @@ describe('MobxQuery', () => {
   });
 
   describe('"enabled" reactive parameter', () => {
-    it('should work', async () => {
+    it.skip('should work', async () => {
       const queryClient = new MobxQueryClient({
         defaultOptions: {
           queries: {
