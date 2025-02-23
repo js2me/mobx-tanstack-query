@@ -10,7 +10,7 @@ import {
 import { LinkedAbortController } from 'linked-abort-controller';
 import { observable, reaction, runInAction, when } from 'mobx';
 import { describe, expect, it, test, vi } from 'vitest';
-import { waitAsync } from 'yammies/async';
+import { waitAsync } from 'yummies/async';
 
 import { MobxQuery } from './mobx-query';
 import { MobxQueryClient } from './mobx-query-client';
