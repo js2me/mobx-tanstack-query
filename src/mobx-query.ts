@@ -47,7 +47,16 @@ export class MobxQuery<
 
   private isEnabledOnResultDemand: boolean;
 
-  private _originEnabled: MobxQueryOptions<TData, TError, TQueryKey>['enabled'];
+  private isEnabledHolded = false;
+  /**
+   * This parameter is responsible for holding the enabled value,
+   * in cases where the "enableOnDemand" option is enabled
+   */
+  private holdedEnabledOption: MobxQueryOptions<
+    TData,
+    TError,
+    TQueryKey
+  >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: MobxQueryClientHooks;
 
@@ -184,14 +193,6 @@ export class MobxQuery<
     );
   }
 
-  private checkIsEnabled() {
-    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
-      return false;
-    }
-
-    return this._originEnabled;
-  }
-
   private createOptions(
     optionsUpdate:
       | Partial<MobxQueryOptions<TData, TError, TQueryKey>>
@@ -202,11 +203,28 @@ export class MobxQuery<
       ...this.options,
       ...optionsUpdate,
     } as any) as MobxQueryOptions<TData, TError, TQueryKey>;
-    if ('enabled' in optionsUpdate) {
-      this._originEnabled = options.enabled;
+
+    // If the on-demand query mode is enabled (when using the result property)
+    // then, if the user does not request the result, the queries should not be executed
+    // to do this, we hold the original value of the enabled option
+    // and set enabled to false until the user requests the result (this.isResultRequsted)
+    if (this.isEnabledOnResultDemand) {
+      if (options.enabled !== false) {
+        this.holdedEnabledOption = options.enabled;
+      }
+
+      if (this.isResultRequsted) {
+        if (this.isEnabledHolded) {
+          options.enabled = this.holdedEnabledOption;
+          this.isEnabledHolded = false;
+        }
+      } else {
+        options.enabled = false;
+        this.isEnabledHolded = true;
+      }
     }
+
     options.structuralSharing = options.structuralSharing ?? false;
-    options.enabled = this.checkIsEnabled();
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
     return options;

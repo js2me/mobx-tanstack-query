@@ -197,7 +197,7 @@ describe('MobxQuery', () => {
   });
 
   describe('"enabled" reactive parameter', () => {
-    it.skip('should work', async () => {
+    it('should be DISABLED from default query options (from query client)', async () => {
       const queryClient = new MobxQueryClient({
         defaultOptions: {
           queries: {
@@ -494,7 +494,7 @@ describe('MobxQuery', () => {
         mobxQuery.dispose();
       });
 
-      it('should not call query event if result is requested (reason: "enabled": false)', async () => {
+      it('should call query event if result is requested (reason: "enableOnDemand": true)', async () => {
         const mobxQuery = new MobxQueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
@@ -505,7 +505,7 @@ describe('MobxQuery', () => {
 
         await when(() => !mobxQuery._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
 
         mobxQuery.dispose();
       });
@@ -552,6 +552,30 @@ describe('MobxQuery', () => {
         mobxQuery.result.data;
 
         await when(() => !mobxQuery._rawResult.isLoading);
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+
+        mobxQuery.dispose();
+      });
+      it('should call query if result is requested (with "enabled" false from default query client options)', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            queries: {
+              enabled: false,
+            },
+          },
+        });
+        const mobxQuery = new MobxQueryMock(
+          {
+            queryKey: ['test', 0 as number] as const,
+            queryFn: () => 100,
+            enableOnDemand: true,
+          },
+          queryClient,
+        );
+
+        mobxQuery.result.data;
+        mobxQuery.result.isLoading;
 
         expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
 
