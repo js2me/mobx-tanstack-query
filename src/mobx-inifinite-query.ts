@@ -59,8 +59,6 @@ export class MobxInfiniteQuery<
 
   private isEnabledOnResultDemand: boolean;
 
-  private isStaticDisabled;
-
   /**
    * This parameter is responsible for holding the enabled value,
    * in cases where the "enableOnDemand" option is enabled
@@ -116,10 +114,6 @@ export class MobxInfiniteQuery<
 
     makeObservable(this);
 
-    this.isStaticDisabled =
-      restOptions.enabled === false ||
-      this.queryClient.getDefaultOptions().queries?.enabled === false;
-
     this.options = this.queryClient.defaultQueryOptions({
       ...restOptions,
       ...getDynamicOptions?.(this),
@@ -128,10 +122,6 @@ export class MobxInfiniteQuery<
     this.options.structuralSharing = this.options.structuralSharing ?? false;
 
     this.processOptions(this.options);
-
-    if (this.isStaticDisabled) {
-      this.holdedEnabledOption = undefined;
-    }
 
     if (typeof queryKeyOrDynamicQueryKey === 'function') {
       this.options.queryKey = queryKeyOrDynamicQueryKey();
