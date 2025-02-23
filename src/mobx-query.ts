@@ -111,7 +111,6 @@ export class MobxQuery<
 
     if (this.isStaticDisabled) {
       this.holdedEnabledOption = undefined;
-      console.info('hold(3)', `${this.holdedEnabledOption}`);
     }
 
     if (typeof queryKeyOrDynamicQueryKey === 'function') {
