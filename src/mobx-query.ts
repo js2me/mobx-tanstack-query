@@ -209,16 +209,14 @@ export class MobxQuery<
     // to do this, we hold the original value of the enabled option
     // and set enabled to false until the user requests the result (this.isResultRequsted)
     if (this.isEnabledOnResultDemand) {
-      if (options.enabled !== false) {
-        this.holdedEnabledOption = options.enabled;
-      }
-
       if (this.isResultRequsted) {
         if (this.isEnabledHolded) {
           options.enabled = this.holdedEnabledOption;
           this.isEnabledHolded = false;
+          this.holdedEnabledOption = undefined;
         }
       } else {
+        this.holdedEnabledOption = options.enabled;
         options.enabled = false;
         this.isEnabledHolded = true;
       }

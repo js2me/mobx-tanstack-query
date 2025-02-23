@@ -581,6 +581,30 @@ describe('MobxQuery', () => {
 
         mobxQuery.dispose();
       });
+
+      it('should enable query from dynamic options ONLY AFTER result is requested', () => {
+        const valueBox = observable.box<string | undefined>();
+
+        const mobxQuery = new MobxQueryMock({
+          queryFn: () => 100,
+          enableOnDemand: true,
+          options: () => ({
+            queryKey: ['values', valueBox.get()] as const,
+            enabled: !!valueBox.get(),
+          }),
+        });
+
+        mobxQuery.result.data;
+        mobxQuery.result.isLoading;
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+
+        valueBox.set('value');
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+
+        mobxQuery.dispose();
+      });
     });
   });
 
