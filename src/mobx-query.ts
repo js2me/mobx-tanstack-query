@@ -47,7 +47,8 @@ export class MobxQuery<
 
   private isEnabledOnResultDemand: boolean;
 
-  private isEnabledHolded = false;
+  private isStaticDisabled;
+
   /**
    * This parameter is responsible for holding the enabled value,
    * in cases where the "enableOnDemand" option is enabled
@@ -64,6 +65,7 @@ export class MobxQuery<
     const {
       queryClient,
       queryKey: queryKeyOrDynamicQueryKey,
+      options: getDynamicOptions,
       ...restOptions
     } = config;
     this.abortController = new LinkedAbortController(config.abortSignal);
@@ -94,11 +96,22 @@ export class MobxQuery<
 
     makeObservable(this);
 
-    this.options = this.createOptions({
-      // ...(this.queryClient.getDefaultOptions().queries as any),
+    this.isStaticDisabled =
+      restOptions.enabled === false ||
+      this.queryClient.getDefaultOptions().queries?.enabled === false;
+
+    this.options = this.queryClient.defaultQueryOptions({
       ...restOptions,
-      ...config.options?.(this),
-    });
+      ...getDynamicOptions?.(this),
+    } as any);
+
+    this.options.structuralSharing = this.options.structuralSharing ?? false;
+
+    this.processOptions(this.options);
+
+    if (this.isStaticDisabled) {
+      this.holdedEnabledOption = undefined;
+    }
 
     if (typeof queryKeyOrDynamicQueryKey === 'function') {
       this.options.queryKey = queryKeyOrDynamicQueryKey();
@@ -133,8 +146,8 @@ export class MobxQuery<
       this.updateResult,
     );
 
-    if (config.options) {
-      reaction(() => config.options!(this), this.update, {
+    if (getDynamicOptions) {
+      reaction(() => getDynamicOptions(this), this.update, {
         signal: this.abortController.signal,
       });
     }
@@ -144,7 +157,7 @@ export class MobxQuery<
         () => this.isResultRequsted,
         (isRequested) => {
           if (isRequested) {
-            this.update(config.options ? config.options(this) : {});
+            this.update(getDynamicOptions?.(this) ?? {});
           }
         },
         {
@@ -193,16 +206,32 @@ export class MobxQuery<
     );
   }
 
-  private createOptions(
+  update(
     optionsUpdate:
       | Partial<MobxQueryOptions<TData, TError, TQueryKey>>
       | MobxQueryUpdateOptions<TData, TError, TQueryKey>
       | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
   ) {
-    const options = this.queryClient.defaultQueryOptions({
+    if (this.abortController.signal.aborted) {
+      return;
+    }
+
+    const nextOptions = {
       ...this.options,
       ...optionsUpdate,
-    } as any) as MobxQueryOptions<TData, TError, TQueryKey>;
+    };
+
+    this.processOptions(nextOptions);
+
+    this.options = nextOptions;
+
+    this.queryObserver.setOptions(this.options);
+  }
+
+  private processOptions = (
+    options: MobxQueryOptions<TData, TError, TQueryKey>,
+  ) => {
+    options.queryHash = this.createQueryHash(options.queryKey, options);
 
     // If the on-demand query mode is enabled (when using the result property)
     // then, if the user does not request the result, the queries should not be executed
@@ -210,35 +239,14 @@ export class MobxQuery<
     // and set enabled to false until the user requests the result (this.isResultRequsted)
     if (this.isEnabledOnResultDemand) {
       if (this.isResultRequsted) {
-        if (this.isEnabledHolded) {
-          options.enabled = this.holdedEnabledOption;
-          this.isEnabledHolded = false;
-          this.holdedEnabledOption = undefined;
-        }
+        options.enabled = this.holdedEnabledOption;
+        this.holdedEnabledOption = undefined;
       } else {
         this.holdedEnabledOption = options.enabled;
         options.enabled = false;
-        this.isEnabledHolded = true;
       }
     }
-
-    options.structuralSharing = options.structuralSharing ?? false;
-    options.queryHash = this.createQueryHash(options.queryKey, options);
-
-    return options;
-  }
-
-  update(
-    options:
-      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
-      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
-  ) {
-    if (this.abortController.signal.aborted) {
-      return;
-    }
-    this.options = this.createOptions(options);
-    this.queryObserver.setOptions(this.options);
-  }
+  };
 
   public get result() {
     if (!this.isResultRequsted) {

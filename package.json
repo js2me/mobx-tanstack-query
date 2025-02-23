@@ -36,10 +36,10 @@
   },
   "peerDependencies": {
     "disposer-util": "^1.0.9",
-    "mobx": ">=6.12.4"
+    "mobx": "^6.12.4"
   },
   "dependencies": {
-    "linked-abort-controller": ">=1.0.2",
+    "linked-abort-controller": "^1.0.2",
     "@tanstack/query-core": "^5.66.0"
   },
   "devDependencies": {
@@ -51,7 +51,7 @@
     "@vitest/coverage-istanbul": "2.1.6",
     "eslint": "8.57.0",
     "js2me-eslint-config": "1.0.6",
-    "js2me-exports-post-build-script": "2.0.17",
+    "js2me-exports-post-build-script": "2.0.18",
     "jsdom": "25.0.1",
     "rimraf": "6.0.1",
     "typescript": "5.4.5",
