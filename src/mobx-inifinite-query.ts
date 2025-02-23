@@ -263,6 +263,10 @@ export class MobxInfiniteQuery<
     this.queryObserver.setOptions(this.options);
   }
 
+  private isEnableHolded = false;
+
+  private enableHolder = () => false;
+
   private processOptions = (
     options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
   ) => {
@@ -273,12 +277,22 @@ export class MobxInfiniteQuery<
     // to do this, we hold the original value of the enabled option
     // and set enabled to false until the user requests the result (this.isResultRequsted)
     if (this.isEnabledOnResultDemand) {
-      if (this.isResultRequsted) {
-        options.enabled = this.holdedEnabledOption;
-        this.holdedEnabledOption = undefined;
-      } else {
+      if (this.isEnableHolded && options.enabled !== this.enableHolder) {
         this.holdedEnabledOption = options.enabled;
-        options.enabled = false;
+      }
+
+      if (this.isResultRequsted) {
+        if (this.isEnableHolded) {
+          options.enabled =
+            this.holdedEnabledOption === this.enableHolder
+              ? undefined
+              : this.holdedEnabledOption;
+          this.isEnableHolded = false;
+        }
+      } else {
+        this.isEnableHolded = true;
+        this.holdedEnabledOption = options.enabled;
+        options.enabled = this.enableHolder;
       }
     }
   };

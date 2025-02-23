@@ -514,7 +514,9 @@ describe('MobxQuery', () => {
         const mobxQuery = new MobxQueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
-          enabled: () => false,
+          enabled: function getEnabledFromUnitTest() {
+            return false;
+          },
         });
 
         mobxQuery.result.data;
@@ -599,7 +601,48 @@ describe('MobxQuery', () => {
 
         expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
 
-        valueBox.set('value');
+        runInAction(() => {
+          valueBox.set('value');
+        });
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+
+        mobxQuery.dispose();
+      });
+
+      it('should enable query from dynamic options ONLY AFTER result is requested (multiple observable updates)', () => {
+        const valueBox = observable.box<string | null | undefined>();
+
+        const mobxQuery = new MobxQueryMock({
+          queryFn: () => 100,
+          enableOnDemand: true,
+          options: () => {
+            const value = valueBox.get();
+            return {
+              queryKey: ['values', value] as const,
+              enabled: value === 'kek',
+            };
+          },
+        });
+
+        mobxQuery.result.data;
+        mobxQuery.result.isLoading;
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+
+        runInAction(() => {
+          valueBox.set(null);
+        });
+
+        runInAction(() => {
+          valueBox.set('faslse');
+        });
+
+        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+
+        runInAction(() => {
+          valueBox.set('kek');
+        });
 
         expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
 
