@@ -1282,4 +1282,76 @@ describe('MobxQuery', () => {
       expect(getDynamicOptionsSpy).toBeCalledTimes(3);
     });
   });
+
+  describe('throwOnError', () => {
+    it('should throw error (throwOnError: true in options)', async () => {
+      vi.useFakeTimers();
+      const query = new MobxQueryMock({
+        throwOnError: true,
+        enabled: false,
+        queryFn: async () => {
+          throw new Error('MobxQueryError');
+        },
+      });
+      let error: Error | undefined;
+
+      const promise = query.start().catch((error_) => {
+        error = error_;
+      });
+      await vi.runAllTimersAsync();
+
+      await promise;
+
+      expect(error?.message).toBe('MobxQueryError');
+    });
+
+    it('should throw error (updating param throwOnError true)', async () => {
+      vi.useFakeTimers();
+      const query = new MobxQueryMock({
+        enabled: false,
+        queryFn: async () => {
+          throw new Error('MobxQueryError');
+        },
+      });
+      let error: Error | undefined;
+
+      const promise = query.start({ throwOnError: true }).catch((error_) => {
+        error = error_;
+      });
+      await vi.runAllTimersAsync();
+
+      await promise;
+
+      expect(error?.message).toBe('MobxQueryError');
+    });
+
+    it('should throw error (throwOnError: true in global options)', async () => {
+      vi.useFakeTimers();
+      const query = new MobxQueryMock(
+        {
+          enabled: false,
+          queryFn: async () => {
+            throw new Error('MobxQueryError');
+          },
+        },
+        new QueryClient({
+          defaultOptions: {
+            queries: {
+              throwOnError: true,
+            },
+          },
+        }),
+      );
+      let error: Error | undefined;
+
+      const promise = query.start().catch((error_) => {
+        error = error_;
+      });
+      await vi.runAllTimersAsync();
+
+      await promise;
+
+      expect(error?.message).toBe('MobxQueryError');
+    });
+  });
 });

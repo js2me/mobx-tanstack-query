@@ -309,7 +309,20 @@ export class MobxInfiniteQuery<
   }
 
   async refetch(options?: RefetchOptions) {
-    return await this.queryObserver.refetch(options);
+    const result = await this.queryObserver.refetch(options);
+    const query = this.queryObserver.getCurrentQuery();
+
+    if (
+      query.state.error &&
+      (options?.throwOnError ||
+        this.options.throwOnError === true ||
+        (typeof this.options.throwOnError === 'function' &&
+          this.options.throwOnError(query.state.error, query)))
+    ) {
+      throw query.state.error;
+    }
+
+    return result;
   }
 
   async reset(params?: MobxInfiniteQueryResetParams) {
