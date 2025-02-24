@@ -54,6 +54,29 @@ const query = new MobxQuery({
 query.result.data; // from this code line query starts fetching data
 ```
 
+This option works as is if query will be "enabled", otherwise you should enable this query.   
+```ts
+const query = new MobxQuery({
+  enabled: false,
+  enableOnDemand: true, 
+  queryFn: () => {},
+});
+query.result.data; // nothing happened because query is disabled.   
+```
+But if you set `enabled` as `true` and option `enableOnDemand` will be `true` too then query will be fetched only after user will try to get access to result.    
+```ts
+const query = new MobxQuery({
+  enabled: true,
+  enableOnDemand: true, 
+  queryFn: () => {},
+});
+...
+// query is not fetched
+...
+// query is not fetched
+query.result.data; // query starts execute the queryFn
+```
+
 #### dynamic `options`   
 Options which can be dynamically updated for this query   
 
