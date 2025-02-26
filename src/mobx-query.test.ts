@@ -713,6 +713,26 @@ describe('MobxQuery', () => {
 
       mobxQuery.dispose();
     });
+
+    test('should call queryFn every time when start() method is called', async () => {
+      const querySpyFn = vi.fn();
+      const mobxQuery = new MobxQueryMock({
+        queryKey: ['test'],
+        queryFn: querySpyFn,
+        enabled: false,
+      });
+
+      await mobxQuery.start();
+      await mobxQuery.start();
+      await mobxQuery.start();
+
+      await when(() => !mobxQuery._rawResult.isLoading);
+
+      expect(mobxQuery.result.isFetched).toBeTruthy();
+      expect(querySpyFn).toBeCalledTimes(3);
+
+      mobxQuery.dispose();
+    });
   });
 
   describe('scenarios', () => {

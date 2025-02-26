@@ -357,14 +357,13 @@ export class MobxQuery<
     this.abortController.abort();
   }
 
-  async start(params?: MobxQueryStartParams<TData, TError, TQueryKey>) {
-    const options: MobxQueryUpdateOptions<TData, TError, TQueryKey> = {
-      enabled: true,
-      ...params,
-    };
-    this.update(options);
+  async start({
+    cancelRefetch,
+    ...params
+  }: MobxQueryStartParams<TData, TError, TQueryKey> = {}) {
+    this.update({ ...params });
 
-    await this.refetch();
+    await this.refetch({ cancelRefetch });
   }
 
   /**
