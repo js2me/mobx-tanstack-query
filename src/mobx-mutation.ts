@@ -40,7 +40,6 @@ export class MobxMutation<
       queryClient,
       invalidateQueries,
       invalidateByKey: providedInvalidateByKey,
-      mutationKey,
       ...restOptions
     } = config;
     this.abortController = new LinkedAbortController(config.abortSignal);
@@ -114,11 +113,11 @@ export class MobxMutation<
       });
     }
 
-    if (invalidateByKey && mutationKey) {
+    if (invalidateByKey && this.mutationOptions.mutationKey) {
       this.onDone(() => {
         this.queryClient.invalidateQueries({
           ...(invalidateByKey === true ? {} : invalidateByKey),
-          queryKey: mutationKey,
+          queryKey: this.mutationOptions.mutationKey,
         });
       });
     }
