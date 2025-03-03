@@ -9,7 +9,10 @@ import {
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
-import { MobxMutationConfig } from './mobx-mutation.types';
+import {
+  MobxMutationConfig,
+  MobxMutationInvalidateQueriesOptions,
+} from './mobx-mutation.types';
 import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
 
 export class MobxMutation<
@@ -33,7 +36,7 @@ export class MobxMutation<
   constructor(
     protected config: MobxMutationConfig<TData, TVariables, TError, TContext>,
   ) {
-    const { queryClient, ...restOptions } = config;
+    const { queryClient, invalidateQueries, ...restOptions } = config;
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
@@ -75,6 +78,29 @@ export class MobxMutation<
         this.reset();
       }
     });
+
+    if (invalidateQueries) {
+      this.onDone((data, payload) => {
+        let invalidateOptions: MobxMutationInvalidateQueriesOptions;
+
+        if (typeof invalidateQueries === 'function') {
+          invalidateOptions = invalidateQueries(data, payload);
+        } else {
+          invalidateOptions = invalidateQueries;
+        }
+
+        if (invalidateOptions.queryKeys?.length) {
+          invalidateOptions.queryKeys?.forEach((queryKey) => {
+            this.queryClient.invalidateQueries({
+              ...invalidateOptions,
+              queryKey,
+            });
+          });
+        } else {
+          this.queryClient.invalidateQueries(invalidateOptions);
+        }
+      });
+    }
 
     config.onInit?.(this);
     this.hooks?.onMutationInit?.(this);

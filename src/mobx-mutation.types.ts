@@ -1,5 +1,6 @@
 import {
   DefaultError,
+  InvalidateQueryFilters,
   MutationObserverOptions,
   QueryClient,
 } from '@tanstack/query-core';
@@ -22,6 +23,11 @@ export interface MobxMutationFeatures {
   resetOnDestroy?: boolean;
 }
 
+export interface MobxMutationInvalidateQueriesOptions
+  extends Omit<InvalidateQueryFilters, 'queryKey'> {
+  queryKeys?: InvalidateQueryFilters['queryKey'][];
+}
+
 export interface MobxMutationConfig<
   TData = unknown,
   TVariables = void,
@@ -38,6 +44,12 @@ export interface MobxMutationConfig<
    */
   disposer?: IDisposer;
   abortSignal?: AbortSignal;
+  invalidateQueries?:
+    | MobxMutationInvalidateQueriesOptions
+    | ((
+        data: TData,
+        payload: TVariables,
+      ) => MobxMutationInvalidateQueriesOptions);
   onInit?: (
     mutation: MobxMutation<TData, TVariables, TError, TContext>,
   ) => void;
