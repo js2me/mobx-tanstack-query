@@ -25,6 +25,7 @@ export interface MobxMutationFeatures {
 
 export interface MobxMutationInvalidateQueriesOptions
   extends Omit<InvalidateQueryFilters, 'queryKey'> {
+  queryKey?: InvalidateQueryFilters['queryKey'];
   queryKeys?: InvalidateQueryFilters['queryKey'][];
 }
 
