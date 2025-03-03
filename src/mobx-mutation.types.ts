@@ -11,6 +11,15 @@ import { MobxQueryClient } from './mobx-query-client';
 
 export interface MobxMutationFeatures {
   /**
+   * Invalidate queries by mutation key.
+   *
+   * - when `true`, invalidate all queries by mutation key (not exact)
+   * - when `object`, invalidate all queries by mutation key with this additional filters
+   */
+  invalidateByKey?:
+    | boolean
+    | Omit<InvalidateQueryFilters, 'queryKey' | 'predicate'>;
+  /**
    * Reset mutation when dispose is called
    *
    * @deprecated Please use 'resetOnDestroy'

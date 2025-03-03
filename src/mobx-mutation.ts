@@ -36,7 +36,13 @@ export class MobxMutation<
   constructor(
     protected config: MobxMutationConfig<TData, TVariables, TError, TContext>,
   ) {
-    const { queryClient, invalidateQueries, ...restOptions } = config;
+    const {
+      queryClient,
+      invalidateQueries,
+      invalidateByKey: providedInvalidateByKey,
+      mutationKey,
+      ...restOptions
+    } = config;
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
@@ -49,6 +55,12 @@ export class MobxMutation<
     action.bound(this, 'updateResult');
 
     makeObservable(this);
+
+    const invalidateByKey =
+      providedInvalidateByKey ??
+      (queryClient instanceof MobxQueryClient
+        ? queryClient.mutationFeatures.invalidateByKey
+        : null);
 
     this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
     this.hooks =
@@ -99,6 +111,15 @@ export class MobxMutation<
         } else {
           this.queryClient.invalidateQueries(invalidateOptions);
         }
+      });
+    }
+
+    if (invalidateByKey && mutationKey) {
+      this.onDone(() => {
+        this.queryClient.invalidateQueries({
+          ...(invalidateByKey === true ? {} : invalidateByKey),
+          queryKey: mutationKey,
+        });
       });
     }
 
