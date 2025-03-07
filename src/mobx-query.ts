@@ -286,7 +286,7 @@ export class MobxQuery<
       queryKey: this.options.queryKey,
       exact: true,
       ...params,
-    });
+    } as any);
   }
 
   async invalidate(params?: MobxQueryInvalidateParams) {
@@ -294,7 +294,7 @@ export class MobxQuery<
       exact: true,
       queryKey: this.options.queryKey,
       ...params,
-    });
+    } as any);
   }
 
   onDone(onDoneCallback: (data: TData, payload: void) => void): void {

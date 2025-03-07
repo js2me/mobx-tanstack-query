@@ -330,7 +330,7 @@ export class MobxInfiniteQuery<
       queryKey: this.options.queryKey,
       exact: true,
       ...params,
-    });
+    } as any);
   }
 
   async invalidate(options?: MobxInfiniteQueryInvalidateParams) {
@@ -338,7 +338,7 @@ export class MobxInfiniteQuery<
       exact: true,
       queryKey: this.options.queryKey,
       ...options,
-    });
+    } as any);
   }
 
   onDone(
