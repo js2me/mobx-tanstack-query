@@ -142,6 +142,10 @@ export class MobxQuery<
       });
     }
 
+    if (this.isResultRequsted) {
+      this.update(getDynamicOptions?.(this) ?? {});
+    }
+
     if (this.isEnabledOnResultDemand) {
       reaction(
         () => this.isResultRequsted,
@@ -152,7 +156,6 @@ export class MobxQuery<
         },
         {
           signal: this.abortController.signal,
-          fireImmediately: true,
         },
       );
     }
