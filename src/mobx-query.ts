@@ -142,10 +142,6 @@ export class MobxQuery<
       });
     }
 
-    if (this.isResultRequsted) {
-      this.update(getDynamicOptions?.(this) ?? {});
-    }
-
     if (this.isEnabledOnResultDemand) {
       reaction(
         () => this.isResultRequsted,
@@ -156,6 +152,7 @@ export class MobxQuery<
         },
         {
           signal: this.abortController.signal,
+          fireImmediately: true,
         },
       );
     }
@@ -281,9 +278,7 @@ export class MobxQuery<
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
-    if (!this.abortController.signal.aborted) {
-      this._result = result;
-    }
+    this._result = result;
   }
 
   async reset(params?: MobxQueryResetParams) {
@@ -336,7 +331,6 @@ export class MobxQuery<
   protected handleAbort = () => {
     this._observerSubscription?.();
 
-    this.queryObserver.getCurrentQuery().destroy();
     this.queryObserver.destroy();
     this.isResultRequsted = false;
 

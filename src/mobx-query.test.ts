@@ -7,6 +7,7 @@ import {
   RefetchOptions,
   SetDataOptions,
   Updater,
+  hashKey,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { observable, reaction, runInAction, when } from 'mobx';
@@ -102,35 +103,53 @@ class MobxQueryMock<
   }
 }
 
+class HttpResponse<TData = any, TError = Error> extends Response {
+  data: TData | null;
+  error: TError | null;
+
+  constructor(data?: TData, error?: TError, init?: ResponseInit) {
+    super(null, init);
+    this.data = data ?? null;
+    this.error = error ?? null;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createMockFetch = () => {
-  return vi.fn((url, options = {}) => {
-    return new Promise((resolve, reject) => {
-      // Проверяем, если сигнал уже был прерван
-      if (options.signal?.aborted) {
-        reject(new DOMException('Aborted', 'AbortError'));
-        return;
-      }
-
-      const timeout = setTimeout(() => {
-        resolve({
-          ok: true,
-          json: () => Promise.resolve({ data: 'success' }),
-        });
-      }, 100);
-
-      // Добавляем обработчик прерывания
-      if (options.signal) {
-        const abortHandler = () => {
-          clearTimeout(timeout);
+  return vi.fn(
+    (cfg: {
+      signal?: AbortSignal;
+      waitAsync?: number;
+      willReturn: HttpResponse<any, any>;
+    }) => {
+      return new Promise<HttpResponse<any, any>>((resolve, reject) => {
+        // Проверяем, если сигнал уже был прерван
+        if (cfg.signal?.aborted) {
           reject(new DOMException('Aborted', 'AbortError'));
-          options.signal?.removeEventListener('abort', abortHandler);
-        };
+          return;
+        }
 
-        options.signal.addEventListener('abort', abortHandler);
-      }
-    });
-  });
+        const timeout = setTimeout(() => {
+          if (cfg.willReturn.error) {
+            reject(cfg.willReturn);
+          } else {
+            resolve(cfg.willReturn);
+          }
+        }, cfg?.waitAsync ?? 5);
+
+        // Добавляем обработчик прерывания
+        if (cfg.signal) {
+          const abortHandler = () => {
+            clearTimeout(timeout);
+            reject(new DOMException('Aborted', 'AbortError'));
+            cfg.signal?.removeEventListener('abort', abortHandler);
+          };
+
+          cfg.signal.addEventListener('abort', abortHandler);
+        }
+      });
+    },
+  );
 };
 
 describe('MobxQuery', () => {
@@ -1468,139 +1487,288 @@ describe('MobxQuery', () => {
       });
     });
 
-    it('after abort signal for inprogress work query (throw abort error after abort) create new instance with the same key and it should work', async () => {
-      const abortController1 = new LinkedAbortController();
-      const mobxQuery = new MobxQueryMock({
-        queryFn: ({ signal }) => {
-          return new Promise(async (res, rej) => {
-            signal.addEventListener('abort', () => {
-              console.info('fffffffffffffffff');
-              rej(new Error(signal.reason));
-            });
-            await waitAsync(1);
-            console.info('fffffffffffffkekee');
-            res({
-              kek: 1,
-            });
-          });
+    it('after aborted MobxQuery with failed queryFn - create new MobxQuery with the same key and it should has succeed execution', async () => {
+      vi.useFakeTimers();
+      const box = observable.box('bar');
+
+      const badResponse = new HttpResponse(
+        undefined,
+        {
+          description: 'not found',
+          errorCode: '404',
         },
-        enabled: true,
-        abortSignal: abortController1.signal,
-        queryKey: ['test', 'key'] as const,
+        {
+          status: 404,
+          statusText: 'Not Found',
+        },
+      );
+
+      const okResponse = new HttpResponse(
+        {
+          fooBars: [1, 2, 3],
+        },
+        undefined,
+        {
+          status: 200,
+          statusText: 'OK',
+        },
+      );
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            throwOnError: true,
+            queryKeyHashFn: hashKey,
+            refetchOnWindowFocus: 'always',
+            refetchOnReconnect: 'always',
+            staleTime: 5 * 60 * 1000,
+            retry: (failureCount, error) => {
+              if (error instanceof Response && error.status >= 500) {
+                return 3 - failureCount > 0;
+              }
+              return false;
+            },
+          },
+          mutations: {
+            throwOnError: true,
+          },
+        },
       });
 
-      expect(mobxQuery.result).toMatchObject({
-        status: 'pending',
-        fetchStatus: 'fetching',
-        isPending: true,
-        isSuccess: false,
-        isError: false,
-        isInitialLoading: true,
-        isLoading: true,
-        data: undefined,
-        dataUpdatedAt: 0,
-        error: null,
-        errorUpdatedAt: 0,
-        failureCount: 0,
-        failureReason: null,
-        errorUpdateCount: 0,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
-        isRefetching: false,
-        isLoadingError: false,
-        isPaused: false,
-        isPlaceholderData: false,
-        isRefetchError: false,
-        isStale: true,
-      } satisfies Partial<QueryObserverResult<any>>);
+      queryClient.mount();
 
-      abortController1.abort();
+      const vmAbortController = new AbortController();
 
-      await waitAsync(10);
+      const fetch = createMockFetch();
 
-      expect(mobxQuery.result).toMatchObject({
-        status: 'pending',
-        fetchStatus: 'fetching',
-        isPending: true,
-        isSuccess: false,
-        isError: false,
-        isInitialLoading: true,
-        isLoading: true,
-        data: undefined,
-        dataUpdatedAt: 0,
-        error: null,
-        errorUpdatedAt: 0,
-        failureCount: 0,
-        failureReason: null,
-        errorUpdateCount: 0,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
-        isRefetching: false,
-        isLoadingError: false,
-        isPaused: false,
-        isPlaceholderData: false,
-        isRefetchError: false,
-        isStale: true,
-      } satisfies Partial<QueryObserverResult<any>>);
-
-      const mobxQuery2 = new MobxQueryMock({
-        queryFn: async () => {
-          await waitAsync(5);
-          return 'foo';
+      const query = new MobxQueryMock(
+        {
+          abortSignal: vmAbortController.signal,
+          queryFn: () =>
+            fetch({
+              willReturn: badResponse,
+            }),
+          options: () => ({
+            queryKey: ['foo', box.get(), 'baz'] as const,
+            enabled: !!box.get(),
+          }),
         },
-        queryKey: ['test', 'key'] as const,
-      });
+        queryClient,
+      );
 
-      await waitAsync(10);
+      await vi.runAllTimersAsync();
 
-      expect(mobxQuery.result).toMatchObject({
-        status: 'pending',
-        fetchStatus: 'fetching',
-        isPending: true,
-        isSuccess: false,
-        isError: false,
-        isInitialLoading: true,
-        isLoading: true,
+      expect(query.result).toMatchObject({
         data: undefined,
         dataUpdatedAt: 0,
-        error: null,
-        errorUpdatedAt: 0,
-        failureCount: 0,
-        failureReason: null,
-        errorUpdateCount: 0,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
-        isRefetching: false,
-        isLoadingError: false,
-        isPaused: false,
-        isPlaceholderData: false,
-        isRefetchError: false,
-        isStale: true,
-      } satisfies Partial<QueryObserverResult<string>>);
-
-      expect(mobxQuery2.result).toMatchObject({
-        status: 'success',
+        errorUpdateCount: 1,
+        error: badResponse,
+        failureCount: 1,
+        failureReason: badResponse,
         fetchStatus: 'idle',
+        isError: true,
+        isFetched: true,
+        isStale: true,
+        isSuccess: false,
         isPending: false,
-        isSuccess: true,
-        isError: false,
-        isInitialLoading: false,
-        isLoading: false,
-        data: 'foo',
-        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+      } satisfies Partial<QueryObserverResult<any, any>>);
+      expect(query.options).toMatchObject({
+        enabled: true,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['foo'],
+      });
+      vmAbortController.abort();
+
+      await vi.runAllTimersAsync();
+
+      expect(query.result).toMatchObject({
+        data: undefined,
+        dataUpdatedAt: 0,
         error: null,
-        errorUpdatedAt: 0,
+        errorUpdateCount: 1,
         failureCount: 0,
         failureReason: null,
-        errorUpdateCount: 0,
+        fetchStatus: 'fetching',
+        isError: false,
         isFetched: true,
-        isFetchedAfterMount: true,
-        isFetching: false,
-        isRefetching: false,
+        isStale: true,
+        isSuccess: false,
+        isPending: true,
+      } satisfies Partial<QueryObserverResult<any, any>>);
+
+      const vmAbortController2 = new AbortController();
+
+      const query2 = new MobxQueryMock(
+        {
+          abortSignal: vmAbortController2.signal,
+          queryFn: () => {
+            return fetch({
+              willReturn: okResponse,
+            });
+          },
+          options: () => ({
+            queryKey: ['foo', 'bar', 'baz'] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(query2.result).toMatchObject({
+        data: okResponse,
+        isError: false,
+        isFetched: true,
+        isStale: true,
+        isSuccess: true,
+        isPending: false,
+      } satisfies Partial<QueryObserverResult<any, any>>);
+    });
+
+    it('after aborted MobxQuery with failed queryFn - create new MobxQuery with the same key and it should has succeed execution (+ abort signal usage inside query fn)', async () => {
+      vi.useFakeTimers();
+      const box = observable.box('bar');
+
+      const badResponse = new HttpResponse(
+        undefined,
+        {
+          description: 'not found',
+          errorCode: '404',
+        },
+        {
+          status: 404,
+          statusText: 'Not Found',
+        },
+      );
+
+      const okResponse = new HttpResponse(
+        {
+          fooBars: [1, 2, 3],
+        },
+        undefined,
+        {
+          status: 200,
+          statusText: 'OK',
+        },
+      );
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            throwOnError: true,
+            queryKeyHashFn: hashKey,
+            refetchOnWindowFocus: 'always',
+            refetchOnReconnect: 'always',
+            staleTime: 5 * 60 * 1000,
+            retry: (failureCount, error) => {
+              if (error instanceof Response && error.status >= 500) {
+                return 3 - failureCount > 0;
+              }
+              return false;
+            },
+          },
+          mutations: {
+            throwOnError: true,
+          },
+        },
       });
+
+      queryClient.mount();
+
+      const vmAbortController = new AbortController();
+
+      const fetch = createMockFetch();
+
+      const query = new MobxQueryMock(
+        {
+          abortSignal: vmAbortController.signal,
+          queryFn: ({ signal }) =>
+            fetch({
+              willReturn: badResponse,
+              signal,
+            }),
+          options: () => ({
+            queryKey: ['foo', box.get(), 'baz'] as const,
+            enabled: !!box.get(),
+          }),
+        },
+        queryClient,
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(query.result).toMatchObject({
+        data: undefined,
+        dataUpdatedAt: 0,
+        errorUpdateCount: 1,
+        error: badResponse,
+        failureCount: 1,
+        failureReason: badResponse,
+        fetchStatus: 'idle',
+        isError: true,
+        isFetched: true,
+        isStale: true,
+        isSuccess: false,
+        isPending: false,
+      } satisfies Partial<QueryObserverResult<any, any>>);
+      expect(query.options).toMatchObject({
+        enabled: true,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['foo'],
+      });
+      vmAbortController.abort();
+
+      await vi.runAllTimersAsync();
+
+      expect(query.result).toMatchObject({
+        data: undefined,
+        dataUpdatedAt: 0,
+        error: null,
+        errorUpdateCount: 1,
+        failureCount: 0,
+        failureReason: null,
+        fetchStatus: 'fetching',
+        isError: false,
+        isFetched: true,
+        isStale: true,
+        isSuccess: false,
+        isPending: true,
+      } satisfies Partial<QueryObserverResult<any, any>>);
+
+      const vmAbortController2 = new AbortController();
+
+      const query2 = new MobxQueryMock(
+        {
+          abortSignal: vmAbortController2.signal,
+          queryFn: ({ signal }) => {
+            return fetch({
+              willReturn: okResponse,
+              signal,
+            });
+          },
+          options: () => ({
+            queryKey: ['foo', 'bar', 'baz'] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(query2.result).toMatchObject({
+        data: okResponse,
+        isError: false,
+        isFetched: true,
+        isStale: true,
+        isSuccess: true,
+        isPending: false,
+      } satisfies Partial<QueryObserverResult<any, any>>);
     });
   });
 

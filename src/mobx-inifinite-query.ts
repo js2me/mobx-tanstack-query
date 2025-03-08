@@ -380,7 +380,6 @@ export class MobxInfiniteQuery<
   protected handleAbort = () => {
     this._observerSubscription?.();
 
-    this.queryObserver.getCurrentQuery().destroy();
     this.queryObserver.destroy();
     this.isResultRequsted = false;
 
