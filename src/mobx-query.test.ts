@@ -102,6 +102,7 @@ class MobxQueryMock<
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createMockFetch = () => {
   return vi.fn((url, options = {}) => {
     return new Promise((resolve, reject) => {
