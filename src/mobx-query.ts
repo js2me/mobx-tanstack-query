@@ -281,7 +281,9 @@ export class MobxQuery<
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
-    this._result = result;
+    if (!this.abortController.signal.aborted) {
+      this._result = result;
+    }
   }
 
   async reset(params?: MobxQueryResetParams) {
