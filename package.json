@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
+    "website": "cd website && pnpm start",
+    "website:build": "cd website && pnpm build",
     "dev": "pnpm test:watch"
   },
   "keywords": [

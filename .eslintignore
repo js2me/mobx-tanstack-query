@@ -17,3 +17,4 @@ jsconfig.json
 post-build.mjs
 coverage
 vitest.config.ts
+website
