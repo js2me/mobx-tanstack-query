@@ -5,3 +5,21 @@ sidebar_label: Overview
 sidebar_position: 1
 slug: /api/mobx-query-client/overview
 ---
+
+# MobxQueryClient  
+
+This is enhanced version of [TanStack's Query QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient).  
+Gives additional configuration for package entities like [`MobxQuery`](/api/mobx-query/overview).  
+
+[Reference to source code](/src/mobx-query-client.ts)  
+
+## API Signature  
+```ts
+import { QueryClient } from "@tanstack/query-core";
+class MobxQueryClient extends QueryClient {}
+```
+
+## Methods and properties   
+
+### `queryFeatures`  
+Features configurations exclusively for [`MobxQuery`](/api/mobx-query/overview)/[`MobxInfiniteQuery`](/api/mobx-infinite-query/overview)  

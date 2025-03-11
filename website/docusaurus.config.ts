@@ -131,7 +131,7 @@ const config: Config = {
     },
     docs: {
       sidebar: {
-        autoCollapseCategories: true,
+        hideable: false
       },
     },
     colorMode: {

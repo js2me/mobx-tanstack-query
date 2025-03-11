@@ -4,142 +4,44 @@ title: Usage
 sidebar_label: Usage
 description: usage
 slug: /getting-started/usage
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 # Usage  
 
-## 1. Create [`MobxQueryClient`](/api/mobx-query-client/overview) instance  
+Steps:  
 
-```ts title="@/shared/lib/tanstack-query/query-client.ts"  
-import { hashKey } from '@tanstack/query-core';
-import { MobxQueryClient } from 'mobx-tanstack-query';
+1. Create [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient) or [`MobxQueryClient`](/api/mobx-query-client/overview)  
 
-const MAX_FAILURE_COUNT = 3;
+```ts title="@/shared/lib/mobx/query/index.ts"
+import { QueryClient } from "@tanstack/query-client";
 
-export const queryClient = new MobxQueryClient({
-  defaultOptions: {
-    queries: {
-      throwOnError: true,
-      queryKeyHashFn: hashKey,
-      refetchOnWindowFocus: 'always',
-      refetchOnReconnect: 'always',
-      staleTime: 5 * 60 * 1000,
-      retry: (failureCount, error) => {
-        if ('status' in error && Number(error.status) >= 500) {
-          return MAX_FAILURE_COUNT - failureCount > 0;
-        }
-        return false;
-      },
-    },
-    mutations: {
-      throwOnError: true,
-    },
-  },
-});
+export const queryClient = new QueryClient()
 ```
 
-Or you can use [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient) instance from TanStack Query core package.  
-But you need to `mount` that instance of `QueryClient`   
+2. Create [`MobxQuery`](/api/mobx-query/overview) or [`MobxMutation`](/api/mobx-mutation/overview)  
 
 ```ts
-queryClient.mount(); // enable all subscriptions for online\offline and window focus/blur
-```
+import { MobxQuery, MobxMutation } from 'mobx-tanstack-query';
+import { queryClient } from "@/shared/lib/mobx/query";
 
-
-## 2. Use   
-
-```ts
-const petsListQuery = new MobxQuery({
+export const fruitsQuery = new MobxQuery({
   queryClient,
-  queryKey: ['pets'],
-  queryFn: async ({ signal, queryKey }) => {
-    const response = await petsApi.fetchPets({ signal });
-    return response.data;
-  },
-});
-
-const addPetsMutation = new MobxMutation({
-  queryClient,
-  mutationFn: async (payload: { petName: string }) => {
-    const response = await petsApi.createPet(payload);
-    return response.data;
-  },
-
-  onSuccess: (data) => {
-    rootStore.notifications.push({
-      type: 'success',
-      title: `Pet created successfully with name ${data.name}`,
-    });
-    petsListQuery.invalidate();
-  },
-  onError: (error) => {
-    rootStore.notifications.push({
-      type: 'danger',
-      title: 'Failed to create pet',
-    });
+  queryKey: ['fruits'],
+  queryFn: async () => {
+    const response = await fetch('/api/fruits');
+    return await response.json()
   }
 });
 
-addPetsMutation.mutate({ petName: 'fluffy' });
+export const addFruitMutation = new MobxMutation({
+  queryClient,
+  mutationFn: async () => {
+    const response = await fetch('/api/fruits', { method: 'POST', data: { name: 'fruit' } });
+    return await response.json()
+  },
+  onSuccess: () => {
+    fruitsQuery.invalidate();
+  }
+});
 ```
-
-
-# Another usage or `mobx-tanstack-query/preset`  
-
-This sub folder is contains already configured [instance of QueryClient](/src/preset/query-client.ts) with [this configuration](/src/preset/configs/default-query-client-config.ts) and needed to reduce your boilerplate with more compact way.  
-Every parameter in configuration you can override using this construction  
-```ts
-import { queryClient } from "mobx-tanstack-query/preset";
-
-const defaultOptions = queryClient.getDefaultOptions();
-defaultOptions.queries!.refetchOnMount = true;
-queryClient.setDefaultOptions({ ...defaultOptions })
-```
-
-
-P.S. Overriding default options should be written before start whole application  
-
-
-### `createQuery(queryFn, otherOptionsWithoutFn?)`  
-
-This is alternative for `new MobxQuery()`. Example:  
-
-```ts
-import { createQuery } from "mobx-tanstack-query/preset";
-
-const query = createQuery(async ({ signal, queryKey }) => {
-  const response = await petsApi.fetchPets({ signal });
-  return response.data;
-}, {
-  queryKey: ['pets'],
-})
-```
-
-### `createMutation(mutationFn, otherOptionsWithoutFn?)`  
-
-This is alternative for `new MobxMutation()`. Example:  
-
-```ts
-import { createMutation } from "mobx-tanstack-query/preset";
-
-const mutation = createMutation(async (payload: { petName: string }) => {
-  const response = await petsApi.createPet(payload);
-  return response.data;
-})
-```
-
-
-### `createInfiniteQuery(queryFn, otherOptionsWithoutFn?)`  
-
-This is alternative for `new MobxInfiniteQuery()`. Example:  
-
-```ts
-import { createInfiniteQuery } from "mobx-tanstack-query/preset";
-
-const query = createInfiniteQuery(async ({ signal, queryKey }) => {
-  const response = await petsApi.fetchPets({ signal });
-  return response.data;
-})
-```
-

@@ -1,0 +1,63 @@
+---
+id: prerequiremenets
+title: Prerequirements
+sidebar_label: Prerequirements
+description: prerequiremenets
+slug: /getting-started/prerequirements
+sidebar_position: 4
+---
+
+# Prerequirements  
+
+Before using `MobX` [Queries](/api/mobx-query/overview) and [Mutations](/api/mobx-mutation/overview) you have to create the instance of TanStack's Query [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient).  
+You can achieve this with:  
+
+
+## 1. Create [`MobxQueryClient`](/api/mobx-query-client/overview) instance  
+
+```ts
+import { MobxQueryClient } from 'mobx-tanstack-query';
+
+export const queryClient = new MobxQueryClient();
+```
+
+## 2. Create [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)  
+You can use [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient) instance from TanStack Query core package.  
+But you need to `mount()` that instance of `QueryClient`, because it enables all subscriptions for online\offline and window focus\blur.   
+
+```ts
+import { QueryClient } from '@tanstack/query-core';
+
+export const queryClient = new QueryClient();
+queryClient.mount();
+```
+
+### Config recommendations  
+
+```ts
+import { hashKey } from '@tanstack/query-core';
+import { MobxQueryClient } from 'mobx-tanstack-query';
+
+const MAX_FAILURE_COUNT = 3;
+
+export const queryClient = new MobxQueryClient({
+  defaultOptions: {
+    queries: {
+      throwOnError: true,
+      queryKeyHashFn: hashKey,
+      refetchOnWindowFocus: 'always',
+      refetchOnReconnect: 'always',
+      staleTime: 5 * 60 * 1000, // 5 mins
+      retry: (failureCount, error) => {
+        if ('status' in error && Number(error.status) >= 500) {
+          return MAX_FAILURE_COUNT - failureCount > 0; // max attempts only for 500+ status codes
+        }
+        return false;
+      },
+    },
+    mutations: {
+      throwOnError: true,
+    },
+  },
+});
+```
