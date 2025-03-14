@@ -6,7 +6,6 @@ import {
   InfiniteData,
   DefaultedInfiniteQueryObserverOptions,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 
 import { MobxInfiniteQuery } from './mobx-inifinite-query';
 import { MobxQueryClient } from './mobx-query-client';
@@ -118,10 +117,6 @@ export interface MobxInfiniteQueryConfig<
   onInit?: (
     query: MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>,
   ) => void;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
   abortSignal?: AbortSignal;
   onDone?: (data: InfiniteData<TData, TPageParam>, payload: void) => void;
   onError?: (error: TError, payload: void) => void;

@@ -102,10 +102,6 @@ export class MobxInfiniteQuery<
         queryClient.queryFeatures.enableOnDemand ?? false;
     }
 
-    if (config.disposer) {
-      config.disposer.add(() => this.dispose());
-    }
-
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
     action.bound(this, 'setData');

@@ -4,7 +4,6 @@ import {
   MutationObserverOptions,
   QueryClient,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 
 import { MobxMutation } from './mobx-mutation';
 import { MobxQueryClient } from './mobx-query-client';
@@ -49,10 +48,6 @@ export interface MobxMutationConfig<
     >,
     MobxMutationFeatures {
   queryClient: QueryClient | MobxQueryClient;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
   abortSignal?: AbortSignal;
   invalidateQueries?:
     | MobxMutationInvalidateQueriesOptions

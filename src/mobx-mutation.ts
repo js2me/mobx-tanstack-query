@@ -46,10 +46,6 @@ export class MobxMutation<
     this.queryClient = queryClient;
     this.result = undefined as any;
 
-    if (config.disposer) {
-      config.disposer.add(() => this.dispose());
-    }
-
     observable.deep(this, 'result');
     action.bound(this, 'updateResult');
 

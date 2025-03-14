@@ -8,7 +8,6 @@ import {
   QueryObserverOptions,
   RefetchOptions,
 } from '@tanstack/query-core';
-import { IDisposer } from 'disposer-util';
 
 import type { MobxQuery } from './mobx-query';
 import { MobxQueryClient } from './mobx-query-client';
@@ -103,10 +102,6 @@ export interface MobxQueryConfig<
    */
   queryKey?: TQueryKey | (() => TQueryKey);
   onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
-  /**
-   * @deprecated use `abortSignal` instead
-   */
-  disposer?: IDisposer;
   abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
