@@ -2,7 +2,6 @@ import {
   DefaultedQueryObserverOptions,
   DefaultError,
   InvalidateQueryFilters,
-  QueryClient,
   QueryFilters,
   QueryKey,
   QueryObserverOptions,
@@ -10,7 +9,7 @@ import {
 } from '@tanstack/query-core';
 
 import type { MobxQuery } from './mobx-query';
-import { MobxQueryClient } from './mobx-query-client';
+import { AnyQueryClient } from './mobx-query-client.types';
 
 export interface MobxQueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
@@ -89,7 +88,7 @@ export interface MobxQueryConfig<
       >
     >,
     MobxQueryFeatures {
-  queryClient: QueryClient | MobxQueryClient;
+  queryClient: AnyQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
    * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.

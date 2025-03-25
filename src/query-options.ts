@@ -2,16 +2,11 @@ import { DefaultError, QueryKey } from '@tanstack/query-core';
 
 import { MobxQueryConfig } from './mobx-query.types';
 
-type PartialKeys<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-interface QueryOptionsParams<
+export interface QueryOptionsParams<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
-> extends PartialKeys<
-    MobxQueryConfig<TData, TError, TQueryKey>,
-    'queryClient'
-  > {}
+> extends Omit<MobxQueryConfig<TData, TError, TQueryKey>, 'queryClient'> {}
 
 export function queryOptions<
   TData,

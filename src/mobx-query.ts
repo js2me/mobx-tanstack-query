@@ -19,6 +19,7 @@ import {
 } from 'mobx';
 
 import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
+import { AnyQueryClient } from './mobx-query-client.types';
 import {
   MobxQueryConfig,
   MobxQueryDynamicOptions,
@@ -28,6 +29,7 @@ import {
   MobxQueryStartParams,
   MobxQueryUpdateOptions,
 } from './mobx-query.types';
+import { QueryOptionsParams } from './query-options';
 
 export class MobxQuery<
   TData,
@@ -59,13 +61,26 @@ export class MobxQuery<
   private _observerSubscription?: VoidFunction;
   private hooks?: MobxQueryClientHooks;
 
-  constructor(protected config: MobxQueryConfig<TData, TError, TQueryKey>) {
+  protected config: MobxQueryConfig<TData, TError, TQueryKey>;
+
+  constructor(
+    queryClient: AnyQueryClient,
+    config: QueryOptionsParams<TData, TError, TQueryKey>,
+  );
+  constructor(config: MobxQueryConfig<TData, TError, TQueryKey>);
+
+  constructor(...args: any[]) {
+    const [queryClient, config] =
+      args.length === 2 ? args : [args[0].queryClient, args[0]];
     const {
-      queryClient,
       queryKey: queryKeyOrDynamicQueryKey,
       options: getDynamicOptions,
       ...restOptions
     } = config;
+    this.config = {
+      ...config,
+      queryClient,
+    };
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
@@ -369,6 +384,11 @@ export class MobxQuery<
   }
 
   [Symbol.dispose](): void {
+    this.destroy();
+  }
+
+  // Firefox fix (Symbol.dispose is undefined in FF)
+  [Symbol.for('Symbol.dispose')](): void {
     this.destroy();
   }
 }

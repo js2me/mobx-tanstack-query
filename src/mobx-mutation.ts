@@ -208,4 +208,9 @@ export class MobxMutation<
   [Symbol.dispose](): void {
     this.destroy();
   }
+
+  // Firefox fix (Symbol.dispose is undefined in FF)
+  [Symbol.for('Symbol.dispose')](): void {
+    this.destroy();
+  }
 }
