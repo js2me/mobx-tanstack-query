@@ -115,6 +115,12 @@ export interface MobxQueryConfig<
   ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
 }
 
+export type MobxQueryFn<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> = Exclude<MobxQueryConfig<TData, TError, TQueryKey>['queryFn'], undefined>;
+
 export interface MobxQueryStartParams<
   TData,
   TError = DefaultError,
