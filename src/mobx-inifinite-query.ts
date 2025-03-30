@@ -29,7 +29,8 @@ import {
   MobxInfiniteQueryResetParams,
   MobxInfiniteQueryUpdateOptions,
 } from './mobx-inifinite-query.types';
-import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
+import { MobxQueryClient } from './mobx-query-client';
+import { MobxQueryClientHooks } from './mobx-query-client.types';
 
 export class MobxInfiniteQuery<
   TData,

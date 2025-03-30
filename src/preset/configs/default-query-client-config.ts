@@ -1,6 +1,6 @@
 import { hashKey } from '@tanstack/query-core';
 
-import { MobxQueryClientConfig } from '../../mobx-query-client';
+import { MobxQueryClientConfig } from '../../mobx-query-client.types';
 
 const MAX_FAILURE_COUNT = 3;
 

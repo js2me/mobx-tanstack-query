@@ -5,7 +5,7 @@
     "clean": "rimraf dist",
     "check": "eslint . --fix",
     "prebuild": "npm run clean && npm run check",
-    "build:watch": "nodemon --watch src --ext ts --exec \"tsc && node ./post-build.mjs\"",
+    "build:watch": "pnpm build && nodemon --watch src --ext ts --exec \"tsc && node ./post-build.mjs\"",
     "build": "tsc && node ./post-build.mjs",
     "pub": "PUBLISH=true pnpm run build",
     "prepublish": "pnpm test",
@@ -38,11 +38,11 @@
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
   "peerDependencies": {
-    "mobx": "^6.12.4"
+    "mobx": "^6.12.4",
+    "@tanstack/query-core": "^5.67.2"
   },
   "dependencies": {
-    "linked-abort-controller": "^1.0.2",
-    "@tanstack/query-core": "^5.67.2"
+    "linked-abort-controller": "^1.0.2"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.1",

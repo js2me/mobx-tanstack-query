@@ -18,8 +18,11 @@ import {
   runInAction,
 } from 'mobx';
 
-import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
-import { AnyQueryClient } from './mobx-query-client.types';
+import { MobxQueryClient } from './mobx-query-client';
+import {
+  AnyQueryClient,
+  MobxQueryClientHooks,
+} from './mobx-query-client.types';
 import {
   MobxQueryConfig,
   MobxQueryDynamicOptions,

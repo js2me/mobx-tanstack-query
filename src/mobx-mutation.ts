@@ -13,7 +13,8 @@ import {
   MobxMutationConfig,
   MobxMutationInvalidateQueriesOptions,
 } from './mobx-mutation.types';
-import { MobxQueryClient, MobxQueryClientHooks } from './mobx-query-client';
+import { MobxQueryClient } from './mobx-query-client';
+import { MobxQueryClientHooks } from './mobx-query-client.types';
 
 export class MobxMutation<
   TData = unknown,
