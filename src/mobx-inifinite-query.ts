@@ -4,7 +4,6 @@ import {
   FetchPreviousPageOptions,
   hashKey,
   InfiniteQueryObserver,
-  QueryClient,
   QueryKey,
   InfiniteQueryObserverResult,
   InfiniteData,
@@ -30,7 +29,10 @@ import {
   MobxInfiniteQueryUpdateOptions,
 } from './mobx-inifinite-query.types';
 import { MobxQueryClient } from './mobx-query-client';
-import { MobxQueryClientHooks } from './mobx-query-client.types';
+import {
+  AnyQueryClient,
+  MobxQueryClientHooks,
+} from './mobx-query-client.types';
 
 export class MobxInfiniteQuery<
   TData,
@@ -40,7 +42,7 @@ export class MobxInfiniteQuery<
 > implements Disposable
 {
   protected abortController: AbortController;
-  protected queryClient: QueryClient | MobxQueryClient;
+  protected queryClient: AnyQueryClient;
 
   protected _result: InfiniteQueryObserverResult<
     InfiniteData<TData, TPageParam>,

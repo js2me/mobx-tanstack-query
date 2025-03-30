@@ -4,7 +4,6 @@ import {
   MutationObserverOptions,
   MutationObserverResult,
   MutationOptions,
-  QueryClient,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
@@ -14,7 +13,10 @@ import {
   MobxMutationInvalidateQueriesOptions,
 } from './mobx-mutation.types';
 import { MobxQueryClient } from './mobx-query-client';
-import { MobxQueryClientHooks } from './mobx-query-client.types';
+import {
+  AnyQueryClient,
+  MobxQueryClientHooks,
+} from './mobx-query-client.types';
 
 export class MobxMutation<
   TData = unknown,
@@ -24,7 +26,7 @@ export class MobxMutation<
 > implements Disposable
 {
   protected abortController: AbortController;
-  protected queryClient: QueryClient | MobxQueryClient;
+  protected queryClient: AnyQueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
   mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;

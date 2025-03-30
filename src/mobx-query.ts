@@ -41,7 +41,7 @@ export class MobxQuery<
 > implements Disposable
 {
   protected abortController: AbortController;
-  protected queryClient: QueryClient | MobxQueryClient;
+  protected queryClient: AnyQueryClient;
 
   protected _result: QueryObserverResult<TData, TError>;
 
@@ -66,15 +66,18 @@ export class MobxQuery<
 
   protected config: MobxQueryConfig<TData, TError, TQueryKey>;
 
+  constructor(config: MobxQueryConfig<TData, TError, TQueryKey>);
   constructor(
     queryClient: AnyQueryClient,
-    config: QueryOptionsParams<TData, TError, TQueryKey>,
+    config: () => QueryOptionsParams<TData, TError, TQueryKey>,
   );
-  constructor(config: MobxQueryConfig<TData, TError, TQueryKey>);
 
   constructor(...args: any[]) {
-    const [queryClient, config] =
-      args.length === 2 ? args : [args[0].queryClient, args[0]];
+    const [queryClient, config]: [
+      AnyQueryClient,
+      QueryOptionsParams<TData, TError, TQueryKey>,
+    ] =
+      args.length === 2 ? [args[0], args[1]()] : [args[0].queryClient, args[0]];
     const {
       queryKey: queryKeyOrDynamicQueryKey,
       options: getDynamicOptions,
@@ -142,7 +145,10 @@ export class MobxQuery<
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
-    this.queryObserver = new QueryObserver(queryClient, this.options);
+    this.queryObserver = new QueryObserver(
+      queryClient as QueryClient,
+      this.options,
+    );
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 

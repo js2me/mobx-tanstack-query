@@ -41,7 +41,7 @@ export function createQuery<
   TQueryKey extends QueryKey = any,
 >(
   queryClient: AnyQueryClient,
-  options: QueryOptionsParams<TData, TError, TQueryKey>,
+  options: () => QueryOptionsParams<TData, TError, TQueryKey>,
 ): MobxQuery<TData, TError, TQueryKey>;
 
 export function createQuery(...args: [any, any?]) {
@@ -56,7 +56,7 @@ export function createQuery(...args: [any, any?]) {
       },
     });
   } else if (args.length === 2) {
-    return new MobxQuery(args[0], args[1]);
+    return new MobxQuery(args[0], args[1]());
   }
 
   return new MobxQuery(queryClient, args[0]);
