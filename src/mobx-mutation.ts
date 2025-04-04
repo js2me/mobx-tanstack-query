@@ -142,15 +142,27 @@ export class MobxMutation<
     this.result = nextResult || {};
   }
 
-  onDone(onDoneCallback: (data: TData, payload: TVariables) => void): void {
+  onSettled(
+    onSettledCallback: (
+      data: TData | undefined,
+      error: TError | null,
+      variables: TVariables,
+      context: TContext | undefined,
+    ) => void,
+  ): void {
     reaction(
       () => {
-        const { error, isSuccess } = this.result;
-        return isSuccess && !error;
+        const { isSuccess, isError, isPending } = this.result;
+        return !isPending && (isSuccess || isError);
       },
-      (isDone) => {
-        if (isDone) {
-          onDoneCallback(this.result.data!, this.result.variables!);
+      (isSettled) => {
+        if (isSettled) {
+          onSettledCallback(
+            this.result.data,
+            this.result.error,
+            this.result.variables!,
+            this.result.context,
+          );
         }
       },
       {
@@ -159,12 +171,45 @@ export class MobxMutation<
     );
   }
 
-  onError(onErrorCallback: (error: TError, payload: TVariables) => void): void {
+  onDone(
+    onDoneCallback: (
+      data: TData,
+      payload: TVariables,
+      context: TContext | undefined,
+    ) => void,
+  ): void {
+    reaction(
+      () => {
+        const { error, isSuccess } = this.result;
+        return isSuccess && !error;
+      },
+      (isDone) => {
+        if (isDone) {
+          onDoneCallback(
+            this.result.data!,
+            this.result.variables!,
+            this.result.context,
+          );
+        }
+      },
+      {
+        signal: this.abortController.signal,
+      },
+    );
+  }
+
+  onError(
+    onErrorCallback: (
+      error: TError,
+      payload: TVariables,
+      context: TContext | undefined,
+    ) => void,
+  ): void {
     reaction(
       () => this.result.error,
       (error) => {
         if (error) {
-          onErrorCallback(error, this.result.variables!);
+          onErrorCallback(error, this.result.variables!, this.result.context);
         }
       },
       {
