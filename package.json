@@ -42,7 +42,7 @@
     "@tanstack/query-core": "^5.67.2"
   },
   "dependencies": {
-    "linked-abort-controller": "^1.0.2"
+    "linked-abort-controller": "^1.1.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.1",

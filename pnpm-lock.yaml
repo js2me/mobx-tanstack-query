@@ -12,8 +12,8 @@ importers:
         specifier: ^5.67.2
         version: 5.67.2
       linked-abort-controller:
-        specifier: ^1.0.2
-        version: 1.0.4
+        specifier: ^1.1.0
+        version: 1.1.0
       mobx:
         specifier: ^6.12.4
         version: 6.13.6
@@ -2383,8 +2383,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  linked-abort-controller@1.0.4:
-    resolution: {integrity: sha512-yzZFM8ZlqhCH7z9fqfOva2trCVP7RDftCAj6YCJuzucMHhcuFBtcThsQNgGEDZbtH0tnPaMuTgMxKa8Pc3zepw==}
+  linked-abort-controller@1.1.0:
+    resolution: {integrity: sha512-qFzIKH2oS+GmCg6rWWfXPNoynWUPC1CRr4NNvbqp40l4HwMTT0OBj4PRQxiOA+OAeAcGW1Xq1MRv7SOdu+MlGw==}
 
   locate-path@5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
@@ -6015,7 +6015,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  linked-abort-controller@1.0.4: {}
+  linked-abort-controller@1.1.0: {}
 
   locate-path@5.0.0:
     dependencies:
