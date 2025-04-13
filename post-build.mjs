@@ -6,8 +6,10 @@ postBuildScript({
   srcDirName: 'src',
   filesToCopy: ['LICENSE', 'README.md', 'assets'],
   updateVersion: process.env.PUBLISH_VERSION,
-  onDone: (versionsDiff, _, packageJson, { targetPackageJson }) => {
+  onDone: (versionsDiff, { $ }, packageJson, { targetPackageJson }) => {
     if (process.env.PUBLISH) {
+      $('pnpm test');
+
       publishScript({
         nextVersion: versionsDiff?.next ?? packageJson.version,
         currVersion: versionsDiff?.current,
