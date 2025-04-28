@@ -1,15 +1,8 @@
----
-id: mobx-query-client-overview
-title: MobxQueryClient overview
-sidebar_label: Overview
-sidebar_position: 1
-slug: /api/mobx-query-client/overview
----
+# MobxQueryClient
 
-# MobxQueryClient  
 
 An enhanced version of [TanStack's Query QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient).  
-Adds specialized configurations for library entities like [`MobxQuery`](/api/mobx-query/overview) or [`MobxMutation`](/api/mobx-mutation/overview).  
+Adds specialized configurations for library entities like [`MobxQuery`](/api/MobxQuery) or [`MobxMutation`](/api/MobxMutation).  
 
 [Reference to source code](/src/mobx-query-client.ts)  
 
@@ -39,22 +32,22 @@ interface MobxQueryClientConfig {
 ## Key methods and properties   
 
 ### `queryFeatures`  
-Features configurations exclusively for [`MobxQuery`](/api/mobx-query/overview)/[`MobxInfiniteQuery`](/api/mobx-infinite-query/overview)  
+Features configurations exclusively for [`MobxQuery`](/api/MobxQuery)/[`MobxInfiniteQuery`](/api/MobxInfiniteQuery)  
 
 ### `mutationFeatures`  
-Features configurations exclusively for [`MobxMutation`](/api/mobx-mutation/overview)  
+Features configurations exclusively for [`MobxMutation`](/api/MobxMutation)  
 
 ### `hooks`  
 Entity lifecycle events. Available hooks:   
 
 | Hook | Description |
 |---|---|
-| onQueryInit  | Triggered when a [`MobxQuery`](/api/mobx-query/overview) is created  |
-| onInfiniteQueryInit | Triggered when a [`MobxInfiniteQuery`](/api/mobx-infinite-query/overview) is created |
-| onMutationInit  | Triggered when a [`MobxMutation`](/api/mobx-mutation/overview) is created |
-| onQueryDestroy  | Triggered when a [`MobxQuery`](/api/mobx-query/overview) is destroyed |
-| onInfiniteQueryDestroy  | Triggered when a [`MobxInfiniteQuery`](/api/mobx-infinite-query/overview) is destroyed |
-| onMutationDestroy  | Triggered when a [`MobxMutation`](/api/mobx-mutation/overview) is destroyed |
+| onQueryInit  | Triggered when a [`MobxQuery`](/api/MobxQuery) is created  |
+| onInfiniteQueryInit | Triggered when a [`MobxInfiniteQuery`](/api/MobxInfiniteQuery) is created |
+| onMutationInit  | Triggered when a [`MobxMutation`](/api/MobxMutation) is created |
+| onQueryDestroy  | Triggered when a [`MobxQuery`](/api/MobxQuery) is destroyed |
+| onInfiniteQueryDestroy  | Triggered when a [`MobxInfiniteQuery`](/api/MobxInfiniteQuery) is destroyed |
+| onMutationDestroy  | Triggered when a [`MobxMutation`](/api/MobxMutation) is destroyed |
 
 ## Inheritance  
 `MobxQueryClient` inherits all methods and properties from [QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient), including:  

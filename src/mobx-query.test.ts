@@ -10,8 +10,15 @@ import {
   hashKey,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
-import { observable, reaction, runInAction, when } from 'mobx';
-import { describe, expect, it, test, vi } from 'vitest';
+import {
+  computed,
+  makeObservable,
+  observable,
+  reaction,
+  runInAction,
+  when,
+} from 'mobx';
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { waitAsync } from 'yummies/async';
 
 import { MobxQuery } from './mobx-query';
@@ -743,6 +750,374 @@ describe('MobxQuery', () => {
 
         mobxQuery.dispose();
       });
+    });
+  });
+
+  describe.skip('"setData" method', () => {
+    const queryClient = new QueryClient();
+
+    beforeEach(() => {
+      // vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      // vi.useRealTimers();
+      vi.restoreAllMocks();
+      queryClient.clear();
+    });
+
+    it('should simple update query data', async ({ task }) => {
+      const queryData = {
+        a: {
+          b: {
+            c: {
+              d: {
+                f: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      } as Record<string, any>;
+
+      const mobxQuery = new MobxQueryMock(
+        {
+          queryKey: [task.name, '1'],
+          queryFn: () => structuredClone(queryData),
+        },
+        queryClient,
+      );
+
+      await when(() => !mobxQuery.result.isLoading);
+
+      mobxQuery.setData(() => ({ bar: 1, baz: 2 }));
+
+      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(mobxQuery.result.data).toEqual({ bar: 1, baz: 2 });
+
+      mobxQuery.dispose();
+    });
+    it('should update query data using mutation', async ({ task }) => {
+      const queryData = {
+        a: {
+          b: {
+            c: {
+              d: {
+                e: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      } as Record<string, any>;
+
+      console.info('asdfdsaf', task.name);
+
+      const mobxQuery = new MobxQueryMock(
+        {
+          queryKey: [task.name, '2'],
+          queryFn: () => structuredClone(queryData),
+        },
+        queryClient,
+      );
+
+      await when(() => !mobxQuery.result.isLoading);
+
+      mobxQuery.setData((curr) => {
+        if (!curr) return curr;
+        curr.a.b.c.d.e.children.push({ id: '2', name: 'Doe', age: 21 });
+        return curr;
+      });
+
+      await when(() => !mobxQuery.result.isLoading);
+      // await when(() => !mobxQuery.result.isStale);
+
+      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(mobxQuery.result.data).toEqual({
+        a: {
+          b: {
+            c: {
+              d: {
+                e: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                    {
+                      id: '2',
+                      name: 'Doe',
+                      age: 21,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+    it('should calls reactions after update query data using mutation', async ({
+      task,
+    }) => {
+      const queryData = {
+        a: {
+          b: {
+            c: {
+              d: {
+                e: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      } as Record<string, any>;
+
+      const mobxQuery = new MobxQueryMock(
+        {
+          queryKey: [task.name, '3'],
+          queryFn: () => structuredClone(queryData),
+        },
+        queryClient,
+      );
+
+      const reactionSpy = vi.fn();
+
+      reaction(
+        () => mobxQuery.result.data,
+        (curr, prev) => reactionSpy(curr, prev),
+      );
+
+      await when(() => !mobxQuery.result.isLoading);
+
+      mobxQuery.setData((curr) => {
+        if (!curr) return curr;
+        curr.a.b.c.d.e.children.push({ id: '2', name: 'Doe', age: 21 });
+        return curr;
+      });
+
+      expect(reactionSpy).toBeCalledTimes(2);
+      expect(reactionSpy).toHaveBeenNthCalledWith(
+        2,
+        {
+          a: {
+            b: {
+              c: {
+                d: {
+                  e: {
+                    children: [
+                      {
+                        id: '1',
+                        name: 'John',
+                        age: 20,
+                      },
+                      {
+                        id: '2',
+                        name: 'Doe',
+                        age: 21,
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          a: {
+            b: {
+              c: {
+                d: {
+                  e: {
+                    children: [
+                      {
+                        id: '1',
+                        name: 'John',
+                        age: 20,
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      );
+
+      mobxQuery.dispose();
+    });
+    it('should update computed.structs after update query data using mutation', async ({
+      task,
+    }) => {
+      const queryData = {
+        a: {
+          b: {
+            c: {
+              d: {
+                e: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      } as Record<string, any>;
+
+      class TestClass {
+        mobxQuery = new MobxQueryMock(
+          {
+            queryKey: [task.name, '4'],
+            queryFn: () => structuredClone(queryData),
+          },
+          queryClient,
+        );
+
+        constructor() {
+          computed.struct(this, 'foo');
+          makeObservable(this);
+        }
+
+        get foo() {
+          return this.mobxQuery.result.data?.a.b.c.d.e.children[0] || null;
+        }
+
+        destroy() {
+          this.mobxQuery.dispose();
+        }
+      }
+
+      const testClass = new TestClass();
+
+      await when(() => !testClass.mobxQuery.result.isLoading);
+
+      expect(testClass.foo).toStrictEqual({
+        age: 20,
+        id: '1',
+        name: 'John',
+      });
+
+      testClass.mobxQuery.setData((curr) => {
+        if (!curr) return curr;
+        curr.a.b.c.d.e.children[0].name = 'Doe';
+        return curr;
+      });
+
+      expect(testClass.foo).toStrictEqual({
+        age: 20,
+        id: '1',
+        name: 'Doe',
+      });
+
+      testClass.destroy();
+    });
+    it('computed.structs should be reactive after update query data using mutation', async ({
+      task,
+    }) => {
+      const queryData = {
+        a: {
+          b: {
+            c: {
+              d: {
+                e: {
+                  children: [
+                    {
+                      id: '1',
+                      name: 'John',
+                      age: 20,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      } as Record<string, any>;
+
+      class TestClass {
+        mobxQuery = new MobxQueryMock(
+          {
+            queryKey: [task.name, '5'],
+            queryFn: () => structuredClone(queryData),
+          },
+          queryClient,
+        );
+
+        constructor() {
+          computed.struct(this, 'foo');
+          makeObservable(this);
+        }
+
+        get foo() {
+          return this.mobxQuery.result.data?.a.b.c.d.e.children[0] || null;
+        }
+
+        destroy() {
+          this.mobxQuery.dispose();
+        }
+      }
+
+      const testClass = new TestClass();
+
+      const reactionFooSpy = vi.fn();
+
+      reaction(
+        () => testClass.foo,
+        (curr, prev) => reactionFooSpy(curr, prev),
+      );
+
+      await when(() => !testClass.mobxQuery.result.isLoading);
+
+      testClass.mobxQuery.setData((curr) => {
+        if (!curr) return curr;
+        curr.a.b.c.d.e.children[0].name = 'Doe';
+        return curr;
+      });
+
+      expect(reactionFooSpy).toBeCalledTimes(2);
+
+      expect(reactionFooSpy).toHaveBeenNthCalledWith(
+        2,
+        {
+          age: 20,
+          id: '1',
+          name: 'Doe',
+        },
+        {
+          age: 20,
+          id: '1',
+          name: 'John',
+        },
+      );
+
+      testClass.destroy();
     });
   });
 

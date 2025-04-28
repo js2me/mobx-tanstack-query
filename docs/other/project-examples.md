@@ -1,10 +1,4 @@
----
-id: project-examples
-title: Project Examples
-sidebar_label: Project Examples
-sidebar_position: 1
-slug: /other/project-examples
----
+# Project Examples
 
 ## **HTTP Status Codes**  
 Simple usage `MobX` Tanstack queries to fetch JSON data from GitHub  

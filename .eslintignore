@@ -18,3 +18,4 @@ post-build.mjs
 coverage
 vitest.config.ts
 website
+docs

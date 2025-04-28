@@ -25,14 +25,14 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: cd website && pnpm install
-      - name: Build website
-        run: pnpm website:build
+        run: cd docs && pnpm install
+      - name: Build docs
+        run: pnpm build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/build
+          path: docs/.vitepress/dist
 
   deploy:
     name: Deploy to GitHub Pages

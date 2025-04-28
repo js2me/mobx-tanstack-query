@@ -394,8 +394,8 @@ export const queryClient = new QueryClient({
     queries: {
       throwOnError: true,
       queryKeyHashFn: hashKey,
-      refetchOnWindowFocus: 'always',
-      refetchOnReconnect: 'always',
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
       staleTime: 5 * 60 * 1000,
       retry: (failureCount, error) => {
         if ('status' in error && Number(error.status) >= 500) {
