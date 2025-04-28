@@ -44,17 +44,17 @@
  * -------------------------------------------------------------------------- */
 
  :root {
-  --vp-c-indigo-1: #c87a45;
-  --vp-c-indigo-2: #ff8a4f;
-  --vp-c-indigo-3: #fb681f;
-  --vp-c-indigo-soft: #ff82512b;
+  --vp-c-indigo-1: #d9195f;
+  --vp-c-indigo-2: #ff5b71;
+  --vp-c-indigo-3: #fb1f35;
+  --vp-c-indigo-soft: #ff517a2b;
 }
 
  html.dark {
-  --vp-c-indigo-1: #ffae77;
-  --vp-c-indigo-2: #ff8a4f;
-  --vp-c-indigo-3: #fb681f;
-  --vp-c-indigo-soft: #ff662069;
+  --vp-c-indigo-1: #ee3479;
+  --vp-c-indigo-2: #ff5b71;
+  --vp-c-indigo-3: #fb1f35;
+  --vp-c-indigo-soft: #ff517a2b;
  }
 
  :root {
