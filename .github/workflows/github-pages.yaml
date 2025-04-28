@@ -25,9 +25,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: cd docs && pnpm install
+        run: pnpm install && cd docs && pnpm install
       - name: Build docs
-        run: pnpm build
+        run: pnpm docs:build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3

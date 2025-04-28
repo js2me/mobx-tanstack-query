@@ -50,8 +50,8 @@ export const queryClient = new MobxQueryClient({
       refetchOnReconnect: true,
       staleTime: 10 * 60 * 1000,
       retry: (failureCount, error) => {
-        if (isHttpBadResponse(error) && error.status >= 500) {
-          return MAX_FAILURE_COUNT - failureCount > 0;
+        if (error instanceof Response && error.status >= 500) {
+          return failureCount < 3;
         }
         return false;
       },

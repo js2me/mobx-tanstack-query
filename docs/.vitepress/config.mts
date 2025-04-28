@@ -48,13 +48,25 @@ export default defineConfig({
         ],
       },
       {
-        text: 'API',
+        text: 'Core API',
+        link: '/api/MobxQuery',
         items: [
           { text: 'MobxQuery', link: '/api/MobxQuery' },
           { text: 'MobxMutation', link: '/api/MobxMutation' },
           { text: 'MobxInfiniteQuery', link: '/api/MobxInfiniteQuery' },
           { text: 'MobxQueryClient', link: '/api/MobxQueryClient' },
+          { text: 'Other', link: '/api/other' },
         ],
+      },
+      {
+        text: 'Preset API',
+        link: '/preset',
+        items: [
+          { text: 'createQuery', link: '/preset/createQuery' },
+          { text: 'createMutation', link: '/preset/createMutation' },
+          { text: 'createInfiniteQuery', link: '/preset/createInfiniteQuery' },
+          { text: 'queryClient', link: '/preset/queryClient' },
+        ]
       },
       {
         text: 'Other',
