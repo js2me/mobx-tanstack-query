@@ -23,3 +23,31 @@ const myApi = {
 
 type Config = MobxMutationConfigFromFn<typeof myApi.createApple>
 ```
+
+
+## `using` keyword   
+
+`MobxQuery`, `MobxInfiniteQuery`, `MobxMutation` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).   
+
+In your project you need to install babel plugin [`@babel/plugin-proposal-explicit-resource-management`](https://www.npmjs.com/package/@babel/plugin-proposal-explicit-resource-management) to add this support.   
+
+How it looks:   
+
+```ts
+import { createQuery } from "mobx-tanstack-query/preset";
+
+class DataModel {
+  async getData() {
+    using query = createQuery(() => yourApi.getData(), { queryKey: ['data']});
+    await when(() => !query.isLoading);
+    return query.result.data!;
+  }
+}
+
+const dataModel = new DataModel();
+const data = await dataModel.getData();
+// after call getData() created MobxQuery
+// will be destroyed
+```
+
+
