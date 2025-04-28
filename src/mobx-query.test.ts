@@ -18,7 +18,7 @@ import {
   runInAction,
   when,
 } from 'mobx';
-import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { afterEach, describe, expect, it, test, vi } from 'vitest';
 import { waitAsync } from 'yummies/async';
 
 import { MobxQuery } from './mobx-query';
@@ -753,15 +753,10 @@ describe('MobxQuery', () => {
     });
   });
 
-  describe.skip('"setData" method', () => {
+  describe('"setData" method', () => {
     const queryClient = new QueryClient();
 
-    beforeEach(() => {
-      // vi.useFakeTimers();
-    });
-
     afterEach(() => {
-      // vi.useRealTimers();
       vi.restoreAllMocks();
       queryClient.clear();
     });
@@ -836,6 +831,7 @@ describe('MobxQuery', () => {
       );
 
       await when(() => !mobxQuery.result.isLoading);
+      await waitAsync(10);
 
       mobxQuery.setData((curr) => {
         if (!curr) return curr;
@@ -844,7 +840,6 @@ describe('MobxQuery', () => {
       });
 
       await when(() => !mobxQuery.result.isLoading);
-      // await when(() => !mobxQuery.result.isStale);
 
       expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
       expect(mobxQuery.result.data).toEqual({
@@ -911,6 +906,7 @@ describe('MobxQuery', () => {
       );
 
       await when(() => !mobxQuery.result.isLoading);
+      await waitAsync(10);
 
       mobxQuery.setData((curr) => {
         if (!curr) return curr;
@@ -1017,6 +1013,7 @@ describe('MobxQuery', () => {
       const testClass = new TestClass();
 
       await when(() => !testClass.mobxQuery.result.isLoading);
+      await waitAsync(10);
 
       expect(testClass.foo).toStrictEqual({
         age: 20,
@@ -1094,6 +1091,7 @@ describe('MobxQuery', () => {
       );
 
       await when(() => !testClass.mobxQuery.result.isLoading);
+      await waitAsync(10);
 
       testClass.mobxQuery.setData((curr) => {
         if (!curr) return curr;
