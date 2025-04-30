@@ -18,6 +18,16 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: `/${packageName}/logo.png` }],
   ],
+  transformHead: ({ pageData, head }) => {
+    head.push(['meta', { property: 'og:site_name', content: packageName }]);
+    head.push(['meta', { property: 'og:title', content: pageData.title }]);
+    if (pageData.description) {
+      head.push(['meta', { property: 'og:description', content: pageData.description }]);   
+    }
+    head.push(['meta', { property: 'og:image', content: `https://${author}.github.io/${packageName}/logo.png` }]);
+
+    return head
+  },
   themeConfig: {
     logo: '/logo.png',
     search: {
