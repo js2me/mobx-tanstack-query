@@ -2,12 +2,13 @@ import { QueryClient } from '@tanstack/query-core';
 
 import { MobxMutationFeatures } from './mobx-mutation.types';
 import {
+  IQueryClient,
   MobxQueryClientConfig,
   MobxQueryClientHooks,
 } from './mobx-query-client.types';
 import { MobxQueryFeatures } from './mobx-query.types';
 
-export class MobxQueryClient extends QueryClient {
+export class MobxQueryClient extends QueryClient implements IQueryClient {
   hooks?: MobxQueryClientHooks;
 
   constructor(private config: MobxQueryClientConfig = {}) {

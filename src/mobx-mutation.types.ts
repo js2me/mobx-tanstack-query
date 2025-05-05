@@ -2,11 +2,10 @@ import {
   DefaultError,
   InvalidateQueryFilters,
   MutationObserverOptions,
-  QueryClient,
 } from '@tanstack/query-core';
 
 import { MobxMutation } from './mobx-mutation';
-import { MobxQueryClient } from './mobx-query-client';
+import { AnyQueryClient } from './mobx-query-client.types';
 
 export interface MobxMutationFeatures {
   /**
@@ -47,7 +46,7 @@ export interface MobxMutationConfig<
       '_defaulted'
     >,
     MobxMutationFeatures {
-  queryClient: QueryClient | MobxQueryClient;
+  queryClient: AnyQueryClient;
   abortSignal?: AbortSignal;
   invalidateQueries?:
     | MobxMutationInvalidateQueriesOptions

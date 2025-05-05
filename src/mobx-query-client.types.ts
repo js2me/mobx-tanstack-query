@@ -12,14 +12,17 @@ import { MobxQuery } from './mobx-query';
 import type { MobxQueryClient } from './mobx-query-client';
 import { MobxQueryFeatures } from './mobx-query.types';
 
-export type QueryClientInterface = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [K in keyof QueryClient]: QueryClient[K] extends Function
-    ? QueryClient[K]
-    : never;
+export type IQueryClient = {
+  [K in keyof QueryClient]: QueryClient[K];
 };
 
-export type AnyQueryClient = MobxQueryClient | QueryClientInterface;
+/**
+ * @deprecated renamed to `IQueryClient`. Will be removed in next major release.
+ */
+// eslint-disable-next-line sonarjs/redundant-type-aliases
+export type QueryClientInterface = IQueryClient;
+
+export type AnyQueryClient = MobxQueryClient | IQueryClient;
 
 export interface MobxDefaultOptions<TError = DefaultError>
   extends Omit<DefaultOptions<TError>, 'queries' | 'mutations'> {

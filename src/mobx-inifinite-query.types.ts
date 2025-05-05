@@ -1,14 +1,13 @@
 import {
   DefaultError,
   InfiniteQueryObserverOptions,
-  QueryClient,
   QueryKey,
   InfiniteData,
   DefaultedInfiniteQueryObserverOptions,
 } from '@tanstack/query-core';
 
 import { MobxInfiniteQuery } from './mobx-inifinite-query';
-import { MobxQueryClient } from './mobx-query-client';
+import { AnyQueryClient } from './mobx-query-client.types';
 import {
   MobxQueryFeatures,
   MobxQueryInvalidateParams,
@@ -102,7 +101,7 @@ export interface MobxInfiniteQueryConfig<
       >
     >,
     MobxQueryFeatures {
-  queryClient: QueryClient | MobxQueryClient;
+  queryClient: AnyQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
    * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.

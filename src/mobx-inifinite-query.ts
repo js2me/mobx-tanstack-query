@@ -147,6 +147,8 @@ export class MobxInfiniteQuery<
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
