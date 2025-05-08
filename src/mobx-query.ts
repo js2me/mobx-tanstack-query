@@ -35,9 +35,11 @@ import {
 import { QueryOptionsParams } from './query-options';
 
 export class MobxQuery<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
 > implements Disposable
 {
   protected abortController: AbortController;
@@ -45,8 +47,14 @@ export class MobxQuery<
 
   protected _result: QueryObserverResult<TData, TError>;
 
-  options: MobxQueryOptions<TData, TError, TQueryKey>;
-  queryObserver: QueryObserver<TData, TError, TData, TData, TQueryKey>;
+  options: MobxQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+  queryObserver: QueryObserver<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >;
 
   isResultRequsted: boolean;
 
@@ -57,25 +65,41 @@ export class MobxQuery<
    * in cases where the "enableOnDemand" option is enabled
    */
   private holdedEnabledOption: MobxQueryOptions<
-    TData,
+    TQueryFnData,
     TError,
+    TData,
+    TQueryData,
     TQueryKey
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: MobxQueryClientHooks;
 
-  protected config: MobxQueryConfig<TData, TError, TQueryKey>;
+  protected config: MobxQueryConfig<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >;
 
-  constructor(config: MobxQueryConfig<TData, TError, TQueryKey>);
+  constructor(
+    config: MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  );
   constructor(
     queryClient: AnyQueryClient,
-    config: () => QueryOptionsParams<TData, TError, TQueryKey>,
+    config: () => QueryOptionsParams<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
   );
 
   constructor(...args: any[]) {
     const [queryClient, config]: [
       AnyQueryClient,
-      QueryOptionsParams<TData, TError, TQueryKey>,
+      QueryOptionsParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
     ] =
       args.length === 2 ? [args[0], args[1]()] : [args[0].queryClient, args[0]];
     const {
@@ -145,10 +169,13 @@ export class MobxQuery<
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
-    this.queryObserver = new QueryObserver(
-      queryClient as QueryClient,
-      this.options,
-    );
+    this.queryObserver = new QueryObserver<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >(queryClient as QueryClient, this.options);
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
@@ -209,7 +236,13 @@ export class MobxQuery<
 
   protected createQueryHash(
     queryKey: any,
-    options: MobxQueryOptions<TData, TError, TQueryKey>,
+    options: MobxQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
   ) {
     if (options.queryKeyHashFn) {
       return options.queryKeyHashFn(queryKey);
@@ -219,10 +252,13 @@ export class MobxQuery<
   }
 
   setData(
-    updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
+    updater: Updater<
+      NoInfer<TQueryFnData> | undefined,
+      NoInfer<TQueryFnData> | undefined
+    >,
     options?: SetDataOptions,
   ) {
-    return this.queryClient.setQueryData<TData>(
+    return this.queryClient.setQueryData<TQueryFnData>(
       this.options.queryKey,
       updater,
       options,
@@ -231,9 +267,23 @@ export class MobxQuery<
 
   update(
     optionsUpdate:
-      | Partial<MobxQueryOptions<TData, TError, TQueryKey>>
-      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
-      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
+      | Partial<
+          MobxQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+        >
+      | MobxQueryUpdateOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >
+      | MobxQueryDynamicOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >,
   ) {
     if (this.abortController.signal.aborted) {
       return;
@@ -256,7 +306,13 @@ export class MobxQuery<
   private enableHolder = () => false;
 
   private processOptions = (
-    options: MobxQueryOptions<TData, TError, TQueryKey>,
+    options: MobxQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
   ) => {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
@@ -379,7 +435,13 @@ export class MobxQuery<
   async start({
     cancelRefetch,
     ...params
-  }: MobxQueryStartParams<TData, TError, TQueryKey> = {}) {
+  }: MobxQueryStartParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > = {}) {
     this.update({ ...params });
 
     await this.refetch({ cancelRefetch });

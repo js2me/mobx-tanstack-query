@@ -8,41 +8,67 @@ import { QueryOptionsParams } from '../query-options';
 import { queryClient } from './query-client';
 
 export type CreateQueryParams<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
 > = Omit<
-  MobxQueryConfig<TData, TError, TQueryKey>,
+  MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   'queryClient' | 'queryFn'
 > & {
   queryClient?: QueryClient;
 };
 
 export function createQuery<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
 >(
-  options: QueryOptionsParams<TData, TError, TQueryKey>,
+  options: QueryOptionsParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
+): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export function createQuery<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  queryFn: MobxQueryFn<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  params?: CreateQueryParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
 ): MobxQuery<TData, TError, TQueryKey>;
 
 export function createQuery<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
->(
-  queryFn: MobxQueryFn<TData, TError, TQueryKey>,
-  params?: CreateQueryParams<TData, TError, TQueryKey>,
-): MobxQuery<TData, TError, TQueryKey>;
-
-export function createQuery<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = any,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
 >(
   queryClient: AnyQueryClient,
-  options: () => QueryOptionsParams<TData, TError, TQueryKey>,
-): MobxQuery<TData, TError, TQueryKey>;
+  options: () => QueryOptionsParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
+): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery(...args: [any, any?]) {
   if (typeof args[0] === 'function') {

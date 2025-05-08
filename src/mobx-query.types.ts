@@ -18,12 +18,14 @@ export interface MobxQueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
 export interface MobxQueryDynamicOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
     Omit<
-      QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
+      QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
       'queryFn' | 'enabled' | 'queryKeyHashFn'
     >
   > {
@@ -31,22 +33,28 @@ export interface MobxQueryDynamicOptions<
 }
 
 export interface MobxQueryOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > extends DefaultedQueryObserverOptions<
-    TData,
+    TQueryFnData,
     TError,
     TData,
-    TData,
+    TQueryData,
     TQueryKey
   > {}
 
 export type MobxQueryUpdateOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> = Partial<QueryObserverOptions<TData, TError, TData, TData, TQueryKey>>;
+> = Partial<
+  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+>;
 
 export interface MobxQueryFeatures {
   /**
@@ -78,12 +86,20 @@ export type MobxQueryConfigFromFn<
 >;
 
 export interface MobxQueryConfig<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
       Omit<
-        QueryObserverOptions<TData, TError, TData, TData, TQueryKey>,
+        QueryObserverOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >,
         'queryKey'
       >
     >,
@@ -100,7 +116,9 @@ export interface MobxQueryConfig<
    * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
    */
   queryKey?: TQueryKey | (() => TQueryKey);
-  onInit?: (query: MobxQuery<TData, TError, TQueryKey>) => void;
+  onInit?: (
+    query: MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  ) => void;
   abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
@@ -110,29 +128,68 @@ export interface MobxQueryConfig<
    */
   options?: (
     query: NoInfer<
-      MobxQuery<NoInfer<TData>, NoInfer<TError>, NoInfer<TQueryKey>>
+      MobxQuery<
+        NoInfer<TQueryFnData>,
+        NoInfer<TError>,
+        NoInfer<TData>,
+        NoInfer<TQueryData>,
+        NoInfer<TQueryKey>
+      >
     >,
-  ) => MobxQueryDynamicOptions<TData, TError, TQueryKey>;
+  ) => MobxQueryDynamicOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >;
 }
 
 export type MobxQueryFn<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> = Exclude<MobxQueryConfig<TData, TError, TQueryKey>['queryFn'], undefined>;
+> = Exclude<
+  MobxQueryConfig<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >['queryFn'],
+  undefined
+>;
+
+export type AnyMobxQuery = MobxQuery<any, any, any, any, any>;
 
 export interface MobxQueryStartParams<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> extends MobxQueryUpdateOptions<TData, TError, TQueryKey>,
+> extends MobxQueryUpdateOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
 export type InferQuery<
-  T extends MobxQueryConfig<any, any, any> | MobxQuery<any, any, any>,
+  T extends MobxQueryConfig | MobxQuery,
   TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',
 > =
-  T extends MobxQueryConfig<infer TData, infer TError, infer TQueryKey>
+  T extends MobxQueryConfig<
+    infer TQueryFnData,
+    infer TError,
+    infer TData,
+    infer TQueryData,
+    infer TQueryKey
+  >
     ? TInferValue extends 'config'
       ? T
       : TInferValue extends 'data'
@@ -142,11 +199,17 @@ export type InferQuery<
           : TInferValue extends 'error'
             ? TError
             : TInferValue extends 'query'
-              ? MobxQuery<TData, TError, TQueryKey>
+              ? MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
               : never
-    : T extends MobxQuery<infer TData, infer TError, infer TQueryKey>
+    : T extends MobxQuery<
+          infer TQueryFnData,
+          infer TError,
+          infer TData,
+          infer TQueryData,
+          infer TQueryKey
+        >
       ? TInferValue extends 'config'
-        ? MobxQueryConfig<TData, TError, TQueryKey>
+        ? MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
         : TInferValue extends 'data'
           ? TData
           : TInferValue extends 'key'

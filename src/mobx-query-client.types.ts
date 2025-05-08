@@ -8,9 +8,8 @@ import {
 import { MobxInfiniteQuery } from './mobx-inifinite-query';
 import { MobxMutation } from './mobx-mutation';
 import { MobxMutationFeatures } from './mobx-mutation.types';
-import { MobxQuery } from './mobx-query';
 import type { MobxQueryClient } from './mobx-query-client';
-import { MobxQueryFeatures } from './mobx-query.types';
+import { AnyMobxQuery, MobxQueryFeatures } from './mobx-query.types';
 
 export type IQueryClient = {
   [K in keyof QueryClient]: QueryClient[K];
@@ -31,10 +30,10 @@ export interface MobxDefaultOptions<TError = DefaultError>
 }
 
 export interface MobxQueryClientHooks {
-  onQueryInit?: (query: MobxQuery<any, any, any>) => void;
+  onQueryInit?: (query: AnyMobxQuery) => void;
   onInfiniteQueryInit?: (query: MobxInfiniteQuery<any, any, any, any>) => void;
   onMutationInit?: (query: MobxMutation<any, any, any, any>) => void;
-  onQueryDestroy?: (query: MobxQuery<any, any, any>) => void;
+  onQueryDestroy?: (query: AnyMobxQuery) => void;
   onInfiniteQueryDestroy?: (
     query: MobxInfiniteQuery<any, any, any, any>,
   ) => void;

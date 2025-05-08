@@ -3,10 +3,15 @@ import { DefaultError, QueryKey } from '@tanstack/query-core';
 import { MobxQueryConfig } from './mobx-query.types';
 
 export interface QueryOptionsParams<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> extends Omit<MobxQueryConfig<TData, TError, TQueryKey>, 'queryClient'> {}
+> extends Omit<
+    MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    'queryClient'
+  > {}
 
 export function queryOptions<
   TData,

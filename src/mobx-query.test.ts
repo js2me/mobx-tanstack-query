@@ -18,7 +18,15 @@ import {
   runInAction,
   when,
 } from 'mobx';
-import { afterEach, describe, expect, it, test, vi } from 'vitest';
+import {
+  afterEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  test,
+  vi,
+} from 'vitest';
 import { waitAsync } from 'yummies/async';
 
 import { MobxQuery } from './mobx-query';
@@ -32,10 +40,12 @@ import {
 import { createQuery } from './preset';
 
 class MobxQueryMock<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
-> extends MobxQuery<TData, TError, TQueryKey> {
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> extends MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
   spies = {
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
@@ -48,7 +58,10 @@ class MobxQueryMock<
   };
 
   constructor(
-    options: Omit<MobxQueryConfig<TData, TError, TQueryKey>, 'queryClient'>,
+    options: Omit<
+      MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+      'queryClient'
+    >,
     queryClient?: QueryClient,
   ) {
     super({
@@ -86,8 +99,20 @@ class MobxQueryMock<
 
   update(
     options:
-      | MobxQueryUpdateOptions<TData, TError, TQueryKey>
-      | MobxQueryDynamicOptions<TData, TError, TQueryKey>,
+      | MobxQueryUpdateOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >
+      | MobxQueryDynamicOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >,
   ): void {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
@@ -95,9 +120,12 @@ class MobxQueryMock<
   }
 
   setData(
-    updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
-    options?: SetDataOptions | undefined,
-  ): TData | undefined {
+    updater: Updater<
+      NoInfer<TQueryFnData> | undefined,
+      NoInfer<TQueryFnData> | undefined
+    >,
+    options?: SetDataOptions,
+  ): TQueryFnData | undefined {
     const result = super.setData(updater, options);
     this.spies.setData.mockReturnValue(result)(updater, options);
     return result;
@@ -2215,5 +2243,34 @@ describe('MobxQuery', () => {
 
       expect(error?.message).toBe('MobxQueryError');
     });
+  });
+
+  it('select type bugfix (#12 issue)', async () => {
+    const data = [
+      {
+        address: 'a1',
+        name: 'Foo',
+      },
+      {
+        address: 'b1',
+        name: 'Bar',
+      },
+    ];
+
+    const queryWithSelect = new MobxQuery({
+      queryClient: new MobxQueryClient(),
+      queryKey: ['a'],
+      queryFn: () => data,
+      select: (data) => {
+        return new Map(data.map((item) => [item.address, item]));
+      },
+    });
+
+    await when(() => !queryWithSelect.result.isLoading);
+
+    expectTypeOf(queryWithSelect.result.data).toEqualTypeOf<
+      undefined | Map<string, { address: string; name: string }>
+    >();
+    expect(queryWithSelect.result.data).toBeDefined();
   });
 });
