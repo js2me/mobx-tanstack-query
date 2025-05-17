@@ -41,6 +41,7 @@ Add configuration using `defineConfig`
 
 ```ts
 import { defineConfig } from "mobx-tanstack-query-api/cli";
+import { fileURLToPath } from "url";
 import path from "path";
 
 const __filename = fileURLToPath(import.meta.url); 
