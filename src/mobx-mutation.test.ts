@@ -160,4 +160,43 @@ describe('MobxMutation', () => {
       await mobxMutation.mutate();
     }).rejects.toThrowError('BAD');
   });
+
+  it('should be able to do abort using second argument in mutationFn', async () => {
+    vi.useFakeTimers();
+
+    const fakeFetch = (data: any = 'OK', signal?: AbortSignal) => {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
+          mobxMutation.destroy();
+        }, 200);
+        const timer = setTimeout(() => resolve(data), 1000);
+        signal?.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(signal.reason);
+        });
+        vi.runAllTimers();
+      });
+    };
+
+    const mobxMutation = new MobxMutationMock({
+      mutationKey: ['test'],
+      mutationFn: async (_, { signal }) => {
+        await fakeFetch('OK', signal);
+      },
+    });
+    try {
+      await mobxMutation.mutate();
+      await vi.runAllTimersAsync();
+      expect(false).toBe('abort should happen');
+    } catch (error) {
+      if (error instanceof DOMException) {
+        expect(error.message).toBe('The operation was aborted.');
+      } else {
+        expect(false).toBe('error should be DOMException');
+      }
+    }
+
+    vi.useRealTimers();
+  });
 });

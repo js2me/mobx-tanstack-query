@@ -36,6 +36,11 @@ export interface MobxMutationInvalidateQueriesOptions
   queryKeys?: InvalidateQueryFilters['queryKey'][];
 }
 
+export type MobxMutationFunction<TData = unknown, TVariables = unknown> = (
+  variables: TVariables,
+  options: { signal: AbortSignal },
+) => Promise<TData>;
+
 export interface MobxMutationConfig<
   TData = unknown,
   TVariables = void,
@@ -43,9 +48,10 @@ export interface MobxMutationConfig<
   TContext = unknown,
 > extends Omit<
       MutationObserverOptions<TData, TError, TVariables, TContext>,
-      '_defaulted'
+      '_defaulted' | 'mutationFn'
     >,
     MobxMutationFeatures {
+  mutationFn?: MobxMutationFunction<TData, TVariables>;
   queryClient: AnyQueryClient;
   abortSignal?: AbortSignal;
   invalidateQueries?:

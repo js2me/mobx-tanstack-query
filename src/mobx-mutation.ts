@@ -43,6 +43,7 @@ export class MobxMutation<
       queryClient,
       invalidateQueries,
       invalidateByKey: providedInvalidateByKey,
+      mutationFn,
       ...restOptions
     } = config;
     this.abortController = new LinkedAbortController(config.abortSignal);
@@ -71,7 +72,11 @@ export class MobxMutation<
       TContext
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-    >(queryClient, this.mutationOptions);
+    >(queryClient, {
+      ...this.mutationOptions,
+      mutationFn: (variables) =>
+        mutationFn?.(variables, { signal: this.abortController.signal }),
+    });
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
