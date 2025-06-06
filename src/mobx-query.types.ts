@@ -8,16 +8,26 @@ import {
   RefetchOptions,
 } from '@tanstack/query-core';
 
-import type { MobxQuery } from './mobx-query';
+import type { Query } from './mobx-query';
 import { AnyQueryClient } from './mobx-query-client.types';
 
-export interface MobxQueryInvalidateParams
+export interface QueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
 
-export interface MobxQueryResetParams
+/**
+ * @remarks ⚠️ use `QueryInvalidateParams`. This type will be removed in next major release
+ */
+export type MobxQueryInvalidateParams = QueryInvalidateParams;
+
+export interface QueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
-export interface MobxQueryDynamicOptions<
+/**
+ * @remarks ⚠️ use `QueryResetParams`. This type will be removed in next major release
+ */
+export type MobxQueryResetParams = QueryResetParams;
+
+export interface QueryDynamicOptions<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
@@ -32,7 +42,18 @@ export interface MobxQueryDynamicOptions<
   enabled?: boolean;
 }
 
-export interface MobxQueryOptions<
+/**
+ * @remarks ⚠️ use `QueryDynamicOptions`. This type will be removed in next major released
+ */
+export type MobxQueryDynamicOptions<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export interface QueryOptions<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
@@ -46,7 +67,18 @@ export interface MobxQueryOptions<
     TQueryKey
   > {}
 
-export type MobxQueryUpdateOptions<
+/**
+ * @remarks ⚠️ use `QueryOptions`. This type will be removed in next major release
+ */
+export type MobxQueryOptions<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export type QueryUpdateOptions<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
@@ -56,11 +88,22 @@ export type MobxQueryUpdateOptions<
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
 >;
 
-export interface MobxQueryFeatures {
+/**
+ * @remarks ⚠️ use `QueryUpdateOptions`. This type will be removed in next major release
+ */
+export type MobxQueryUpdateOptions<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export interface QueryFeatures {
   /**
    * Reset query when dispose is called
    *
-   * @deprecated Please use 'resetOnDestroy'
+   * @deprecated Please use 'resetOnDestroy'. This type will be removed in next major release
    */
   resetOnDispose?: boolean;
 
@@ -75,17 +118,33 @@ export interface MobxQueryFeatures {
   enableOnDemand?: boolean;
 }
 
-export type MobxQueryConfigFromFn<
-  T extends (...args: any[]) => any,
+/**
+ * @remarks ⚠️ use `QueryFeatures`. This type will be removed in next major release
+ */
+export type MobxQueryFeatures = QueryFeatures;
+
+export type QueryConfigFromFn<
+  TFunction extends (...args: any[]) => any,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
-> = MobxQueryConfig<
-  ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
+> = QueryConfig<
+  ReturnType<TFunction> extends Promise<infer TData>
+    ? TData
+    : ReturnType<TFunction>,
   TError,
   TQueryKey
 >;
 
-export interface MobxQueryConfig<
+/**
+ * @remarks ⚠️ use `QueryConfigFromFn`. This type will be removed in next major release
+ */
+export type MobxQueryConfigFromFn<
+  TFunction extends (...args: any[]) => any,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryConfigFromFn<TFunction, TError, TQueryKey>;
+
+export interface QueryConfig<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
@@ -103,7 +162,7 @@ export interface MobxQueryConfig<
         'queryKey'
       >
     >,
-    MobxQueryFeatures {
+    QueryFeatures {
   queryClient: AnyQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
@@ -117,7 +176,7 @@ export interface MobxQueryConfig<
    */
   queryKey?: TQueryKey | (() => TQueryKey);
   onInit?: (
-    query: MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    query: Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) => void;
   abortSignal?: AbortSignal;
   onDone?: (data: TData, payload: void) => void;
@@ -128,7 +187,7 @@ export interface MobxQueryConfig<
    */
   options?: (
     query: NoInfer<
-      MobxQuery<
+      Query<
         NoInfer<TQueryFnData>,
         NoInfer<TError>,
         NoInfer<TData>,
@@ -136,41 +195,56 @@ export interface MobxQueryConfig<
         NoInfer<TQueryKey>
       >
     >,
-  ) => MobxQueryDynamicOptions<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >;
+  ) => QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 }
 
-export type MobxQueryFn<
+/**
+ * @remarks ⚠️ use `QueryConfig`. This type will be removed in next major release
+ */
+export type MobxQueryConfig<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export type QueryFn<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > = Exclude<
-  MobxQueryConfig<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >['queryFn'],
+  QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>['queryFn'],
   undefined
 >;
 
-export type AnyMobxQuery = MobxQuery<any, any, any, any, any>;
-
-export interface MobxQueryStartParams<
+/**
+ * @remarks ⚠️ use `QueryFn`. This type will be removed in next major release
+ */
+export type MobxQueryFn<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> extends MobxQueryUpdateOptions<
+> = QueryFn<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export type AnyQuery = Query<any, any, any, any, any>;
+
+/**
+ * @remarks ⚠️ use `AnyQuery`. This type will be removed in next major release
+ */
+export type AnyMobxQuery = AnyQuery;
+
+export interface QueryStartParams<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> extends QueryUpdateOptions<
       TQueryFnData,
       TError,
       TData,
@@ -179,11 +253,22 @@ export interface MobxQueryStartParams<
     >,
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
+/**
+ * @remarks ⚠️ use `QueryStartParams`. This type will be removed in next major release
+ */
+export type MobxQueryStartParams<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryStartParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
 export type InferQuery<
-  T extends MobxQueryConfig | MobxQuery,
+  T extends QueryConfig | Query,
   TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',
 > =
-  T extends MobxQueryConfig<
+  T extends QueryConfig<
     infer TQueryFnData,
     infer TError,
     infer TData,
@@ -199,9 +284,9 @@ export type InferQuery<
           : TInferValue extends 'error'
             ? TError
             : TInferValue extends 'query'
-              ? MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+              ? Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>
               : never
-    : T extends MobxQuery<
+    : T extends Query<
           infer TQueryFnData,
           infer TError,
           infer TData,
@@ -209,7 +294,7 @@ export type InferQuery<
           infer TQueryKey
         >
       ? TInferValue extends 'config'
-        ? MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+        ? QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
         : TInferValue extends 'data'
           ? TData
           : TInferValue extends 'key'

@@ -6,20 +6,29 @@ import {
   DefaultedInfiniteQueryObserverOptions,
 } from '@tanstack/query-core';
 
-import { MobxInfiniteQuery } from './mobx-inifinite-query';
+import { InfiniteQuery } from './mobx-inifinite-query';
 import { AnyQueryClient } from './mobx-query-client.types';
 import {
-  MobxQueryFeatures,
-  MobxQueryInvalidateParams,
-  MobxQueryResetParams,
+  QueryFeatures,
+  QueryInvalidateParams,
+  QueryResetParams,
 } from './mobx-query.types';
 
-export interface MobxInfiniteQueryInvalidateParams
-  extends MobxQueryInvalidateParams {}
+export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 
-export interface MobxInfiniteQueryResetParams extends MobxQueryResetParams {}
+/**
+ * @remarks ⚠️ use `InfiniteQueryInvalidateParams`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryInvalidateParams = InfiniteQueryInvalidateParams;
 
-export interface MobxInfiniteQueryDynamicOptions<
+export interface InfiniteQueryResetParams extends QueryResetParams {}
+
+/**
+ * @remarks ⚠️ use `InfiniteQueryResetParams`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryResetParams = InfiniteQueryResetParams;
+
+export interface InfiniteQueryDynamicOptions<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
@@ -40,7 +49,17 @@ export interface MobxInfiniteQueryDynamicOptions<
   enabled?: boolean;
 }
 
-export interface MobxInfiniteQueryOptions<
+/**
+ * @remarks ⚠️ use `InfiniteQueryDynamicOptions`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryDynamicOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
+
+export interface InfiniteQueryOptions<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
@@ -54,7 +73,17 @@ export interface MobxInfiniteQueryOptions<
     TPageParam
   > {}
 
-export interface MobxInfiniteQueryUpdateOptions<
+/**
+ * @remarks ⚠️ use `InfiniteQueryOptions`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryOptions<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+
+export interface InfiniteQueryUpdateOptions<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
@@ -70,19 +99,39 @@ export interface MobxInfiniteQueryUpdateOptions<
     >
   > {}
 
-export type MobxInfiniteQueryConfigFromFn<
-  T extends (...args: any[]) => any,
+/**
+ * @remarks ⚠️ use `InfiniteQueryUpdateOptions`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryUpdateOptions<
+  TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = MobxInfiniteQueryConfig<
-  ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
+> = InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>;
+
+export type InfiniteQueryConfigFromFn<
+  TFn extends (...args: any[]) => any,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = InfiniteQueryConfig<
+  ReturnType<TFn> extends Promise<infer TData> ? TData : ReturnType<TFn>,
   TError,
   TQueryKey,
   TPageParam
 >;
 
-export interface MobxInfiniteQueryConfig<
+/**
+ * @remarks ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryConfigFromFn<
+  TFn extends (...args: any[]) => any,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = InfiniteQueryConfigFromFn<TFn, TError, TQueryKey, TPageParam>;
+
+export interface InfiniteQueryConfig<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
@@ -100,7 +149,7 @@ export interface MobxInfiniteQueryConfig<
         'queryKey'
       >
     >,
-    MobxQueryFeatures {
+    QueryFeatures {
   queryClient: AnyQueryClient;
   /**
    * TanStack Query manages query caching for you based on query keys.
@@ -113,9 +162,7 @@ export interface MobxInfiniteQueryConfig<
    * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
    */
   queryKey?: TQueryKey | (() => TQueryKey);
-  onInit?: (
-    query: MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>,
-  ) => void;
+  onInit?: (query: InfiniteQuery<TData, TError, TQueryKey, TPageParam>) => void;
   abortSignal?: AbortSignal;
   onDone?: (data: InfiniteData<TData, TPageParam>, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
@@ -125,20 +172,30 @@ export interface MobxInfiniteQueryConfig<
    */
   options?: (
     query: NoInfer<
-      MobxInfiniteQuery<
+      InfiniteQuery<
         NoInfer<TData>,
         NoInfer<TError>,
         NoInfer<TQueryKey>,
         NoInfer<TPageParam>
       >
     >,
-  ) => MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
+  ) => InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
 }
+
+/**
+ * @remarks ⚠️ use `InfiniteQueryConfig`. This type will be removed in next major release
+ */
+export type MobxInfiniteQueryConfig<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>;
 
 export type InferInfiniteQuery<
   T extends
-    | MobxInfiniteQueryConfig<any, any, any, any>
-    | MobxInfiniteQuery<any, any, any>,
+    | InfiniteQueryConfig<any, any, any, any>
+    | InfiniteQuery<any, any, any>,
   TInferValue extends
     | 'data'
     | 'key'
@@ -147,7 +204,7 @@ export type InferInfiniteQuery<
     | 'query'
     | 'config',
 > =
-  T extends MobxInfiniteQueryConfig<
+  T extends InfiniteQueryConfig<
     infer TData,
     infer TError,
     infer TQueryKey,
@@ -164,16 +221,16 @@ export type InferInfiniteQuery<
             : TInferValue extends 'error'
               ? TError
               : TInferValue extends 'query'
-                ? MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam>
+                ? InfiniteQuery<TData, TError, TQueryKey, TPageParam>
                 : never
-    : T extends MobxInfiniteQuery<
+    : T extends InfiniteQuery<
           infer TData,
           infer TError,
           infer TQueryKey,
           infer TPageParam
         >
       ? TInferValue extends 'config'
-        ? MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>
+        ? InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>
         : TInferValue extends 'data'
           ? TData
           : TInferValue extends 'key'

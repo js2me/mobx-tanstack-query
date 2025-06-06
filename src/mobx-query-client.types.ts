@@ -1,47 +1,64 @@
 import {
   DefaultError,
-  DefaultOptions,
-  QueryClient,
-  QueryClientConfig,
+  DefaultOptions as DefaultCoreOptions,
+  QueryClient as QueryClientCore,
+  QueryClientConfig as QueryClientCoreConfig,
 } from '@tanstack/query-core';
 
-import { MobxInfiniteQuery } from './mobx-inifinite-query';
-import { MobxMutation } from './mobx-mutation';
-import { MobxMutationFeatures } from './mobx-mutation.types';
-import type { MobxQueryClient } from './mobx-query-client';
-import { AnyMobxQuery, MobxQueryFeatures } from './mobx-query.types';
+import { InfiniteQuery } from './mobx-inifinite-query';
+import { Mutation } from './mobx-mutation';
+import { MutationFeatures } from './mobx-mutation.types';
+import type { QueryClient } from './mobx-query-client';
+import { AnyQuery, QueryFeatures } from './mobx-query.types';
 
-export type IQueryClient = {
-  [K in keyof QueryClient]: QueryClient[K];
+export type IQueryClientCore = {
+  [K in keyof QueryClientCore]: QueryClientCore[K];
 };
+
+/**
+ * @remarks ⚠️ use `IQueryClientCore`. This type will be removed in next major release
+ */
+export type IQueryClient = IQueryClientCore;
 
 /**
  * @deprecated renamed to `IQueryClient`. Will be removed in next major release.
  */
-// eslint-disable-next-line sonarjs/redundant-type-aliases
-export type QueryClientInterface = IQueryClient;
+export type QueryClientInterface = IQueryClientCore;
 
-export type AnyQueryClient = MobxQueryClient | IQueryClient;
+export type AnyQueryClient = QueryClient | IQueryClientCore;
 
-export interface MobxDefaultOptions<TError = DefaultError>
-  extends Omit<DefaultOptions<TError>, 'queries' | 'mutations'> {
-  queries?: DefaultOptions<TError>['queries'] & MobxQueryFeatures;
-  mutations?: DefaultOptions<TError>['mutations'] & MobxMutationFeatures;
+export interface DefaultOptions<TError = DefaultError>
+  extends Omit<DefaultCoreOptions<TError>, 'queries' | 'mutations'> {
+  queries?: DefaultCoreOptions<TError>['queries'] & QueryFeatures;
+  mutations?: DefaultCoreOptions<TError>['mutations'] & MutationFeatures;
 }
 
-export interface MobxQueryClientHooks {
-  onQueryInit?: (query: AnyMobxQuery) => void;
-  onInfiniteQueryInit?: (query: MobxInfiniteQuery<any, any, any, any>) => void;
-  onMutationInit?: (query: MobxMutation<any, any, any, any>) => void;
-  onQueryDestroy?: (query: AnyMobxQuery) => void;
-  onInfiniteQueryDestroy?: (
-    query: MobxInfiniteQuery<any, any, any, any>,
-  ) => void;
-  onMutationDestroy?: (query: MobxMutation<any, any, any, any>) => void;
+/**
+ * @remarks ⚠️ use `DefaultOptions`. This type will be removed in next major release
+ */
+export type MobxDefaultOptions<TError = DefaultError> = DefaultOptions<TError>;
+
+export interface QueryClientHooks {
+  onQueryInit?: (query: AnyQuery) => void;
+  onInfiniteQueryInit?: (query: InfiniteQuery<any, any, any, any>) => void;
+  onMutationInit?: (query: Mutation<any, any, any, any>) => void;
+  onQueryDestroy?: (query: AnyQuery) => void;
+  onInfiniteQueryDestroy?: (query: InfiniteQuery<any, any, any, any>) => void;
+  onMutationDestroy?: (query: Mutation<any, any, any, any>) => void;
 }
 
-export interface MobxQueryClientConfig
-  extends Omit<QueryClientConfig, 'defaultOptions'> {
-  defaultOptions?: MobxDefaultOptions;
-  hooks?: MobxQueryClientHooks;
+/**
+ * @remarks ⚠️ use `QueryClientHooks`. This type will be removed in next major release
+ */
+export type MobxQueryClientHooks = QueryClientHooks;
+
+export interface QueryClientConfig
+  extends Omit<QueryClientCoreConfig, 'defaultOptions'> {
+  defaultOptions?: DefaultOptions;
+  hooks?: QueryClientHooks;
 }
+
+/**
+ * @remarks ⚠️ use `QueryClientConfig`. This type will be removed in next major release
+ */
+export type MobxQueryClientConfig = QueryClientConfig;

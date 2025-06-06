@@ -21,20 +21,17 @@ import {
 } from 'mobx';
 
 import {
-  MobxInfiniteQueryConfig,
-  MobxInfiniteQueryDynamicOptions,
-  MobxInfiniteQueryInvalidateParams,
-  MobxInfiniteQueryOptions,
-  MobxInfiniteQueryResetParams,
-  MobxInfiniteQueryUpdateOptions,
+  InfiniteQueryConfig,
+  InfiniteQueryDynamicOptions,
+  InfiniteQueryInvalidateParams,
+  InfiniteQueryOptions,
+  InfiniteQueryResetParams,
+  InfiniteQueryUpdateOptions,
 } from './mobx-inifinite-query.types';
-import { MobxQueryClient } from './mobx-query-client';
-import {
-  AnyQueryClient,
-  MobxQueryClientHooks,
-} from './mobx-query-client.types';
+import { QueryClient } from './mobx-query-client';
+import { AnyQueryClient, QueryClientHooks } from './mobx-query-client.types';
 
-export class MobxInfiniteQuery<
+export class InfiniteQuery<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
@@ -48,7 +45,7 @@ export class MobxInfiniteQuery<
     InfiniteData<TData, TPageParam>,
     TError
   >;
-  options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+  options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
   queryObserver: InfiniteQueryObserver<
     TData,
     TError,
@@ -66,22 +63,17 @@ export class MobxInfiniteQuery<
    * This parameter is responsible for holding the enabled value,
    * in cases where the "enableOnDemand" option is enabled
    */
-  private holdedEnabledOption: MobxInfiniteQueryOptions<
+  private holdedEnabledOption: InfiniteQueryOptions<
     TData,
     TError,
     TQueryKey,
     TPageParam
   >['enabled'];
   private _observerSubscription?: VoidFunction;
-  private hooks?: MobxQueryClientHooks;
+  private hooks?: QueryClientHooks;
 
   constructor(
-    protected config: MobxInfiniteQueryConfig<
-      TData,
-      TError,
-      TQueryKey,
-      TPageParam
-    >,
+    protected config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
   ) {
     const {
       queryClient,
@@ -97,10 +89,7 @@ export class MobxInfiniteQuery<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
-    if (
-      queryClient instanceof MobxQueryClient &&
-      config.enableOnDemand == null
-    ) {
+    if (queryClient instanceof QueryClient && config.enableOnDemand == null) {
       this.isEnabledOnResultDemand =
         queryClient.queryFeatures.enableOnDemand ?? false;
     }
@@ -116,7 +105,7 @@ export class MobxInfiniteQuery<
     this.options = this.queryClient.defaultQueryOptions({
       ...restOptions,
       ...getDynamicOptions?.(this),
-    } as any) as MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+    } as any) as InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
 
     this.options.structuralSharing = this.options.structuralSharing ?? false;
 
@@ -193,7 +182,7 @@ export class MobxInfiniteQuery<
 
   protected createQueryHash(
     queryKey: any,
-    options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
+    options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
   ) {
     if (options.queryKeyHashFn) {
       return options.queryKeyHashFn(queryKey);
@@ -234,9 +223,9 @@ export class MobxInfiniteQuery<
 
   update(
     optionsUpdate:
-      | Partial<MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
-      | MobxInfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-      | MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+      | Partial<InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
+      | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
+      | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
   ) {
     if (this.abortController.signal.aborted) {
       return;
@@ -245,7 +234,7 @@ export class MobxInfiniteQuery<
     const nextOptions = {
       ...this.options,
       ...optionsUpdate,
-    } as MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+    } as InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
 
     this.processOptions(nextOptions);
 
@@ -259,7 +248,7 @@ export class MobxInfiniteQuery<
   private enableHolder = () => false;
 
   private processOptions = (
-    options: MobxInfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
+    options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
   ) => {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
@@ -326,7 +315,7 @@ export class MobxInfiniteQuery<
     return result;
   }
 
-  async reset(params?: MobxInfiniteQueryResetParams) {
+  async reset(params?: InfiniteQueryResetParams) {
     await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
@@ -334,7 +323,7 @@ export class MobxInfiniteQuery<
     } as any);
   }
 
-  async invalidate(options?: MobxInfiniteQueryInvalidateParams) {
+  async invalidate(options?: InfiniteQueryInvalidateParams) {
     await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
@@ -387,7 +376,7 @@ export class MobxInfiniteQuery<
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
 
-    if (this.queryClient instanceof MobxQueryClient && !isNeedToReset) {
+    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
       isNeedToReset =
         this.queryClient.queryFeatures.resetOnDestroy ||
         this.queryClient.queryFeatures.resetOnDispose;
@@ -406,7 +395,7 @@ export class MobxInfiniteQuery<
   }
 
   /**
-   * @deprecated use `destroy`
+   * @deprecated use `destroy`. This method will be removed in next major release
    */
   dispose() {
     this.destroy();
@@ -421,3 +410,8 @@ export class MobxInfiniteQuery<
     this.destroy();
   }
 }
+
+/**
+ * @remarks ⚠️ use `InfiniteQuery`. This export will be removed in next major release
+ */
+export const MobxInfiniteQuery = InfiniteQuery;

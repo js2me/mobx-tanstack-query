@@ -9,20 +9,20 @@ import {
 import { when } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MobxInfiniteQuery } from './mobx-inifinite-query';
+import { InfiniteQuery } from './mobx-inifinite-query';
 import {
-  MobxInfiniteQueryConfig,
-  MobxInfiniteQueryDynamicOptions,
-  MobxInfiniteQueryUpdateOptions,
+  InfiniteQueryConfig,
+  InfiniteQueryDynamicOptions,
+  InfiniteQueryUpdateOptions,
 } from './mobx-inifinite-query.types';
-import { MobxQueryInvalidateParams } from './mobx-query.types';
+import { QueryInvalidateParams } from './mobx-query.types';
 
-class MobxInfiniteQueryMock<
+class InfiniteQueryMock<
   TData,
   TError = DefaultError,
   TQueryKey extends QueryKey = any,
   TPageParam = unknown,
-> extends MobxInfiniteQuery<TData, TError, TQueryKey, TPageParam> {
+> extends InfiniteQuery<TData, TError, TQueryKey, TPageParam> {
   spies = {
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
@@ -38,7 +38,7 @@ class MobxInfiniteQueryMock<
 
   constructor(
     options: Omit<
-      MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+      InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
       'queryClient'
     >,
   ) {
@@ -68,15 +68,15 @@ class MobxInfiniteQueryMock<
     return super.refetch(options);
   }
 
-  invalidate(params?: MobxQueryInvalidateParams | undefined): Promise<void> {
+  invalidate(params?: QueryInvalidateParams | undefined): Promise<void> {
     this.spies.invalidate(params)();
     return super.invalidate();
   }
 
   update(
     options:
-      | MobxInfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-      | MobxInfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+      | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
+      | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
   ) {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
@@ -108,83 +108,83 @@ class MobxInfiniteQueryMock<
   }
 }
 
-describe('MobxInfiniteQuery', () => {
+describe('InfiniteQuery', () => {
   it('should call queryFn without infinite query params', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       queryFn: () => {},
     });
 
-    expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-    expect(mobxQuery.spies.queryFn).toBeCalledWith({
-      ...mobxQuery.spies.queryFn.mock.calls[0][0],
+    expect(query.spies.queryFn).toBeCalledTimes(1);
+    expect(query.spies.queryFn).toBeCalledWith({
+      ...query.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('should call queryFn with initialPageParam', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       initialPageParam: 0,
       queryFn: () => {},
     });
 
-    expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-    expect(mobxQuery.spies.queryFn).toBeCalledWith({
-      ...mobxQuery.spies.queryFn.mock.calls[0][0],
+    expect(query.spies.queryFn).toBeCalledTimes(1);
+    expect(query.spies.queryFn).toBeCalledWith({
+      ...query.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: 0,
       queryKey: ['test'],
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('should call queryFn with getNextPageParam', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       getNextPageParam: () => 1,
       queryFn: () => {},
     });
 
-    expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-    expect(mobxQuery.spies.queryFn).toBeCalledWith({
-      ...mobxQuery.spies.queryFn.mock.calls[0][0],
+    expect(query.spies.queryFn).toBeCalledTimes(1);
+    expect(query.spies.queryFn).toBeCalledWith({
+      ...query.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('should call queryFn with getNextPageParam returning null', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       getNextPageParam: () => null,
       queryFn: async () => 'data',
     });
 
-    expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-    expect(mobxQuery.spies.queryFn).toBeCalledWith({
-      ...mobxQuery.spies.queryFn.mock.calls[0][0],
+    expect(query.spies.queryFn).toBeCalledTimes(1);
+    expect(query.spies.queryFn).toBeCalledWith({
+      ...query.spies.queryFn.mock.calls[0][0],
       direction: 'forward',
       meta: undefined,
       pageParam: undefined,
       queryKey: ['test'],
     });
 
-    await when(() => !mobxQuery.result.isLoading);
+    await when(() => !query.result.isLoading);
 
-    expect(mobxQuery.result).toStrictEqual({
-      ...mobxQuery.result,
+    expect(query.result).toStrictEqual({
+      ...query.result,
       data: {
         pageParams: [undefined],
         pages: ['data'],
@@ -218,11 +218,11 @@ describe('MobxInfiniteQuery', () => {
       status: 'success',
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('should call queryFn after fetchNextPage call', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       initialPageParam: 1,
       getNextPageParam: (_, _1, lastPageParam) => lastPageParam + 1,
@@ -231,8 +231,8 @@ describe('MobxInfiniteQuery', () => {
       },
     });
 
-    expect(mobxQuery.result).toStrictEqual({
-      ...mobxQuery.result,
+    expect(query.result).toStrictEqual({
+      ...query.result,
       data: undefined,
       dataUpdatedAt: 0,
       error: null,
@@ -264,13 +264,13 @@ describe('MobxInfiniteQuery', () => {
       status: 'pending',
     });
 
-    await mobxQuery.fetchNextPage();
+    await query.fetchNextPage();
 
-    expect(mobxQuery.spies.fetchNextPage).toBeCalledTimes(1);
-    expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(query.spies.fetchNextPage).toBeCalledTimes(1);
+    expect(query.spies.queryFn).toBeCalledTimes(1);
 
-    expect(mobxQuery.result).toStrictEqual({
-      ...mobxQuery.result,
+    expect(query.result).toStrictEqual({
+      ...query.result,
       data: {
         pageParams: [1],
         pages: [[1, 2, 3]],
@@ -304,11 +304,11 @@ describe('MobxInfiniteQuery', () => {
       status: 'success',
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('should call queryFn after fetchNextPage call (x3 times)', async () => {
-    const mobxQuery = new MobxInfiniteQueryMock({
+    const query = new InfiniteQueryMock({
       queryKey: ['test'],
       initialPageParam: 1,
       getNextPageParam: (_, _1, lastPageParam) => lastPageParam + 1,
@@ -317,8 +317,8 @@ describe('MobxInfiniteQuery', () => {
       },
     });
 
-    expect(mobxQuery.result).toStrictEqual({
-      ...mobxQuery.result,
+    expect(query.result).toStrictEqual({
+      ...query.result,
       data: undefined,
       dataUpdatedAt: 0,
       error: null,
@@ -350,12 +350,12 @@ describe('MobxInfiniteQuery', () => {
       status: 'pending',
     });
 
-    await mobxQuery.fetchNextPage();
-    await mobxQuery.fetchNextPage();
-    await mobxQuery.fetchNextPage();
+    await query.fetchNextPage();
+    await query.fetchNextPage();
+    await query.fetchNextPage();
 
-    expect(mobxQuery.result).toStrictEqual({
-      ...mobxQuery.result,
+    expect(query.result).toStrictEqual({
+      ...query.result,
       data: {
         pageParams: [1, 2, 3],
         pages: [
@@ -402,26 +402,26 @@ describe('MobxInfiniteQuery', () => {
       status: 'success',
     });
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   describe('"enabled" reactive parameter', () => {
     it('should be reactive after change queryKey', async () => {
-      const mobxQuery = new MobxInfiniteQueryMock({
+      const query = new InfiniteQueryMock({
         queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         getNextPageParam: () => 1,
         queryFn: () => 100,
       });
 
-      mobxQuery.update({ queryKey: ['test', 1] as const });
+      query.update({ queryKey: ['test', 1] as const });
 
-      await when(() => !mobxQuery.result.isLoading);
+      await when(() => !query.result.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 100);
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
   });
 });

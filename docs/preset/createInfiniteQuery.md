@@ -1,6 +1,6 @@
 # createInfiniteQuery  
 
-This is alternative for `new MobxInfiniteQuery()`.  
+This is alternative for `new InfiniteQuery()`.  
 
 ## API Signature  
 

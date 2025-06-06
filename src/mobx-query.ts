@@ -1,7 +1,6 @@
 import {
   DefaultError,
   hashKey,
-  QueryClient,
   QueryKey,
   QueryObserver,
   QueryObserverResult,
@@ -18,23 +17,20 @@ import {
   runInAction,
 } from 'mobx';
 
-import { MobxQueryClient } from './mobx-query-client';
+import { QueryClient } from './mobx-query-client';
+import { AnyQueryClient, QueryClientHooks } from './mobx-query-client.types';
 import {
-  AnyQueryClient,
-  MobxQueryClientHooks,
-} from './mobx-query-client.types';
-import {
-  MobxQueryConfig,
-  MobxQueryDynamicOptions,
-  MobxQueryInvalidateParams,
-  MobxQueryOptions,
-  MobxQueryResetParams,
-  MobxQueryStartParams,
-  MobxQueryUpdateOptions,
+  QueryConfig,
+  QueryDynamicOptions,
+  QueryInvalidateParams,
+  QueryOptions,
+  QueryResetParams,
+  QueryStartParams,
+  QueryUpdateOptions,
 } from './mobx-query.types';
 import { QueryOptionsParams } from './query-options';
 
-export class MobxQuery<
+export class Query<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
@@ -47,7 +43,7 @@ export class MobxQuery<
 
   protected _result: QueryObserverResult<TData, TError>;
 
-  options: MobxQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+  options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
   queryObserver: QueryObserver<
     TQueryFnData,
     TError,
@@ -64,7 +60,7 @@ export class MobxQuery<
    * This parameter is responsible for holding the enabled value,
    * in cases where the "enableOnDemand" option is enabled
    */
-  private holdedEnabledOption: MobxQueryOptions<
+  private holdedEnabledOption: QueryOptions<
     TQueryFnData,
     TError,
     TData,
@@ -72,9 +68,9 @@ export class MobxQuery<
     TQueryKey
   >['enabled'];
   private _observerSubscription?: VoidFunction;
-  private hooks?: MobxQueryClientHooks;
+  private hooks?: QueryClientHooks;
 
-  protected config: MobxQueryConfig<
+  protected config: QueryConfig<
     TQueryFnData,
     TError,
     TData,
@@ -83,7 +79,7 @@ export class MobxQuery<
   >;
 
   constructor(
-    config: MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    config: QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   );
   constructor(
     queryClient: AnyQueryClient,
@@ -119,10 +115,7 @@ export class MobxQuery<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
-    if (
-      queryClient instanceof MobxQueryClient &&
-      config.enableOnDemand == null
-    ) {
+    if (queryClient instanceof QueryClient && config.enableOnDemand == null) {
       this.isEnabledOnResultDemand =
         queryClient.queryFeatures.enableOnDemand ?? false;
     }
@@ -236,13 +229,7 @@ export class MobxQuery<
 
   protected createQueryHash(
     queryKey: any,
-    options: MobxQueryOptions<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >,
+    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) {
     if (options.queryKeyHashFn) {
       return options.queryKeyHashFn(queryKey);
@@ -268,22 +255,10 @@ export class MobxQuery<
   update(
     optionsUpdate:
       | Partial<
-          MobxQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+          QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
         >
-      | MobxQueryUpdateOptions<
-          TQueryFnData,
-          TError,
-          TData,
-          TQueryData,
-          TQueryKey
-        >
-      | MobxQueryDynamicOptions<
-          TQueryFnData,
-          TError,
-          TData,
-          TQueryData,
-          TQueryKey
-        >,
+      | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+      | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) {
     if (this.abortController.signal.aborted) {
       return;
@@ -306,13 +281,7 @@ export class MobxQuery<
   private enableHolder = () => false;
 
   private processOptions = (
-    options: MobxQueryOptions<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >,
+    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) => {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
@@ -357,7 +326,7 @@ export class MobxQuery<
     this._result = result;
   }
 
-  async reset(params?: MobxQueryResetParams) {
+  async reset(params?: QueryResetParams) {
     return await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
@@ -365,7 +334,7 @@ export class MobxQuery<
     } as any);
   }
 
-  async invalidate(params?: MobxQueryInvalidateParams) {
+  async invalidate(params?: QueryInvalidateParams) {
     return await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
@@ -413,7 +382,7 @@ export class MobxQuery<
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
 
-    if (this.queryClient instanceof MobxQueryClient && !isNeedToReset) {
+    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
       isNeedToReset =
         this.queryClient.queryFeatures.resetOnDestroy ||
         this.queryClient.queryFeatures.resetOnDispose;
@@ -435,7 +404,7 @@ export class MobxQuery<
   async start({
     cancelRefetch,
     ...params
-  }: MobxQueryStartParams<
+  }: QueryStartParams<
     TQueryFnData,
     TError,
     TData,
@@ -448,7 +417,7 @@ export class MobxQuery<
   }
 
   /**
-   * @deprecated use `destroy`
+   * @deprecated use `destroy`. This method will be removed in next major release
    */
   dispose() {
     this.destroy();
@@ -463,3 +432,8 @@ export class MobxQuery<
     this.destroy();
   }
 }
+
+/**
+ * @remarks ⚠️ use `Query`. This export will be removed in next major release
+ */
+export const MobxQuery = Query;

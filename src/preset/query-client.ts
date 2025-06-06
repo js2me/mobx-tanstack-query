@@ -1,5 +1,5 @@
-import { MobxQueryClient } from '../mobx-query-client';
+import { QueryClient } from '../mobx-query-client';
 
 import { defaultQueryClientConfig } from './configs';
 
-export const queryClient = new MobxQueryClient(defaultQueryClientConfig);
+export const queryClient = new QueryClient(defaultQueryClientConfig);

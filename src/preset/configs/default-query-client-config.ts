@@ -1,6 +1,6 @@
 import { hashKey } from '@tanstack/query-core';
 
-import { MobxQueryClientConfig } from '../../mobx-query-client.types';
+import { QueryClientConfig } from '../../mobx-query-client.types';
 
 export const defaultQueryClientConfig = {
   defaultOptions: {
@@ -22,4 +22,4 @@ export const defaultQueryClientConfig = {
       throwOnError: true,
     },
   },
-} satisfies MobxQueryClientConfig;
+} satisfies QueryClientConfig;

@@ -1,8 +1,8 @@
-# MobxQueryClient
+# QueryClient
 
 
 An enhanced version of [TanStack's Query QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient).  
-Adds specialized configurations for library entities like [`MobxQuery`](/api/MobxQuery) or [`MobxMutation`](/api/MobxMutation).  
+Adds specialized configurations for library entities like [`Query`](/api/Query) or [`Mutation`](/api/Mutation).  
 
 [Reference to source code](/src/mobx-query-client.ts)  
 
@@ -10,8 +10,8 @@ Adds specialized configurations for library entities like [`MobxQuery`](/api/Mob
 ```ts
 import { QueryClient } from "@tanstack/query-core";
 
-class MobxQueryClient extends QueryClient {
-  constructor(config?: MobxQueryClientConfig);
+class QueryClient extends QueryClient {
+  constructor(config?: QueryClientConfig);
 }
 ```
 
@@ -20,37 +20,37 @@ When creating an instance, you can provide:
 ```ts
 import { DefaultOptions } from '@tanstack/query-core';
 
-interface MobxQueryClientConfig {
+interface QueryClientConfig {
   defaultOptions?: DefaultOptions & {
-    queries: MobxQueryFeatures;
+    queries: QueryFeatures;
     mutations: MobxMutatonFeatures;
   };
-  hooks?: MobxQueryClientHooks;
+  hooks?: QueryClientHooks;
 }
 ```
 
 ## Key methods and properties   
 
 ### `queryFeatures`  
-Features configurations exclusively for [`MobxQuery`](/api/MobxQuery)/[`MobxInfiniteQuery`](/api/MobxInfiniteQuery)  
+Features configurations exclusively for [`Query`](/api/Query)/[`InfiniteQuery`](/api/InfiniteQuery)  
 
 ### `mutationFeatures`  
-Features configurations exclusively for [`MobxMutation`](/api/MobxMutation)  
+Features configurations exclusively for [`Mutation`](/api/Mutation)  
 
 ### `hooks`  
 Entity lifecycle events. Available hooks:   
 
 | Hook | Description |
 |---|---|
-| onQueryInit  | Triggered when a [`MobxQuery`](/api/MobxQuery) is created  |
-| onInfiniteQueryInit | Triggered when a [`MobxInfiniteQuery`](/api/MobxInfiniteQuery) is created |
-| onMutationInit  | Triggered when a [`MobxMutation`](/api/MobxMutation) is created |
-| onQueryDestroy  | Triggered when a [`MobxQuery`](/api/MobxQuery) is destroyed |
-| onInfiniteQueryDestroy  | Triggered when a [`MobxInfiniteQuery`](/api/MobxInfiniteQuery) is destroyed |
-| onMutationDestroy  | Triggered when a [`MobxMutation`](/api/MobxMutation) is destroyed |
+| onQueryInit  | Triggered when a [`Query`](/api/Query) is created  |
+| onInfiniteQueryInit | Triggered when a [`InfiniteQuery`](/api/InfiniteQuery) is created |
+| onMutationInit  | Triggered when a [`Mutation`](/api/Mutation) is created |
+| onQueryDestroy  | Triggered when a [`Query`](/api/Query) is destroyed |
+| onInfiniteQueryDestroy  | Triggered when a [`InfiniteQuery`](/api/InfiniteQuery) is destroyed |
+| onMutationDestroy  | Triggered when a [`Mutation`](/api/Mutation) is destroyed |
 
 ## Inheritance  
-`MobxQueryClient` inherits all methods and properties from [QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient), including:  
+`QueryClient` inherits all methods and properties from [QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient), including:  
 - [`getQueryData()`](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientgetquerydata)  
 - [`setQueryData()`](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientsetquerydata)
 - [`invalidateQueries()`](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientinvalidatequeries)
@@ -61,10 +61,10 @@ Entity lifecycle events. Available hooks:
 ## Usage Example
 
 ```ts
-import { MobxQueryClient } from 'mobx-tanstack-query';
+import { QueryClient } from 'mobx-tanstack-query';
 
 // Create a client with custom hooks
-const client = new MobxQueryClient({
+const client = new QueryClient({
   hooks: {
     onQueryInit: (query) => {
       console.log('[Init] Query:', query.queryKey);
@@ -88,7 +88,7 @@ const data = client.getQueryData(['todos']);
 ```
 
 ## When to Use?
-Use `MobxQueryClient` if you need:  
+Use `QueryClient` if you need:  
 - Customization of query/mutation lifecycle
 - Tracking entity initialization/destruction events
 - Advanced configuration for `MobX`-powered queries and mutations.

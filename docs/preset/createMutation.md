@@ -1,6 +1,6 @@
 # createMutation  
 
-This is alternative for `new MobxMutation()`.  
+This is alternative for `new Mutation()`.  
 
 ## API Signature  
 

@@ -1,6 +1,6 @@
 # createQuery  
 
-This is alternative for `new MobxQuery()`.  
+This is alternative for `new Query()`.  
 
 ## API Signature  
 

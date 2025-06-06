@@ -1,13 +1,13 @@
-# MobxMutation  
+# Mutation  
 
 Class wrapper for [@tanstack-query/core mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with **MobX** reactivity   
 
 ## Usage  
 
-Create an instance of `MobxMutation` with [`mutationFn`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) parameter
+Create an instance of `Mutation` with [`mutationFn`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) parameter
 
 ```ts
-const mutation = new MobxMutation({
+const mutation = new Mutation({
   queryClient,
   abortSignal, // Helps you to automatically clean up mutation  
   mutationFn: async ({ signal, queryKey }) => {

@@ -21,9 +21,9 @@ _**MobX** wrapper for [**Tanstack Query Core**](https://tanstack.com/query/lates
 ## Documentation is [here](https://js2me.github.io/mobx-tanstack-query)  
 
 ```ts
-import { MobxQuery } from "mobx-tanstack-query";
+import { Query } from "mobx-tanstack-query";
 
-const query = new MobxQuery({
+const query = new Query({
   queryClient,
   queryKey: ['hello', 'world'],
   queryFn: async () => {

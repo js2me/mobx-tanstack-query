@@ -1,7 +1,7 @@
 import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
-import { MobxInfiniteQuery } from '../mobx-inifinite-query';
-import { MobxInfiniteQueryConfig } from '../mobx-inifinite-query.types';
+import { InfiniteQuery } from '../mobx-inifinite-query';
+import { InfiniteQueryConfig } from '../mobx-inifinite-query.types';
 
 import { queryClient } from './query-client';
 
@@ -11,7 +11,7 @@ export type CreateInfiniteQueryParams<
   TQueryKey extends QueryKey = any,
   TPageParam = unknown,
 > = Omit<
-  MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+  InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
   'queryClient' | 'queryFn'
 > & {
   queryClient?: QueryClient;
@@ -23,10 +23,10 @@ export const createInfiniteQuery = <
   TQueryKey extends QueryKey = any,
   TPageParam = unknown,
 >(
-  fn: MobxInfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>['queryFn'],
+  fn: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>['queryFn'],
   params?: CreateInfiniteQueryParams<TData, TError, TQueryKey, TPageParam>,
 ) => {
-  return new MobxInfiniteQuery({
+  return new InfiniteQuery({
     ...params,
     queryClient: params?.queryClient ?? queryClient,
     queryFn: fn,

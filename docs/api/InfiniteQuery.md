@@ -1,17 +1,17 @@
-# MobxInfiniteQuery  
+# InfiniteQuery  
 
 Class wrapper for [@tanstack-query/core infinite queries](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries) with **MobX** reactivity  
 
-[_See docs for MobxQuery_](/api/MobxQuery)  
+[_See docs for Query_](/api/Query)  
 
 
 
 ## Usage  
 
-Create an instance of `MobxInfiniteQuery` with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
+Create an instance of `InfiniteQuery` with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
 
 ```ts
-const query = new MobxInfiniteQuery({
+const query = new InfiniteQuery({
   queryClient,
   abortSignal: this.abortSignal,
   queryKey: ['stars']

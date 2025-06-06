@@ -1,40 +1,42 @@
-import { QueryClient } from '@tanstack/query-core';
+import { QueryClient as QueryClientCore } from '@tanstack/query-core';
 
-import { MobxMutationFeatures } from './mobx-mutation.types';
+import { MutationFeatures } from './mobx-mutation.types';
 import {
-  IQueryClient,
-  MobxQueryClientConfig,
-  MobxQueryClientHooks,
+  IQueryClientCore,
+  QueryClientConfig,
+  QueryClientHooks,
 } from './mobx-query-client.types';
-import { MobxQueryFeatures } from './mobx-query.types';
+import { QueryFeatures } from './mobx-query.types';
 
-export class MobxQueryClient extends QueryClient implements IQueryClient {
-  hooks?: MobxQueryClientHooks;
+export class QueryClient extends QueryClientCore implements IQueryClientCore {
+  hooks?: QueryClientHooks;
 
-  constructor(private config: MobxQueryClientConfig = {}) {
+  constructor(private config: QueryClientConfig = {}) {
     super(config);
     this.hooks = config.hooks;
   }
 
   setDefaultOptions(
-    options: Exclude<MobxQueryClientConfig['defaultOptions'], undefined>,
+    options: Exclude<QueryClientConfig['defaultOptions'], undefined>,
   ): void {
     super.setDefaultOptions(options);
     this.config.defaultOptions = options;
   }
 
-  getDefaultOptions(): Exclude<
-    MobxQueryClientConfig['defaultOptions'],
-    undefined
-  > {
+  getDefaultOptions(): Exclude<QueryClientConfig['defaultOptions'], undefined> {
     return super.getDefaultOptions();
   }
 
-  get queryFeatures(): MobxQueryFeatures {
+  get queryFeatures(): QueryFeatures {
     return this.getDefaultOptions().queries ?? {};
   }
 
-  get mutationFeatures(): MobxMutationFeatures {
+  get mutationFeatures(): MutationFeatures {
     return this.getDefaultOptions().mutations ?? {};
   }
 }
+
+/**
+ * @remarks ⚠️ use `QueryClient`. This export will be removed in next major release
+ */
+export const MobxQueryClient = QueryClient;

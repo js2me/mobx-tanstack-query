@@ -4,10 +4,10 @@ import {
   MutationObserverOptions,
 } from '@tanstack/query-core';
 
-import { MobxMutation } from './mobx-mutation';
+import { Mutation } from './mobx-mutation';
 import { AnyQueryClient } from './mobx-query-client.types';
 
-export interface MobxMutationFeatures {
+export interface MutationFeatures {
   /**
    * Invalidate queries by mutation key.
    *
@@ -30,18 +30,37 @@ export interface MobxMutationFeatures {
   resetOnDestroy?: boolean;
 }
 
-export interface MobxMutationInvalidateQueriesOptions
+/**
+ * @remarks ⚠️ use `MutationFeatures`. This type will be removed in next major release
+ */
+export type MobxMutationFeatures = MutationFeatures;
+
+export interface MutationInvalidateQueriesOptions
   extends Omit<InvalidateQueryFilters, 'queryKey'> {
   queryKey?: InvalidateQueryFilters['queryKey'];
   queryKeys?: InvalidateQueryFilters['queryKey'][];
 }
 
-export type MobxMutationFunction<TData = unknown, TVariables = unknown> = (
+/**
+ * @remarks ⚠️ use `MutationInvalidateQueriesOptions`. This type will be removed in next major release
+ */
+export type MobxMutationInvalidateQueriesOptions =
+  MutationInvalidateQueriesOptions;
+
+export type MutationFn<TData = unknown, TVariables = unknown> = (
   variables: TVariables,
   options: { signal: AbortSignal },
 ) => Promise<TData>;
 
-export interface MobxMutationConfig<
+/**
+ * @remarks ⚠️ use `MutationFn`. This type will be removed in next major release
+ */
+export type MobxMutationFunction<
+  TData = unknown,
+  TVariables = unknown,
+> = MutationFn<TData, TVariables>;
+
+export interface MutationConfig<
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
@@ -50,34 +69,48 @@ export interface MobxMutationConfig<
       MutationObserverOptions<TData, TError, TVariables, TContext>,
       '_defaulted' | 'mutationFn'
     >,
-    MobxMutationFeatures {
-  mutationFn?: MobxMutationFunction<TData, TVariables>;
+    MutationFeatures {
+  mutationFn?: MutationFn<TData, TVariables>;
   queryClient: AnyQueryClient;
   abortSignal?: AbortSignal;
   invalidateQueries?:
-    | MobxMutationInvalidateQueriesOptions
-    | ((
-        data: TData,
-        payload: TVariables,
-      ) => MobxMutationInvalidateQueriesOptions);
-  onInit?: (
-    mutation: MobxMutation<TData, TVariables, TError, TContext>,
-  ) => void;
+    | MutationInvalidateQueriesOptions
+    | ((data: TData, payload: TVariables) => MutationInvalidateQueriesOptions);
+  onInit?: (mutation: Mutation<TData, TVariables, TError, TContext>) => void;
 }
 
-export type MobxMutationConfigFromFn<
+/**
+ * @remarks ⚠️ use `MutationConfig`. This type will be removed in next major release
+ */
+export type MobxMutationConfig<
+  TData = unknown,
+  TVariables = void,
+  TError = DefaultError,
+  TContext = unknown,
+> = MutationConfig<TData, TError, TVariables, TContext>;
+
+export type MutationConfigFromFn<
   T extends (...args: any[]) => any,
   TError = DefaultError,
   TContext = unknown,
-> = MobxMutationConfig<
+> = MutationConfig<
   ReturnType<T> extends Promise<infer TData> ? TData : ReturnType<T>,
   Parameters<T>[0],
   TError,
   TContext
 >;
 
+/**
+ * @remarks ⚠️ use `MutationConfigFromFn`. This type will be removed in next major release
+ */
+export type MobxMutationConfigFromFn<
+  T extends (...args: any[]) => any,
+  TError = DefaultError,
+  TContext = unknown,
+> = MutationConfigFromFn<T, TError, TContext>;
+
 export type InferMutation<
-  T extends MobxMutationConfig | MobxMutation,
+  T extends MutationConfig | Mutation,
   TInferValue extends
     | 'data'
     | 'variables'
@@ -86,7 +119,7 @@ export type InferMutation<
     | 'mutation'
     | 'config',
 > =
-  T extends MobxMutationConfig<
+  T extends MutationConfig<
     infer TData,
     infer TVariables,
     infer TError,
@@ -103,16 +136,16 @@ export type InferMutation<
             : TInferValue extends 'context'
               ? TContext
               : TInferValue extends 'mutation'
-                ? MobxMutation<TData, TVariables, TError, TContext>
+                ? Mutation<TData, TVariables, TError, TContext>
                 : never
-    : T extends MobxMutation<
+    : T extends Mutation<
           infer TData,
           infer TVariables,
           infer TError,
           infer TContext
         >
       ? TInferValue extends 'config'
-        ? MobxMutationConfig<TData, TVariables, TError, TContext>
+        ? MutationConfig<TData, TVariables, TError, TContext>
         : TInferValue extends 'data'
           ? TData
           : TInferValue extends 'variables'

@@ -29,23 +29,22 @@ import {
 } from 'vitest';
 import { waitAsync } from 'yummies/async';
 
-import { MobxQuery } from './mobx-query';
-import { MobxQueryClient } from './mobx-query-client';
+import { Query } from './mobx-query';
 import {
-  MobxQueryConfig,
-  MobxQueryDynamicOptions,
-  MobxQueryInvalidateParams,
-  MobxQueryUpdateOptions,
+  QueryConfig,
+  QueryDynamicOptions,
+  QueryInvalidateParams,
+  QueryUpdateOptions,
 } from './mobx-query.types';
 import { createQuery } from './preset';
 
-class MobxQueryMock<
+class QueryMock<
   TQueryFnData = unknown,
   TError = DefaultError,
   TData = TQueryFnData,
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-> extends MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
+> extends Query<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
   spies = {
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
@@ -59,7 +58,7 @@ class MobxQueryMock<
 
   constructor(
     options: Omit<
-      MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+      QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
       'queryClient'
     >,
     queryClient?: QueryClient,
@@ -92,27 +91,15 @@ class MobxQueryMock<
     return super.refetch(options);
   }
 
-  invalidate(params?: MobxQueryInvalidateParams | undefined): Promise<void> {
+  invalidate(params?: QueryInvalidateParams | undefined): Promise<void> {
     this.spies.invalidate(params);
     return super.invalidate();
   }
 
   update(
     options:
-      | MobxQueryUpdateOptions<
-          TQueryFnData,
-          TError,
-          TData,
-          TQueryData,
-          TQueryKey
-        >
-      | MobxQueryDynamicOptions<
-          TQueryFnData,
-          TError,
-          TData,
-          TQueryData,
-          TQueryKey
-        >,
+      | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+      | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ): void {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
@@ -187,83 +174,83 @@ const createMockFetch = () => {
   );
 };
 
-describe('MobxQuery', () => {
+describe('Query', () => {
   it('should be fetched on start', async () => {
-    const mobxQuery = new MobxQueryMock({
+    const query = new QueryMock({
       queryKey: ['test'],
       queryFn: () => {},
     });
 
-    await when(() => !mobxQuery._rawResult.isLoading);
+    await when(() => !query._rawResult.isLoading);
 
-    expect(mobxQuery.result.isFetched).toBeTruthy();
+    expect(query.result.isFetched).toBeTruthy();
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('"result" field to be defined', async () => {
-    const mobxQuery = new MobxQueryMock({
+    const query = new QueryMock({
       queryKey: ['test'],
       queryFn: () => {},
     });
 
-    await when(() => !mobxQuery._rawResult.isLoading);
+    await when(() => !query._rawResult.isLoading);
 
-    expect(mobxQuery.result).toBeDefined();
+    expect(query.result).toBeDefined();
 
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   it('"result" field should be reactive', async () => {
     let counter = 0;
-    const mobxQuery = new MobxQueryMock({
+    const query = new QueryMock({
       queryKey: ['test'],
       queryFn: () => ++counter,
     });
     const reactionSpy = vi.fn();
 
     const dispose = reaction(
-      () => mobxQuery.result,
+      () => query.result,
       (result) => reactionSpy(result),
     );
 
-    await when(() => !mobxQuery._rawResult.isLoading);
+    await when(() => !query._rawResult.isLoading);
 
     expect(reactionSpy).toBeCalled();
-    expect(reactionSpy).toBeCalledWith({ ...mobxQuery.result });
+    expect(reactionSpy).toBeCalledWith({ ...query.result });
 
     dispose();
-    mobxQuery.dispose();
+    query.dispose();
   });
 
   describe('"queryKey" reactive parameter', () => {
     it('should rerun queryFn after queryKey change', async () => {
       const boxCounter = observable.box(0);
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: ({ queryKey }) => {
           return queryKey[1];
         },
         queryKey: () => ['test', boxCounter.get()] as const,
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
       runInAction(() => {
         boxCounter.set(1);
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(2);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 0);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(2, 1);
+      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).nthReturnedWith(1, 0);
+      expect(query.spies.queryFn).nthReturnedWith(2, 1);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     it('should rerun queryFn after queryKey change', async () => {
       const boxEnabled = observable.box(false);
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: () => 10,
         queryKey: () => ['test', boxEnabled.get()] as const,
         enabled: ({ queryKey }) => queryKey[1],
@@ -273,25 +260,25 @@ describe('MobxQuery', () => {
         boxEnabled.set(true);
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 10);
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
   });
 
   describe('"enabled" reactive parameter', () => {
     it('should be DISABLED from default query options (from query client)', async () => {
-      const queryClient = new MobxQueryClient({
+      const queryClient = new QueryClient({
         defaultOptions: {
           queries: {
             enabled: false,
           },
         },
       });
-      const mobxQuery = new MobxQueryMock(
+      const query = new QueryMock(
         {
           queryKey: ['test', 0 as number] as const,
           queryFn: () => 100,
@@ -299,90 +286,90 @@ describe('MobxQuery', () => {
         queryClient,
       );
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toBeCalledTimes(0);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     it('should be reactive after change queryKey', async () => {
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });
 
-      mobxQuery.update({ queryKey: ['test', 1] as const });
+      query.update({ queryKey: ['test', 1] as const });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 100);
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     it('should be reactive dependent on another query (runs before declartion)', async () => {
-      const disabledMobxQuery = new MobxQueryMock({
+      const disabledQuery = new QueryMock({
         queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });
 
-      disabledMobxQuery.update({ queryKey: ['test', 1] as const });
+      disabledQuery.update({ queryKey: ['test', 1] as const });
 
-      const dependentMobxQuery = new MobxQueryMock({
+      const dependentQuery = new QueryMock({
         options: () => ({
-          enabled: !!disabledMobxQuery.options.enabled,
-          queryKey: [...disabledMobxQuery.options.queryKey, 'dependent'],
+          enabled: !!disabledQuery.options.enabled,
+          queryKey: [...disabledQuery.options.queryKey, 'dependent'],
         }),
         queryFn: ({ queryKey }) => queryKey,
       });
 
-      await when(() => !disabledMobxQuery._rawResult.isLoading);
-      await when(() => !dependentMobxQuery._rawResult.isLoading);
+      await when(() => !disabledQuery._rawResult.isLoading);
+      await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         1,
         'dependent',
       ]);
 
-      disabledMobxQuery.dispose();
-      dependentMobxQuery.dispose();
+      disabledQuery.dispose();
+      dependentQuery.dispose();
     });
 
     it('should be reactive dependent on another query (runs after declaration)', async () => {
-      const tempDisabledMobxQuery = new MobxQueryMock({
+      const tempDisabledQuery = new QueryMock({
         queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
       });
 
-      const dependentMobxQuery = new MobxQueryMock({
+      const dependentQuery = new QueryMock({
         options: () => ({
-          enabled: !!tempDisabledMobxQuery.options.enabled,
-          queryKey: [...tempDisabledMobxQuery.options.queryKey, 'dependent'],
+          enabled: !!tempDisabledQuery.options.enabled,
+          queryKey: [...tempDisabledQuery.options.queryKey, 'dependent'],
         }),
         queryFn: ({ queryKey }) => queryKey,
       });
 
-      tempDisabledMobxQuery.update({ queryKey: ['test', 1] as const });
+      tempDisabledQuery.update({ queryKey: ['test', 1] as const });
 
-      await when(() => !tempDisabledMobxQuery._rawResult.isLoading);
-      await when(() => !dependentMobxQuery._rawResult.isLoading);
+      await when(() => !tempDisabledQuery._rawResult.isLoading);
+      await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentMobxQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
       // результат с 0 потому что options.enabled у первой квери - это функция и
-      // !!tempDisabledMobxQuery.options.enabled будет всегда true
-      expect(dependentMobxQuery.spies.queryFn).nthReturnedWith(1, [
+      // !!tempDisabledQuery.options.enabled будет всегда true
+      expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         0,
         'dependent',
       ]);
 
-      tempDisabledMobxQuery.dispose();
-      dependentMobxQuery.dispose();
+      tempDisabledQuery.dispose();
+      dependentQuery.dispose();
     });
   });
 
@@ -390,7 +377,7 @@ describe('MobxQuery', () => {
     it('"options.queryKey" should updates query', async () => {
       const boxCounter = observable.box(0);
       let counter = 0;
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: ({ queryKey }) => {
           counter += queryKey[1] * 10;
           return counter;
@@ -404,18 +391,18 @@ describe('MobxQuery', () => {
         boxCounter.set(1);
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(2);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 0);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(2, 10);
+      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).nthReturnedWith(1, 0);
+      expect(query.spies.queryFn).nthReturnedWith(2, 10);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     it('"options.enabled" should change "enabled" statement for query (enabled as boolean in options)', async () => {
       const boxEnabled = observable.box(false);
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: ({ queryKey }) => {
           return queryKey[1];
         },
@@ -429,17 +416,17 @@ describe('MobxQuery', () => {
         boxEnabled.set(true);
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, 10);
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     it('"options.enabled" should change "enabled" statement for query (enabled as query based fn)', async () => {
       const boxEnabled = observable.box(false);
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: ({ queryKey }) => {
           return queryKey[1];
         },
@@ -453,88 +440,88 @@ describe('MobxQuery', () => {
         boxEnabled.set(true);
       });
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.spies.queryFn).nthReturnedWith(1, true);
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, true);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
   });
 
   describe('"enableOnDemand" option', () => {
     describe('at start', () => {
       it('should not call query if result is not requested (without "enabled" property use)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": false)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: false,
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": fn -> false)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: () => false,
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": fn -> true)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: () => true,
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": true)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: true,
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": false in dynamic options)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           options: () => ({
@@ -542,15 +529,15 @@ describe('MobxQuery', () => {
           }),
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query if result is not requested (with "enabled": true in dynamic options)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           options: () => ({
@@ -558,46 +545,46 @@ describe('MobxQuery', () => {
           }),
         });
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should call query if result is requested (without "enabled" property use)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
         });
 
-        mobxQuery.result.data;
+        query.result.data;
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query event if result is requested (reason: "enabled": false out of box)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: false,
         });
 
-        mobxQuery.result.data;
+        query.result.data;
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query even if result is requested (reason: "enabled": fn -> false)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: function getEnabledFromUnitTest() {
@@ -605,55 +592,55 @@ describe('MobxQuery', () => {
           },
         });
 
-        mobxQuery.result.data;
+        query.result.data;
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should call query if result is requested (with "enabled": fn -> true)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: () => true,
         });
 
-        mobxQuery.result.data;
+        query.result.data;
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should call query if result is requested (with "enabled": true)', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 10,
           enableOnDemand: true,
           enabled: true,
         });
 
-        mobxQuery.result.data;
+        query.result.data;
 
-        await when(() => !mobxQuery._rawResult.isLoading);
+        await when(() => !query._rawResult.isLoading);
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
       it('should NOT call query if result is requested (reason: "enabled" false from default query client options)', async () => {
-        const queryClient = new MobxQueryClient({
+        const queryClient = new QueryClient({
           defaultOptions: {
             queries: {
               enabled: false,
             },
           },
         });
-        const mobxQuery = new MobxQueryMock(
+        const query = new QueryMock(
           {
             queryKey: ['test', 0 as number] as const,
             queryFn: () => 100,
@@ -662,23 +649,23 @@ describe('MobxQuery', () => {
           queryClient,
         );
 
-        mobxQuery.result.data;
-        mobxQuery.result.isLoading;
+        query.result.data;
+        query.result.isLoading;
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should not call query even it is enabled until result is requested', async () => {
-        const queryClient = new MobxQueryClient({
+        const queryClient = new QueryClient({
           defaultOptions: {
             queries: {
               enabled: true,
             },
           },
         });
-        const mobxQuery = new MobxQueryMock(
+        const query = new QueryMock(
           {
             queryKey: ['test', 0 as number] as const,
             queryFn: () => 100,
@@ -687,37 +674,37 @@ describe('MobxQuery', () => {
           queryClient,
         );
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.result.data;
-        mobxQuery.result.isLoading;
+        query.result.data;
+        query.result.isLoading;
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should enable query when result is requested', async () => {
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryKey: ['test', 0 as number] as const,
           queryFn: () => 100,
           enableOnDemand: true,
         });
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        mobxQuery.result.data;
-        mobxQuery.result.isLoading;
+        query.result.data;
+        query.result.isLoading;
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should enable query from dynamic options ONLY AFTER result is requested', () => {
         const valueBox = observable.box<string | undefined>();
 
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 100,
           enableOnDemand: true,
           options: () => ({
@@ -726,24 +713,24 @@ describe('MobxQuery', () => {
           }),
         });
 
-        mobxQuery.result.data;
-        mobxQuery.result.isLoading;
+        query.result.data;
+        query.result.isLoading;
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('value');
         });
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
 
       it('should enable query from dynamic options ONLY AFTER result is requested (multiple observable updates)', () => {
         const valueBox = observable.box<string | null | undefined>();
 
-        const mobxQuery = new MobxQueryMock({
+        const query = new QueryMock({
           queryFn: () => 100,
           enableOnDemand: true,
           options: () => {
@@ -755,10 +742,10 @@ describe('MobxQuery', () => {
           },
         });
 
-        mobxQuery.result.data;
-        mobxQuery.result.isLoading;
+        query.result.data;
+        query.result.isLoading;
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
         runInAction(() => {
           valueBox.set(null);
@@ -768,15 +755,15 @@ describe('MobxQuery', () => {
           valueBox.set('faslse');
         });
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toBeCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('kek');
         });
 
-        expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        mobxQuery.dispose();
+        query.dispose();
       });
     });
   });
@@ -810,7 +797,7 @@ describe('MobxQuery', () => {
         },
       } as Record<string, any>;
 
-      const mobxQuery = new MobxQueryMock(
+      const query = new QueryMock(
         {
           queryKey: [task.name, '1'],
           queryFn: () => structuredClone(queryData),
@@ -818,14 +805,14 @@ describe('MobxQuery', () => {
         queryClient,
       );
 
-      await when(() => !mobxQuery.result.isLoading);
+      await when(() => !query.result.isLoading);
 
-      mobxQuery.setData(() => ({ bar: 1, baz: 2 }));
+      query.setData(() => ({ bar: 1, baz: 2 }));
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.result.data).toEqual({ bar: 1, baz: 2 });
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.result.data).toEqual({ bar: 1, baz: 2 });
 
-      mobxQuery.dispose();
+      query.dispose();
     });
     it('should update query data using mutation', async ({ task }) => {
       const queryData = {
@@ -850,7 +837,7 @@ describe('MobxQuery', () => {
 
       console.info('asdfdsaf', task.name);
 
-      const mobxQuery = new MobxQueryMock(
+      const query = new QueryMock(
         {
           queryKey: [task.name, '2'],
           queryFn: () => structuredClone(queryData),
@@ -858,19 +845,19 @@ describe('MobxQuery', () => {
         queryClient,
       );
 
-      await when(() => !mobxQuery.result.isLoading);
+      await when(() => !query.result.isLoading);
       await waitAsync(10);
 
-      mobxQuery.setData((curr) => {
+      query.setData((curr) => {
         if (!curr) return curr;
         curr.a.b.c.d.e.children.push({ id: '2', name: 'Doe', age: 21 });
         return curr;
       });
 
-      await when(() => !mobxQuery.result.isLoading);
+      await when(() => !query.result.isLoading);
 
-      expect(mobxQuery.spies.queryFn).toBeCalledTimes(1);
-      expect(mobxQuery.result.data).toEqual({
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.result.data).toEqual({
         a: {
           b: {
             c: {
@@ -918,7 +905,7 @@ describe('MobxQuery', () => {
         },
       } as Record<string, any>;
 
-      const mobxQuery = new MobxQueryMock(
+      const query = new QueryMock(
         {
           queryKey: [task.name, '3'],
           queryFn: () => structuredClone(queryData),
@@ -929,14 +916,14 @@ describe('MobxQuery', () => {
       const reactionSpy = vi.fn();
 
       reaction(
-        () => mobxQuery.result.data,
+        () => query.result.data,
         (curr, prev) => reactionSpy(curr, prev),
       );
 
-      await when(() => !mobxQuery.result.isLoading);
+      await when(() => !query.result.isLoading);
       await waitAsync(10);
 
-      mobxQuery.setData((curr) => {
+      query.setData((curr) => {
         if (!curr) return curr;
         curr.a.b.c.d.e.children.push({ id: '2', name: 'Doe', age: 21 });
         return curr;
@@ -990,7 +977,7 @@ describe('MobxQuery', () => {
         },
       );
 
-      mobxQuery.dispose();
+      query.dispose();
     });
     it('should update computed.structs after update query data using mutation', async ({
       task,
@@ -1016,7 +1003,7 @@ describe('MobxQuery', () => {
       } as Record<string, any>;
 
       class TestClass {
-        mobxQuery = new MobxQueryMock(
+        query = new QueryMock(
           {
             queryKey: [task.name, '4'],
             queryFn: () => structuredClone(queryData),
@@ -1030,17 +1017,17 @@ describe('MobxQuery', () => {
         }
 
         get foo() {
-          return this.mobxQuery.result.data?.a.b.c.d.e.children[0] || null;
+          return this.query.result.data?.a.b.c.d.e.children[0] || null;
         }
 
         destroy() {
-          this.mobxQuery.dispose();
+          this.query.dispose();
         }
       }
 
       const testClass = new TestClass();
 
-      await when(() => !testClass.mobxQuery.result.isLoading);
+      await when(() => !testClass.query.result.isLoading);
       await waitAsync(10);
 
       expect(testClass.foo).toStrictEqual({
@@ -1049,7 +1036,7 @@ describe('MobxQuery', () => {
         name: 'John',
       });
 
-      testClass.mobxQuery.setData((curr) => {
+      testClass.query.setData((curr) => {
         if (!curr) return curr;
         curr.a.b.c.d.e.children[0].name = 'Doe';
         return curr;
@@ -1087,7 +1074,7 @@ describe('MobxQuery', () => {
       } as Record<string, any>;
 
       class TestClass {
-        mobxQuery = new MobxQueryMock(
+        query = new QueryMock(
           {
             queryKey: [task.name, '5'],
             queryFn: () => structuredClone(queryData),
@@ -1101,11 +1088,11 @@ describe('MobxQuery', () => {
         }
 
         get foo() {
-          return this.mobxQuery.result.data?.a.b.c.d.e.children[0] || null;
+          return this.query.result.data?.a.b.c.d.e.children[0] || null;
         }
 
         destroy() {
-          this.mobxQuery.dispose();
+          this.query.dispose();
         }
       }
 
@@ -1118,10 +1105,10 @@ describe('MobxQuery', () => {
         (curr, prev) => reactionFooSpy(curr, prev),
       );
 
-      await when(() => !testClass.mobxQuery.result.isLoading);
+      await when(() => !testClass.query.result.isLoading);
       await waitAsync(10);
 
-      testClass.mobxQuery.setData((curr) => {
+      testClass.query.setData((curr) => {
         if (!curr) return curr;
         curr.a.b.c.d.e.children[0].name = 'Doe';
         return curr;
@@ -1150,46 +1137,46 @@ describe('MobxQuery', () => {
   describe('"start" method', () => {
     test('should call once queryFn', async () => {
       const querySpyFn = vi.fn();
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryKey: ['test'],
         queryFn: querySpyFn,
         enabled: false,
       });
 
-      await mobxQuery.start();
+      await query.start();
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.result.isFetched).toBeTruthy();
+      expect(query.result.isFetched).toBeTruthy();
       expect(querySpyFn).toBeCalledTimes(1);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
 
     test('should call queryFn every time when start() method is called', async () => {
       const querySpyFn = vi.fn();
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryKey: ['test'],
         queryFn: querySpyFn,
         enabled: false,
       });
 
-      await mobxQuery.start();
-      await mobxQuery.start();
-      await mobxQuery.start();
+      await query.start();
+      await query.start();
+      await query.start();
 
-      await when(() => !mobxQuery._rawResult.isLoading);
+      await when(() => !query._rawResult.isLoading);
 
-      expect(mobxQuery.result.isFetched).toBeTruthy();
+      expect(query.result.isFetched).toBeTruthy();
       expect(querySpyFn).toBeCalledTimes(3);
 
-      mobxQuery.dispose();
+      query.dispose();
     });
   });
 
   describe('scenarios', () => {
     it('query with refetchInterval(number) should be stopped after inner abort', async () => {
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1208,7 +1195,7 @@ describe('MobxQuery', () => {
     });
     it('query with refetchInterval(number) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1228,7 +1215,7 @@ describe('MobxQuery', () => {
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1248,7 +1235,7 @@ describe('MobxQuery', () => {
     });
     it('query with refetchInterval(fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1268,7 +1255,7 @@ describe('MobxQuery', () => {
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
     it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1287,7 +1274,7 @@ describe('MobxQuery', () => {
     });
     it('query with refetchInterval(condition-fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           return 10;
@@ -1310,7 +1297,7 @@ describe('MobxQuery', () => {
       const abortController = new AbortController();
       const counter = observable.box(0);
 
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
@@ -1339,7 +1326,7 @@ describe('MobxQuery', () => {
       const abortController = new AbortController();
       const counter = observable.box(0);
 
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
@@ -1368,7 +1355,7 @@ describe('MobxQuery', () => {
       const abortController = new AbortController();
       const counter = observable.box(0);
 
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(10);
           runInAction(() => {
@@ -1414,7 +1401,7 @@ describe('MobxQuery', () => {
     it('after abort identical (by query key) query another query should work', async () => {
       const abortController1 = new LinkedAbortController();
       const abortController2 = new LinkedAbortController();
-      const mobxQuery1 = new MobxQueryMock({
+      const query1 = new QueryMock({
         queryFn: async () => {
           await waitAsync(5);
           return 'bar';
@@ -1422,7 +1409,7 @@ describe('MobxQuery', () => {
         abortSignal: abortController1.signal,
         queryKey: ['test'] as const,
       });
-      const mobxQuery2 = new MobxQueryMock({
+      const query2 = new QueryMock({
         queryFn: async () => {
           await waitAsync(5);
           return 'foo';
@@ -1432,7 +1419,7 @@ describe('MobxQuery', () => {
       });
       abortController1.abort();
 
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1455,11 +1442,11 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
-      expect(mobxQuery2.result).toStrictEqual({
+      expect(query2.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1482,12 +1469,12 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery2.result.promise,
-        refetch: mobxQuery2.result.refetch,
+        promise: query2.result.promise,
+        refetch: query2.result.refetch,
         status: 'pending',
       });
       await waitAsync(10);
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1510,13 +1497,13 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
-      expect(mobxQuery2.result).toStrictEqual({
+      expect(query2.result).toStrictEqual({
         data: 'foo',
-        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+        dataUpdatedAt: query2.result.dataUpdatedAt,
         error: null,
         errorUpdateCount: 0,
         errorUpdatedAt: 0,
@@ -1537,12 +1524,12 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: true,
-        promise: mobxQuery2.result.promise,
-        refetch: mobxQuery2.result.refetch,
+        promise: query2.result.promise,
+        refetch: query2.result.refetch,
         status: 'success',
       });
       await waitAsync(10);
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1565,8 +1552,8 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
     });
@@ -1574,7 +1561,7 @@ describe('MobxQuery', () => {
     it('after abort identical (by query key) query another query should work (with resetOnDestroy option)', async () => {
       const abortController1 = new LinkedAbortController();
       const abortController2 = new LinkedAbortController();
-      const mobxQuery1 = new MobxQueryMock({
+      const query1 = new QueryMock({
         queryFn: async () => {
           await waitAsync(5);
           return 'bar';
@@ -1583,7 +1570,7 @@ describe('MobxQuery', () => {
         queryKey: ['test'] as const,
         resetOnDestroy: true,
       });
-      const mobxQuery2 = new MobxQueryMock({
+      const query2 = new QueryMock({
         queryFn: async () => {
           await waitAsync(5);
           return 'foo';
@@ -1594,7 +1581,7 @@ describe('MobxQuery', () => {
       });
       abortController1.abort();
 
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1617,11 +1604,11 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
-      expect(mobxQuery2.result).toStrictEqual({
+      expect(query2.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1644,12 +1631,12 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery2.result.promise,
-        refetch: mobxQuery2.result.refetch,
+        promise: query2.result.promise,
+        refetch: query2.result.refetch,
         status: 'pending',
       });
       await waitAsync(10);
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1672,13 +1659,13 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
-      expect(mobxQuery2.result).toStrictEqual({
+      expect(query2.result).toStrictEqual({
         data: 'foo',
-        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+        dataUpdatedAt: query2.result.dataUpdatedAt,
         error: null,
         errorUpdateCount: 0,
         errorUpdatedAt: 0,
@@ -1699,12 +1686,12 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: true,
-        promise: mobxQuery2.result.promise,
-        refetch: mobxQuery2.result.refetch,
+        promise: query2.result.promise,
+        refetch: query2.result.refetch,
         status: 'success',
       });
       await waitAsync(10);
-      expect(mobxQuery1.result).toStrictEqual({
+      expect(query1.result).toStrictEqual({
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1727,8 +1714,8 @@ describe('MobxQuery', () => {
         isRefetching: false,
         isStale: true,
         isSuccess: false,
-        promise: mobxQuery1.result.promise,
-        refetch: mobxQuery1.result.refetch,
+        promise: query1.result.promise,
+        refetch: query1.result.refetch,
         status: 'pending',
       });
     });
@@ -1756,7 +1743,7 @@ describe('MobxQuery', () => {
 
     it('after abort signal for inprogress success work query create new instance with the same key and it should work', async () => {
       const abortController1 = new LinkedAbortController();
-      const mobxQuery = new MobxQueryMock({
+      const query = new QueryMock({
         queryFn: async () => {
           await waitAsync(11);
           return {
@@ -1774,7 +1761,7 @@ describe('MobxQuery', () => {
         queryKey: ['test', 'key'] as const,
       });
 
-      expect(mobxQuery.result).toMatchObject({
+      expect(query.result).toMatchObject({
         status: 'pending',
         fetchStatus: 'fetching',
         isPending: true,
@@ -1804,7 +1791,7 @@ describe('MobxQuery', () => {
 
       await waitAsync(10);
 
-      expect(mobxQuery.result).toMatchObject({
+      expect(query.result).toMatchObject({
         status: 'pending',
         fetchStatus: 'fetching',
         isPending: true,
@@ -1830,7 +1817,7 @@ describe('MobxQuery', () => {
         isStale: true,
       } satisfies Partial<QueryObserverResult<any>>);
 
-      const mobxQuery2 = new MobxQueryMock({
+      const query2 = new QueryMock({
         queryFn: async () => {
           await waitAsync(5);
           return 'foo';
@@ -1840,7 +1827,7 @@ describe('MobxQuery', () => {
 
       await waitAsync(10);
 
-      expect(mobxQuery.result).toMatchObject({
+      expect(query.result).toMatchObject({
         status: 'pending',
         fetchStatus: 'fetching',
         isPending: true,
@@ -1866,7 +1853,7 @@ describe('MobxQuery', () => {
         isStale: true,
       } satisfies Partial<QueryObserverResult<string>>);
 
-      expect(mobxQuery2.result).toMatchObject({
+      expect(query2.result).toMatchObject({
         status: 'success',
         fetchStatus: 'idle',
         isPending: false,
@@ -1875,7 +1862,7 @@ describe('MobxQuery', () => {
         isInitialLoading: false,
         isLoading: false,
         data: 'foo',
-        dataUpdatedAt: mobxQuery2.result.dataUpdatedAt,
+        dataUpdatedAt: query2.result.dataUpdatedAt,
         error: null,
         errorUpdatedAt: 0,
         failureCount: 0,
@@ -1888,7 +1875,7 @@ describe('MobxQuery', () => {
       });
     });
 
-    it('after aborted MobxQuery with failed queryFn - create new MobxQuery with the same key and it should has succeed execution', async () => {
+    it('after aborted Query with failed queryFn - create new Query with the same key and it should has succeed execution', async () => {
       vi.useFakeTimers();
       const box = observable.box('bar');
 
@@ -1942,7 +1929,7 @@ describe('MobxQuery', () => {
 
       const fetch = createMockFetch();
 
-      const query = new MobxQueryMock(
+      const query = new QueryMock(
         {
           abortSignal: vmAbortController.signal,
           queryFn: () =>
@@ -2001,7 +1988,7 @@ describe('MobxQuery', () => {
 
       const vmAbortController2 = new AbortController();
 
-      const query2 = new MobxQueryMock(
+      const query2 = new QueryMock(
         {
           abortSignal: vmAbortController2.signal,
           queryFn: () => {
@@ -2029,7 +2016,7 @@ describe('MobxQuery', () => {
       } satisfies Partial<QueryObserverResult<any, any>>);
     });
 
-    it('after aborted MobxQuery with failed queryFn - create new MobxQuery with the same key and it should has succeed execution (+ abort signal usage inside query fn)', async () => {
+    it('after aborted Query with failed queryFn - create new Query with the same key and it should has succeed execution (+ abort signal usage inside query fn)', async () => {
       vi.useFakeTimers();
       const box = observable.box('bar');
 
@@ -2083,7 +2070,7 @@ describe('MobxQuery', () => {
 
       const fetch = createMockFetch();
 
-      const query = new MobxQueryMock(
+      const query = new QueryMock(
         {
           abortSignal: vmAbortController.signal,
           queryFn: ({ signal }) =>
@@ -2143,7 +2130,7 @@ describe('MobxQuery', () => {
 
       const vmAbortController2 = new AbortController();
 
-      const query2 = new MobxQueryMock(
+      const query2 = new QueryMock(
         {
           abortSignal: vmAbortController2.signal,
           queryFn: ({ signal }) => {
@@ -2176,11 +2163,11 @@ describe('MobxQuery', () => {
   describe('throwOnError', () => {
     it('should throw error (throwOnError: true in options)', async () => {
       vi.useFakeTimers();
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         throwOnError: true,
         enabled: false,
         queryFn: async () => {
-          throw new Error('MobxQueryError');
+          throw new Error('QueryError');
         },
       });
       let error: Error | undefined;
@@ -2192,15 +2179,15 @@ describe('MobxQuery', () => {
 
       await promise;
 
-      expect(error?.message).toBe('MobxQueryError');
+      expect(error?.message).toBe('QueryError');
     });
 
     it('should throw error (updating param throwOnError true)', async () => {
       vi.useFakeTimers();
-      const query = new MobxQueryMock({
+      const query = new QueryMock({
         enabled: false,
         queryFn: async () => {
-          throw new Error('MobxQueryError');
+          throw new Error('QueryError');
         },
       });
       let error: Error | undefined;
@@ -2212,16 +2199,16 @@ describe('MobxQuery', () => {
 
       await promise;
 
-      expect(error?.message).toBe('MobxQueryError');
+      expect(error?.message).toBe('QueryError');
     });
 
     it('should throw error (throwOnError: true in global options)', async () => {
       vi.useFakeTimers();
-      const query = new MobxQueryMock(
+      const query = new QueryMock(
         {
           enabled: false,
           queryFn: async () => {
-            throw new Error('MobxQueryError');
+            throw new Error('QueryError');
           },
         },
         new QueryClient({
@@ -2241,7 +2228,7 @@ describe('MobxQuery', () => {
 
       await promise;
 
-      expect(error?.message).toBe('MobxQueryError');
+      expect(error?.message).toBe('QueryError');
     });
   });
 
@@ -2257,8 +2244,8 @@ describe('MobxQuery', () => {
       },
     ];
 
-    const queryWithSelect = new MobxQuery({
-      queryClient: new MobxQueryClient(),
+    const queryWithSelect = new Query({
+      queryClient: new QueryClient(),
       queryKey: ['a'],
       queryFn: () => data,
       select: (data) => {

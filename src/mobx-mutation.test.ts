@@ -2,15 +2,15 @@ import { DefaultError, QueryClient } from '@tanstack/query-core';
 import { reaction } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MobxMutation } from './mobx-mutation';
-import { MobxMutationConfig } from './mobx-mutation.types';
+import { Mutation } from './mobx-mutation';
+import { MutationConfig } from './mobx-mutation.types';
 
-class MobxMutationMock<
+class MutationMock<
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
   TContext = unknown,
-> extends MobxMutation<TData, TVariables, TError, TContext> {
+> extends Mutation<TData, TVariables, TError, TContext> {
   spies = {
     mutationFn: null as unknown as ReturnType<typeof vi.fn>,
     dispose: vi.fn(),
@@ -21,7 +21,7 @@ class MobxMutationMock<
 
   constructor(
     options: Omit<
-      MobxMutationConfig<TData, TVariables, TError, TContext>,
+      MutationConfig<TData, TVariables, TError, TContext>,
       'queryClient'
     >,
   ) {
@@ -56,30 +56,30 @@ class MobxMutationMock<
   }
 }
 
-describe('MobxMutation', () => {
+describe('Mutation', () => {
   it('should call mutationFn', async () => {
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async () => {},
     });
 
-    await mobxMutation.mutate();
+    await mutation.mutate();
 
-    expect(mobxMutation.spies.mutationFn).toHaveBeenCalled();
+    expect(mutation.spies.mutationFn).toHaveBeenCalled();
   });
 
   it('should have result with finished data', async () => {
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async () => {
         return 'OK';
       },
     });
 
-    await mobxMutation.mutate();
+    await mutation.mutate();
 
-    expect(mobxMutation.result).toStrictEqual({
-      ...mobxMutation.result,
+    expect(mutation.result).toStrictEqual({
+      ...mutation.result,
       context: undefined,
       data: 'OK',
       error: null,
@@ -96,17 +96,17 @@ describe('MobxMutation', () => {
   });
 
   it('should change mutation status (success)', async () => {
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async () => {
         return 'OK';
       },
     });
 
-    const statuses: (typeof mobxMutation)['result']['status'][] = [];
+    const statuses: (typeof mutation)['result']['status'][] = [];
 
     reaction(
-      () => mobxMutation.result.status,
+      () => mutation.result.status,
       (status) => {
         statuses.push(status);
       },
@@ -115,23 +115,23 @@ describe('MobxMutation', () => {
       },
     );
 
-    await mobxMutation.mutate();
+    await mutation.mutate();
 
     expect(statuses).toStrictEqual(['idle', 'pending', 'success']);
   });
 
   it('should change mutation status (failure)', async () => {
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async () => {
         throw new Error('BAD');
       },
     });
 
-    const statuses: (typeof mobxMutation)['result']['status'][] = [];
+    const statuses: (typeof mutation)['result']['status'][] = [];
 
     reaction(
-      () => mobxMutation.result.status,
+      () => mutation.result.status,
       (status) => {
         statuses.push(status);
       },
@@ -141,7 +141,7 @@ describe('MobxMutation', () => {
     );
 
     try {
-      await mobxMutation.mutate();
+      await mutation.mutate();
       // eslint-disable-next-line no-empty
     } catch {}
 
@@ -149,7 +149,7 @@ describe('MobxMutation', () => {
   });
 
   it('should throw exception', async () => {
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async () => {
         throw new Error('BAD');
@@ -157,7 +157,7 @@ describe('MobxMutation', () => {
     });
 
     expect(async () => {
-      await mobxMutation.mutate();
+      await mutation.mutate();
     }).rejects.toThrowError('BAD');
   });
 
@@ -168,7 +168,7 @@ describe('MobxMutation', () => {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          mobxMutation.destroy();
+          mutation.destroy();
         }, 200);
         const timer = setTimeout(() => resolve(data), 1000);
         signal?.addEventListener('abort', () => {
@@ -179,14 +179,14 @@ describe('MobxMutation', () => {
       });
     };
 
-    const mobxMutation = new MobxMutationMock({
+    const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async (_, { signal }) => {
         await fakeFetch('OK', signal);
       },
     });
     try {
-      await mobxMutation.mutate();
+      await mutation.mutate();
       await vi.runAllTimersAsync();
       expect(false).toBe('abort should happen');
     } catch (error) {

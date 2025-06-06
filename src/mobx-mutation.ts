@@ -9,16 +9,13 @@ import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable, reaction } from 'mobx';
 
 import {
-  MobxMutationConfig,
-  MobxMutationInvalidateQueriesOptions,
+  MutationConfig,
+  MutationInvalidateQueriesOptions,
 } from './mobx-mutation.types';
-import { MobxQueryClient } from './mobx-query-client';
-import {
-  AnyQueryClient,
-  MobxQueryClientHooks,
-} from './mobx-query-client.types';
+import { QueryClient } from './mobx-query-client';
+import { AnyQueryClient, QueryClientHooks } from './mobx-query-client.types';
 
-export class MobxMutation<
+export class Mutation<
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
@@ -34,10 +31,10 @@ export class MobxMutation<
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
   private _observerSubscription?: VoidFunction;
-  private hooks?: MobxQueryClientHooks;
+  private hooks?: QueryClientHooks;
 
   constructor(
-    protected config: MobxMutationConfig<TData, TVariables, TError, TContext>,
+    protected config: MutationConfig<TData, TVariables, TError, TContext>,
   ) {
     const {
       queryClient,
@@ -57,7 +54,7 @@ export class MobxMutation<
 
     const invalidateByKey =
       providedInvalidateByKey ??
-      (queryClient instanceof MobxQueryClient
+      (queryClient instanceof QueryClient
         ? queryClient.mutationFeatures.invalidateByKey
         : null);
 
@@ -89,7 +86,7 @@ export class MobxMutation<
 
       if (
         config.resetOnDispose ||
-        (queryClient instanceof MobxQueryClient &&
+        (queryClient instanceof QueryClient &&
           queryClient.mutationFeatures.resetOnDispose)
       ) {
         this.reset();
@@ -98,7 +95,7 @@ export class MobxMutation<
 
     if (invalidateQueries) {
       this.onDone((data, payload) => {
-        let invalidateOptions: MobxMutationInvalidateQueriesOptions;
+        let invalidateOptions: MutationInvalidateQueriesOptions;
 
         if (typeof invalidateQueries === 'function') {
           invalidateOptions = invalidateQueries(data, payload);
@@ -235,7 +232,7 @@ export class MobxMutation<
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
 
-    if (this.queryClient instanceof MobxQueryClient && !isNeedToReset) {
+    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
       isNeedToReset =
         this.queryClient.mutationFeatures.resetOnDestroy ||
         this.queryClient.mutationFeatures.resetOnDispose;
@@ -254,7 +251,7 @@ export class MobxMutation<
   }
 
   /**
-   * @deprecated use `destroy`
+   * @deprecated use `destroy`. This method will be removed in next major release
    */
   dispose() {
     this.destroy();
@@ -269,3 +266,8 @@ export class MobxMutation<
     this.destroy();
   }
 }
+
+/**
+ * @remarks ⚠️ use `Mutation`. This export will be removed in next major release
+ */
+export const MobxMutation = Mutation;

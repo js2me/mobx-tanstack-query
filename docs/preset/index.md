@@ -2,9 +2,9 @@
 
 _Or_ **mobx-tanstack-query/preset**  
 
-This is additional api to work with this package, which contains factory functions for `mobx-tanstack-query` entities and already configured [`MobxQueryClient`](/api/MobxQueryClient)   
+This is additional api to work with this package, which contains factory functions for `mobx-tanstack-query` entities and already configured [`QueryClient`](/api/QueryClient)   
 
-Here is [link for built-in configuration of `MobxQueryClient`](/src/preset/configs/default-query-client-config.ts)   
+Here is [link for built-in configuration of `QueryClient`](/src/preset/configs/default-query-client-config.ts)   
 
 
 ## Usage  

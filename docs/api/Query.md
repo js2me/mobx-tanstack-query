@@ -1,14 +1,14 @@
-# MobxQuery  
+# Query  
 
 Class wrapper for [@tanstack-query/core queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) with **MobX** reactivity  
 
 
 ## Usage  
 
-Create an instance of `MobxQuery` with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
+Create an instance of `Query` with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
 
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   queryClient,
   abortSignal, // Helps you to automatically clean up query  
   queryKey: ['pets'],
@@ -26,7 +26,7 @@ const query = new MobxQuery({
 Query will be disabled until you request result for this query  
 Example:  
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   //...
   enableOnDemand: true
 });
@@ -36,7 +36,7 @@ query.result.data; // from this code line query starts fetching data
 
 This option works as is if query will be "enabled", otherwise you should enable this query.   
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   enabled: false,
   enableOnDemand: true, 
   queryFn: () => {},
@@ -45,7 +45,7 @@ query.result.data; // nothing happened because query is disabled.
 ```
 But if you set `enabled` as `true` and option `enableOnDemand` will be `true` too then query will be fetched only after user will try to get access to result.    
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   enabled: true,
   enableOnDemand: true, 
   queryFn: () => {},
@@ -61,7 +61,7 @@ query.result.data; // query starts execute the queryFn
 Options which can be dynamically updated for this query   
 
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   // ...
   options: () => ({
     enabled: this.myObservableValue > 10,
@@ -76,7 +76,7 @@ const query = new MobxQuery({
 ### dynamic `queryKey`  
 Works the same as dynamic `options` option but only for `queryKey`   
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   // ...
   queryKey: () => ['foo', 'bar', this.myObservableValue] as const,
   queryFn: ({ queryKey }) => {
@@ -86,7 +86,7 @@ const query = new MobxQuery({
 ```  
 P.S. you can combine it with dynamic (out of box) `enabled` property   
 ```ts
-const query = new MobxQuery({
+const query = new Query({
   // ...
   queryKey: () => ['foo', 'bar', this.myObservableValue] as const,
   enabled: ({ queryKey }) => queryKey[2] > 10,
@@ -173,4 +173,4 @@ export const queryClient = new QueryClient({
 queryClient.mount(); // enable all subscriptions for online\offline and window focus/blur
 ```
 
-If you work with [`MobxQueryClient`](/api/MobxQueryClient) then calling `mount()` is not needed.     
+If you work with [`QueryClient`](/api/QueryClient) then calling `mount()` is not needed.     

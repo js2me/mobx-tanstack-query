@@ -1,6 +1,6 @@
 import { DefaultError, QueryKey } from '@tanstack/query-core';
 
-import { MobxQueryConfig } from './mobx-query.types';
+import { QueryConfig } from './mobx-query.types';
 
 export interface QueryOptionsParams<
   TQueryFnData = unknown,
@@ -9,17 +9,25 @@ export interface QueryOptionsParams<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > extends Omit<
-    MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
     'queryClient'
   > {}
 
 export function queryOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 >(
-  options: QueryOptionsParams<TData, TError, TQueryKey>,
-): QueryOptionsParams<TData, TError, TQueryKey>;
+  options: QueryOptionsParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
+): QueryOptionsParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function queryOptions(options: unknown) {
   return options;

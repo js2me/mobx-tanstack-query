@@ -34,14 +34,14 @@ It offers first-class support for React hooks and follows modern React patterns.
 
 The current React integration is implemented via `MobX` React bindings.
 
-## Creating instance of [`MobxQueryClient`](/api/MobxQueryClient)   
+## Creating instance of [`QueryClient`](/api/QueryClient)   
 This is extended version of original [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)   
 
 ```ts
-import { MobxQueryClient } from "mobx-tanstack-query";
+import { QueryClient } from "mobx-tanstack-query";
 import { hashKey } from '@tanstack/query-core';
 
-export const queryClient = new MobxQueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       throwOnError: true,
@@ -66,9 +66,9 @@ export const queryClient = new MobxQueryClient({
 ## Writing first queries
 
 ```ts
-import { MobxQuery } from 'mobx-tanstack-query';
+import { Query } from 'mobx-tanstack-query';
 
-const fruitQuery = new MobxQuery({
+const fruitQuery = new Query({
   queryClient,
   queryFn: async ({ queryKey }) => {
     const response = await fetch(`/api/fruits/${queryKey[1]}`);
@@ -82,7 +82,7 @@ const fruitQuery = new MobxQuery({
 
 ```ts
 import { observable, action } from "mobx";
-import { MobxQuery } from 'mobx-tanstack-query';
+import { Query } from 'mobx-tanstack-query';
 
 class MyViewModel {
   abortController = new AbortController();
@@ -90,7 +90,7 @@ class MyViewModel {
   @observable
   accessor fruitName = 'apple';
 
-  fruitQuery = new MobxQuery({
+  fruitQuery = new Query({
     queryClient,
     abortSignal: this.abortController.signal, // Don't forget about that!
     queryFn: async ({ queryKey }) => {

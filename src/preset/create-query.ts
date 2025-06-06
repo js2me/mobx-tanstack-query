@@ -1,8 +1,8 @@
 import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
-import { MobxQuery } from '../mobx-query';
+import { Query } from '../mobx-query';
 import { AnyQueryClient } from '../mobx-query-client.types';
-import { MobxQueryConfig, MobxQueryFn } from '../mobx-query.types';
+import { QueryConfig, QueryFn } from '../mobx-query.types';
 import { QueryOptionsParams } from '../query-options';
 
 import { queryClient } from './query-client';
@@ -14,7 +14,7 @@ export type CreateQueryParams<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > = Omit<
-  MobxQueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   'queryClient' | 'queryFn'
 > & {
   queryClient?: QueryClient;
@@ -34,7 +34,7 @@ export function createQuery<
     TQueryData,
     TQueryKey
   >,
-): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery<
   TQueryFnData = unknown,
@@ -43,7 +43,7 @@ export function createQuery<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 >(
-  queryFn: MobxQueryFn<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  queryFn: QueryFn<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   params?: CreateQueryParams<
     TQueryFnData,
     TError,
@@ -51,7 +51,7 @@ export function createQuery<
     TQueryData,
     TQueryKey
   >,
-): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery<
   TQueryFnData = unknown,
@@ -68,11 +68,11 @@ export function createQuery<
     TQueryData,
     TQueryKey
   >,
-): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery(...args: [any, any?]) {
   if (typeof args[0] === 'function') {
-    return new MobxQuery({
+    return new Query({
       ...args[1],
       queryClient: args[1]?.queryClient ?? queryClient,
       queryFn: args[0],
@@ -82,8 +82,8 @@ export function createQuery(...args: [any, any?]) {
       },
     });
   } else if (args.length === 2) {
-    return new MobxQuery(args[0], args[1]());
+    return new Query(args[0], args[1]());
   }
 
-  return new MobxQuery(queryClient, args[0]);
+  return new Query(queryClient, args[0]);
 }

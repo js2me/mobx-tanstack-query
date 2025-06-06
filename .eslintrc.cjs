@@ -9,6 +9,7 @@ module.exports = {
     ],
     'unicorn/prevent-abbreviations': 'off',
     'sonarjs/no-redundant-optional': 'off',
-    'sonarjs/deprecation': 'off'
+    'sonarjs/deprecation': 'off',
+    'sonarjs/redundant-type-aliases': 'off'
   },
 };

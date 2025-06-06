@@ -12,7 +12,7 @@ type MyConfig = InferMutation<typeof myMutation, 'config'>
 ```
 
 
-## `MobxQueryConfigFromFn`, `MobxMutationConfigFromFn`, `MobxInfiniteQueryConfigFromFn`   
+## `QueryConfigFromFn`, `MutationConfigFromFn`, `InfiniteQueryConfigFromFn`   
 
 This types are needed to create configuration types from your functions of your http client  
 
@@ -21,13 +21,13 @@ const myApi = {
   createApple: (name: string): Promise<AppleDC> => ... 
 }
 
-type Config = MobxMutationConfigFromFn<typeof myApi.createApple>
+type Config = MutationConfigFromFn<typeof myApi.createApple>
 ```
 
 
 ## `using` keyword   
 
-`MobxQuery`, `MobxInfiniteQuery`, `MobxMutation` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).   
+`Query`, `InfiniteQuery`, `Mutation` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).   
 
 In your project you need to install babel plugin [`@babel/plugin-proposal-explicit-resource-management`](https://www.npmjs.com/package/@babel/plugin-proposal-explicit-resource-management) to add this support.   
 
@@ -46,7 +46,7 @@ class DataModel {
 
 const dataModel = new DataModel();
 const data = await dataModel.getData();
-// after call getData() created MobxQuery
+// after call getData() created Query
 // will be destroyed
 ```
 
