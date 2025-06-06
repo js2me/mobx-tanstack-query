@@ -115,7 +115,7 @@ export class Query<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
-    if (queryClient instanceof QueryClient && config.enableOnDemand == null) {
+    if ('queryFeatures' in queryClient && config.enableOnDemand == null) {
       this.isEnabledOnResultDemand =
         queryClient.queryFeatures.enableOnDemand ?? false;
     }

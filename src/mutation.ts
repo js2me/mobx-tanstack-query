@@ -12,7 +12,6 @@ import {
   MutationConfig,
   MutationInvalidateQueriesOptions,
 } from './mutation.types';
-import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
 export class Mutation<
@@ -54,7 +53,7 @@ export class Mutation<
 
     const invalidateByKey =
       providedInvalidateByKey ??
-      (queryClient instanceof QueryClient
+      ('mutationFeatures' in queryClient
         ? queryClient.mutationFeatures.invalidateByKey
         : null);
 
@@ -86,7 +85,7 @@ export class Mutation<
 
       if (
         config.resetOnDispose ||
-        (queryClient instanceof QueryClient &&
+        ('mutationFeatures' in queryClient &&
           queryClient.mutationFeatures.resetOnDispose)
       ) {
         this.reset();
@@ -232,7 +231,7 @@ export class Mutation<
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
 
-    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
+    if ('mutationFeatures' in this.queryClient && !isNeedToReset) {
       isNeedToReset =
         this.queryClient.mutationFeatures.resetOnDestroy ||
         this.queryClient.mutationFeatures.resetOnDispose;

@@ -28,7 +28,6 @@ import {
   InfiniteQueryResetParams,
   InfiniteQueryUpdateOptions,
 } from './inifinite-query.types';
-import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
 export class InfiniteQuery<
@@ -89,7 +88,7 @@ export class InfiniteQuery<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
-    if (queryClient instanceof QueryClient && config.enableOnDemand == null) {
+    if ('queryFeatures' in queryClient && config.enableOnDemand == null) {
       this.isEnabledOnResultDemand =
         queryClient.queryFeatures.enableOnDemand ?? false;
     }
@@ -376,7 +375,7 @@ export class InfiniteQuery<
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
 
-    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
+    if ('queryFeatures' in this.queryClient && !isNeedToReset) {
       isNeedToReset =
         this.queryClient.queryFeatures.resetOnDestroy ||
         this.queryClient.queryFeatures.resetOnDispose;
