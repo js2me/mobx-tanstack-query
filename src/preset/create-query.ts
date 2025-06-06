@@ -51,7 +51,7 @@ export function createQuery<
     TQueryData,
     TQueryKey
   >,
-): MobxQuery<TData, TError, TQueryKey, TQueryData, TQueryKey>;
+): MobxQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery<
   TQueryFnData = unknown,
