@@ -5,11 +5,11 @@ import {
   QueryClientConfig as QueryClientCoreConfig,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery } from './mobx-inifinite-query';
-import { Mutation } from './mobx-mutation';
-import { MutationFeatures } from './mobx-mutation.types';
-import type { QueryClient } from './mobx-query-client';
-import { AnyQuery, QueryFeatures } from './mobx-query.types';
+import { InfiniteQuery } from './inifinite-query';
+import { Mutation } from './mutation';
+import { MutationFeatures } from './mutation.types';
+import type { QueryClient } from './query-client';
+import { AnyQuery, QueryFeatures } from './query.types';
 
 export type IQueryClientCore = {
   [K in keyof QueryClientCore]: QueryClientCore[K];

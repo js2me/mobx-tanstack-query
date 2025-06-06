@@ -11,9 +11,9 @@ import { action, makeObservable, observable, reaction } from 'mobx';
 import {
   MutationConfig,
   MutationInvalidateQueriesOptions,
-} from './mobx-mutation.types';
-import { QueryClient } from './mobx-query-client';
-import { AnyQueryClient, QueryClientHooks } from './mobx-query-client.types';
+} from './mutation.types';
+import { QueryClient } from './query-client';
+import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
 export class Mutation<
   TData = unknown,

@@ -29,14 +29,14 @@ import {
 } from 'vitest';
 import { waitAsync } from 'yummies/async';
 
-import { Query } from './mobx-query';
+import { createQuery } from './preset';
+import { Query } from './query';
 import {
   QueryConfig,
   QueryDynamicOptions,
   QueryInvalidateParams,
   QueryUpdateOptions,
-} from './mobx-query.types';
-import { createQuery } from './preset';
+} from './query.types';
 
 class QueryMock<
   TQueryFnData = unknown,

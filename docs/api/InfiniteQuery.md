@@ -4,7 +4,7 @@ Class wrapper for [@tanstack-query/core infinite queries](https://tanstack.com/q
 
 [_See docs for Query_](/api/Query)  
 
-
+[Reference to source code](/src/infinite-query.ts)  
 
 ## Usage  
 

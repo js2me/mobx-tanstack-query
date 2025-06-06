@@ -8,8 +8,8 @@ import {
   RefetchOptions,
 } from '@tanstack/query-core';
 
-import type { Query } from './mobx-query';
-import { AnyQueryClient } from './mobx-query-client.types';
+import type { Query } from './query';
+import { AnyQueryClient } from './query-client.types';
 
 export interface QueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}

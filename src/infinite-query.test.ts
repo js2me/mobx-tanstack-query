@@ -9,13 +9,13 @@ import {
 import { when } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
-import { InfiniteQuery } from './mobx-inifinite-query';
+import { InfiniteQuery } from './inifinite-query';
 import {
   InfiniteQueryConfig,
   InfiniteQueryDynamicOptions,
   InfiniteQueryUpdateOptions,
-} from './mobx-inifinite-query.types';
-import { QueryInvalidateParams } from './mobx-query.types';
+} from './inifinite-query.types';
+import { QueryInvalidateParams } from './query.types';
 
 class InfiniteQueryMock<
   TData,

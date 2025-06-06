@@ -1,12 +1,9 @@
 import {
   DefaultError,
-  FetchNextPageOptions,
-  FetchPreviousPageOptions,
   hashKey,
-  InfiniteQueryObserver,
   QueryKey,
-  InfiniteQueryObserverResult,
-  InfiniteData,
+  QueryObserver,
+  QueryObserverResult,
   RefetchOptions,
   SetDataOptions,
   Updater,
@@ -14,45 +11,45 @@ import {
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
-  reaction,
   makeObservable,
   observable,
+  reaction,
   runInAction,
 } from 'mobx';
 
+import { QueryClient } from './query-client';
+import { AnyQueryClient, QueryClientHooks } from './query-client.types';
+import { QueryOptionsParams } from './query-options';
 import {
-  InfiniteQueryConfig,
-  InfiniteQueryDynamicOptions,
-  InfiniteQueryInvalidateParams,
-  InfiniteQueryOptions,
-  InfiniteQueryResetParams,
-  InfiniteQueryUpdateOptions,
-} from './mobx-inifinite-query.types';
-import { QueryClient } from './mobx-query-client';
-import { AnyQueryClient, QueryClientHooks } from './mobx-query-client.types';
+  QueryConfig,
+  QueryDynamicOptions,
+  QueryInvalidateParams,
+  QueryOptions,
+  QueryResetParams,
+  QueryStartParams,
+  QueryUpdateOptions,
+} from './query.types';
 
-export class InfiniteQuery<
-  TData,
+export class Query<
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
-  TPageParam = unknown,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
 > implements Disposable
 {
   protected abortController: AbortController;
   protected queryClient: AnyQueryClient;
 
-  protected _result: InfiniteQueryObserverResult<
-    InfiniteData<TData, TPageParam>,
-    TError
-  >;
-  options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
-  queryObserver: InfiniteQueryObserver<
-    TData,
+  protected _result: QueryObserverResult<TData, TError>;
+
+  options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+  queryObserver: QueryObserver<
+    TQueryFnData,
     TError,
-    InfiniteData<TData, TPageParam>,
     TData,
-    TQueryKey,
-    TPageParam
+    TQueryData,
+    TQueryKey
   >;
 
   isResultRequsted: boolean;
@@ -63,24 +60,53 @@ export class InfiniteQuery<
    * This parameter is responsible for holding the enabled value,
    * in cases where the "enableOnDemand" option is enabled
    */
-  private holdedEnabledOption: InfiniteQueryOptions<
-    TData,
+  private holdedEnabledOption: QueryOptions<
+    TQueryFnData,
     TError,
-    TQueryKey,
-    TPageParam
+    TData,
+    TQueryData,
+    TQueryKey
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
 
+  protected config: QueryConfig<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >;
+
   constructor(
-    protected config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
-  ) {
+    config: QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  );
+  constructor(
+    queryClient: AnyQueryClient,
+    config: () => QueryOptionsParams<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
+  );
+
+  constructor(...args: any[]) {
+    const [queryClient, config]: [
+      AnyQueryClient,
+      QueryOptionsParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    ] =
+      args.length === 2 ? [args[0], args[1]()] : [args[0].queryClient, args[0]];
     const {
-      queryClient,
       queryKey: queryKeyOrDynamicQueryKey,
       options: getDynamicOptions,
       ...restOptions
     } = config;
+    this.config = {
+      ...config,
+      queryClient,
+    };
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
@@ -105,7 +131,7 @@ export class InfiniteQuery<
     this.options = this.queryClient.defaultQueryOptions({
       ...restOptions,
       ...getDynamicOptions?.(this),
-    } as any) as InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+    } as any);
 
     this.options.structuralSharing = this.options.structuralSharing ?? false;
 
@@ -136,9 +162,13 @@ export class InfiniteQuery<
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
+    this.queryObserver = new QueryObserver<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >(queryClient as QueryClient, this.options);
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
@@ -177,12 +207,29 @@ export class InfiniteQuery<
     this.abortController.signal.addEventListener('abort', this.handleAbort);
 
     this.config.onInit?.(this);
-    this.hooks?.onInfiniteQueryInit?.(this);
+    this.hooks?.onQueryInit?.(this);
+  }
+
+  async refetch(options?: RefetchOptions) {
+    const result = await this.queryObserver.refetch(options);
+    const query = this.queryObserver.getCurrentQuery();
+
+    if (
+      query.state.error &&
+      (options?.throwOnError ||
+        this.options.throwOnError === true ||
+        (typeof this.options.throwOnError === 'function' &&
+          this.options.throwOnError(query.state.error, query)))
+    ) {
+      throw query.state.error;
+    }
+
+    return result;
   }
 
   protected createQueryHash(
     queryKey: any,
-    options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
+    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) {
     if (options.queryKeyHashFn) {
       return options.queryKeyHashFn(queryKey);
@@ -193,39 +240,25 @@ export class InfiniteQuery<
 
   setData(
     updater: Updater<
-      NoInfer<InfiniteData<TData, TPageParam>> | undefined,
-      NoInfer<InfiniteData<TData, TPageParam>> | undefined
+      NoInfer<TQueryFnData> | undefined,
+      NoInfer<TQueryFnData> | undefined
     >,
     options?: SetDataOptions,
   ) {
-    this.queryClient.setQueryData<InfiniteData<TData, TPageParam>>(
+    return this.queryClient.setQueryData<TQueryFnData>(
       this.options.queryKey,
       updater,
       options,
     );
   }
 
-  private checkIsEnabled() {
-    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
-      return false;
-    }
-
-    return this.holdedEnabledOption;
-  }
-
-  fetchNextPage(options?: FetchNextPageOptions | undefined) {
-    return this.queryObserver.fetchNextPage(options);
-  }
-
-  fetchPreviousPage(options?: FetchPreviousPageOptions | undefined) {
-    return this.queryObserver.fetchPreviousPage(options);
-  }
-
   update(
     optionsUpdate:
-      | Partial<InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
-      | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-      | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+      | Partial<
+          QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+        >
+      | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+      | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) {
     if (this.abortController.signal.aborted) {
       return;
@@ -234,7 +267,7 @@ export class InfiniteQuery<
     const nextOptions = {
       ...this.options,
       ...optionsUpdate,
-    } as InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+    };
 
     this.processOptions(nextOptions);
 
@@ -248,7 +281,7 @@ export class InfiniteQuery<
   private enableHolder = () => false;
 
   private processOptions = (
-    options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>,
+    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) => {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
@@ -289,54 +322,27 @@ export class InfiniteQuery<
   /**
    * Modify this result so it matches the tanstack query result.
    */
-  private updateResult(
-    nextResult: InfiniteQueryObserverResult<
-      InfiniteData<TData, TPageParam>,
-      TError
-    >,
-  ) {
-    this._result = nextResult || {};
+  private updateResult(result: QueryObserverResult<TData, TError>) {
+    this._result = result;
   }
 
-  async refetch(options?: RefetchOptions) {
-    const result = await this.queryObserver.refetch(options);
-    const query = this.queryObserver.getCurrentQuery();
-
-    if (
-      query.state.error &&
-      (options?.throwOnError ||
-        this.options.throwOnError === true ||
-        (typeof this.options.throwOnError === 'function' &&
-          this.options.throwOnError(query.state.error, query)))
-    ) {
-      throw query.state.error;
-    }
-
-    return result;
-  }
-
-  async reset(params?: InfiniteQueryResetParams) {
-    await this.queryClient.resetQueries({
+  async reset(params?: QueryResetParams) {
+    return await this.queryClient.resetQueries({
       queryKey: this.options.queryKey,
       exact: true,
       ...params,
     } as any);
   }
 
-  async invalidate(options?: InfiniteQueryInvalidateParams) {
-    await this.queryClient.invalidateQueries({
+  async invalidate(params?: QueryInvalidateParams) {
+    return await this.queryClient.invalidateQueries({
       exact: true,
       queryKey: this.options.queryKey,
-      ...options,
+      ...params,
     } as any);
   }
 
-  onDone(
-    onDoneCallback: (
-      data: InfiniteData<TData, TPageParam>,
-      payload: void,
-    ) => void,
-  ): void {
+  onDone(onDoneCallback: (data: TData, payload: void) => void): void {
     reaction(
       () => {
         const { error, isSuccess, fetchStatus } = this._result;
@@ -387,11 +393,27 @@ export class InfiniteQuery<
     }
 
     delete this._observerSubscription;
-    this.hooks?.onInfiniteQueryDestroy?.(this);
+
+    this.hooks?.onQueryDestroy?.(this);
   };
 
   destroy() {
     this.abortController.abort();
+  }
+
+  async start({
+    cancelRefetch,
+    ...params
+  }: QueryStartParams<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > = {}) {
+    this.update({ ...params });
+
+    await this.refetch({ cancelRefetch });
   }
 
   /**
@@ -412,6 +434,6 @@ export class InfiniteQuery<
 }
 
 /**
- * @remarks ⚠️ use `InfiniteQuery`. This export will be removed in next major release
+ * @remarks ⚠️ use `Query`. This export will be removed in next major release
  */
-export const MobxInfiniteQuery = InfiniteQuery;
+export const MobxQuery = Query;

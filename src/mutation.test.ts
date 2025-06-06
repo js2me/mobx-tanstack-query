@@ -2,8 +2,8 @@ import { DefaultError, QueryClient } from '@tanstack/query-core';
 import { reaction } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Mutation } from './mobx-mutation';
-import { MutationConfig } from './mobx-mutation.types';
+import { Mutation } from './mutation';
+import { MutationConfig } from './mutation.types';
 
 class MutationMock<
   TData = unknown,

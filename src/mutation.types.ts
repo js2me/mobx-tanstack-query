@@ -4,8 +4,8 @@ import {
   MutationObserverOptions,
 } from '@tanstack/query-core';
 
-import { Mutation } from './mobx-mutation';
-import { AnyQueryClient } from './mobx-query-client.types';
+import { Mutation } from './mutation';
+import { AnyQueryClient } from './query-client.types';
 
 export interface MutationFeatures {
   /**

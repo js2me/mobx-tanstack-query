@@ -4,7 +4,7 @@
 An enhanced version of [TanStack's Query QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient).  
 Adds specialized configurations for library entities like [`Query`](/api/Query) or [`Mutation`](/api/Mutation).  
 
-[Reference to source code](/src/mobx-query-client.ts)  
+[Reference to source code](/src/query-client.ts)  
 
 ## API Signature  
 ```ts

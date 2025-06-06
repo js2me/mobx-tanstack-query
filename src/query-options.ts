@@ -1,6 +1,6 @@
 import { DefaultError, QueryKey } from '@tanstack/query-core';
 
-import { QueryConfig } from './mobx-query.types';
+import { QueryConfig } from './query.types';
 
 export interface QueryOptionsParams<
   TQueryFnData = unknown,

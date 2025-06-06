@@ -2,6 +2,7 @@
 
 Class wrapper for [@tanstack-query/core queries](https://tanstack.com/query/latest/docs/framework/react/guides/queries) with **MobX** reactivity  
 
+[Reference to source code](/src/query.ts)  
 
 ## Usage  
 

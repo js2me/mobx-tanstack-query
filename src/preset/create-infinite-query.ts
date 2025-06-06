@@ -1,7 +1,7 @@
 import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
-import { InfiniteQuery } from '../mobx-inifinite-query';
-import { InfiniteQueryConfig } from '../mobx-inifinite-query.types';
+import { InfiniteQuery } from '../inifinite-query';
+import { InfiniteQueryConfig } from '../inifinite-query.types';
 
 import { queryClient } from './query-client';
 

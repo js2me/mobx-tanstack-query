@@ -1,12 +1,12 @@
 import { QueryClient as QueryClientCore } from '@tanstack/query-core';
 
-import { MutationFeatures } from './mobx-mutation.types';
+import { MutationFeatures } from './mutation.types';
 import {
   IQueryClientCore,
   QueryClientConfig,
   QueryClientHooks,
-} from './mobx-query-client.types';
-import { QueryFeatures } from './mobx-query.types';
+} from './query-client.types';
+import { QueryFeatures } from './query.types';
 
 export class QueryClient extends QueryClientCore implements IQueryClientCore {
   hooks?: QueryClientHooks;

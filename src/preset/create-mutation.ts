@@ -1,7 +1,7 @@
 import { DefaultError, QueryClient } from '@tanstack/query-core';
 
-import { Mutation } from '../mobx-mutation';
-import { MutationConfig } from '../mobx-mutation.types';
+import { Mutation } from '../mutation';
+import { MutationConfig } from '../mutation.types';
 
 import { queryClient } from './query-client';
 

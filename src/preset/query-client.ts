@@ -1,4 +1,4 @@
-import { QueryClient } from '../mobx-query-client';
+import { QueryClient } from '../query-client';
 
 import { defaultQueryClientConfig } from './configs';
 

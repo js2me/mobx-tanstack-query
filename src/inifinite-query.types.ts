@@ -6,13 +6,13 @@ import {
   DefaultedInfiniteQueryObserverOptions,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery } from './mobx-inifinite-query';
-import { AnyQueryClient } from './mobx-query-client.types';
+import { InfiniteQuery } from './inifinite-query';
+import { AnyQueryClient } from './query-client.types';
 import {
   QueryFeatures,
   QueryInvalidateParams,
   QueryResetParams,
-} from './mobx-query.types';
+} from './query.types';
 
 export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 
