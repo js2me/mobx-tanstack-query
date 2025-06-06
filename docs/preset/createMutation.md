@@ -1,6 +1,6 @@
 # createMutation  
 
-This is alternative for `new Mutation()`.  
+This is alternative for [`new Mutation()`](/api/Mutation#usage).  
 
 ## API Signature  
 

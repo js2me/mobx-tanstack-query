@@ -93,20 +93,41 @@ export class Query<
   );
 
   constructor(...args: any[]) {
-    const [queryClient, config]: [
-      AnyQueryClient,
-      QueryOptionsParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-    ] =
-      args.length === 2 ? [args[0], args[1]()] : [args[0].queryClient, args[0]];
-    const {
-      queryKey: queryKeyOrDynamicQueryKey,
-      options: getDynamicOptions,
-      ...restOptions
-    } = config;
+    let queryClient: AnyQueryClient;
+    let config: QueryOptionsParams<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >;
+    let getDynamicOptions:
+      | QueryConfig<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryData,
+          TQueryKey
+        >['options']
+      | undefined;
+
+    if (args.length === 2) {
+      queryClient = args[0];
+      config = args[1]();
+      getDynamicOptions = args[1];
+    } else {
+      queryClient = args[0].queryClient;
+      config = args[0];
+      getDynamicOptions = args[0].options;
+    }
+
+    const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
+
     this.config = {
       ...config,
       queryClient,
     };
+
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
@@ -413,7 +434,7 @@ export class Query<
   > = {}) {
     this.update({ ...params });
 
-    await this.refetch({ cancelRefetch });
+    return await this.refetch({ cancelRefetch });
   }
 
   /**

@@ -10,7 +10,7 @@ export interface QueryOptionsParams<
   TQueryKey extends QueryKey = QueryKey,
 > extends Omit<
     QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-    'queryClient'
+    'queryClient' | 'options'
   > {}
 
 export function queryOptions<

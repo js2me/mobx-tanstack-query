@@ -72,6 +72,7 @@ export default defineConfig({
         text: 'Preset API',
         link: '/preset',
         items: [
+          { text: 'Overview', link: '/preset' },
           { text: 'createQuery', link: '/preset/createQuery' },
           { text: 'createMutation', link: '/preset/createMutation' },
           { text: 'createInfiniteQuery', link: '/preset/createInfiniteQuery' },

@@ -5,23 +5,136 @@ Class wrapper for [@tanstack-query/core queries](https://tanstack.com/query/late
 [Reference to source code](/src/query.ts)  
 
 ## Usage  
+There are two ways to use queries:   
+
+### 1. Automatic enabling\disabling of queries  
+This approach is suitable when we want the query to automatically make a request and process the data  
+depending on the availability of the necessary data.   
+
+Example:   
+```ts
+const petName = observable.box<string>();
+
+const petQuery = new Query(queryClient, () => ({
+  queryKey: ['pets', petName.get()] as const,
+  enabled: !!petName.get(), // dynamic
+  queryFn: async ({ queryKey }) => {
+    const petName = queryKey[1]!;
+    const response = await petsApi.getPetByName(petName);
+    return await response.json();
+  },
+}));
+
+// petQuery is not enabled
+petQuery.options.enabled;
+
+petName.set('Fluffy');
+
+// petQuery is enabled
+petQuery.options.enabled;
+```
+### 2. Manual control of query fetching
+This approach is suitable when we need to manually load data using a query.   
+
+Example:   
+```ts
+const petQuery = new Query({
+  queryClient,
+  queryKey: ['pets', undefined as (string | undefined)] as const,
+  enabled: false,
+  queryFn: async ({ queryKey }) => {
+    const petName = queryKey[1]!;
+    const response = await petsApi.getPetByName(petName);
+    return await response.json();
+  },
+});
+
+const result = await petQuery.start({
+  queryKey: ['pets', 'Fluffy'],
+});
+
+console.log(result.data);
+```  
+
+### Another examples
 
 Create an instance of `Query` with [`queryKey`](https://tanstack.com/query/latest/docs/framework/react/guides/query-keys) and [`queryFn`](https://tanstack.com/query/latest/docs/framework/react/guides/query-functions) parameters
 
 ```ts
-const query = new Query({
+const petsQuery = new Query({
   queryClient,
   abortSignal, // Helps you to automatically clean up query  
   queryKey: ['pets'],
   queryFn: async ({ signal, queryKey }) => {
     const response = await petsApi.fetchPets({ signal });
-    return response.data;
+    return await response.json();
   },
-});  
+});
+
+...
+
+console.log(
+  petsQuery.result.data,
+  petsQuery.result.isLoading
+)
 ```  
 
+::: info This query is enabled by default!
+This means that the query will immediately call the `queryFn` function,  
+i.e., make a request to `fetchPets`  
+This is the default behavior of queries according to the [**query documtation**](https://tanstack.com/query/latest/docs/framework/react/guides/queries)   
+:::
 
-## Features  
+## Recommendations   
+
+### Don't forget about `abortSignal`s   
+When creating a query, subscriptions to the original queries and reactions are created.  
+If you don't clean up subscriptions and reactions - memory leaks can occur.
+
+### Use `queryKey` to pass data to `queryFn`
+
+`queryKey` is not only a cache key but also a way to send necessary data for our API requests!
+
+Example
+```ts
+const petQuery = new Query(queryClient, () => ({
+  queryKey: ['pets', 'Fluffy'] as const,
+  queryFn: async ({ queryKey }) => {
+    const petName = queryKey[1]!;
+    const response = await petsApi.getPetByName(petName);
+    return await response.json();
+  },
+}));
+```
+
+## Built-in Features  
+
+### `abortSignal` option   
+This field is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Query` class   
+
+```ts
+const abortController = new AbortController();
+
+const petsQuery = new Query({
+  queryClient,
+  abortSignal: abortController.signal,
+  queryKey: ['pets'] as const,
+  queryFn: async ({ signal }) => {
+    const response = await petsApi.getAllPets({ signal });
+    return await response.json();
+  },
+});
+
+...
+abortController.abort()
+```
+
+This is alternative for `destroy` method
+
+### `destroy()` method   
+This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Query` class   
+
+This is alternative for `abortSignal` option   
 
 ### `enableOnDemand` option  
 Query will be disabled until you request result for this query  
@@ -100,6 +213,15 @@ const query = new Query({
 ### method `start(params)`   
 
 Enable query if it is disabled then fetch the query.    
+This method is helpful if you want manually control fetching your query
+
+
+Example:   
+
+```ts
+
+```
+
 
 ### method `update()`   
 
@@ -171,7 +293,8 @@ export const queryClient = new QueryClient({
   },
 });
 
-queryClient.mount(); // enable all subscriptions for online\offline and window focus/blur
+// enable all subscriptions for online\offline and window focus/blur
+queryClient.mount();
 ```
 
 If you work with [`QueryClient`](/api/QueryClient) then calling `mount()` is not needed.     

@@ -1,6 +1,6 @@
 # createQuery  
 
-This is alternative for `new Query()`.  
+This is alternative for [`new Query()`](/api/Query#usage).  
 
 ## API Signature  
 
