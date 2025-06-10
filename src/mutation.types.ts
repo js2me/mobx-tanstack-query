@@ -39,6 +39,7 @@ export interface MutationInvalidateQueriesOptions
   extends Omit<InvalidateQueryFilters, 'queryKey'> {
   queryKey?: InvalidateQueryFilters['queryKey'];
   queryKeys?: InvalidateQueryFilters['queryKey'][];
+  allQueryKeys?: true;
 }
 
 /**

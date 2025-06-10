@@ -102,7 +102,11 @@ export class Mutation<
           invalidateOptions = invalidateQueries;
         }
 
-        if (invalidateOptions.queryKeys?.length) {
+        if (invalidateOptions.allQueryKeys) {
+          this.queryClient.invalidateQueries({
+            ...invalidateOptions,
+          });
+        } else if (invalidateOptions.queryKeys?.length) {
           invalidateOptions.queryKeys?.forEach((queryKey) => {
             this.queryClient.invalidateQueries({
               ...invalidateOptions,
