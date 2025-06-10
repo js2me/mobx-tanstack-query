@@ -94,12 +94,19 @@ export class Mutation<
 
     if (invalidateQueries) {
       this.onDone((data, payload) => {
-        let invalidateOptions: MutationInvalidateQueriesOptions;
+        let invalidateOptions:
+          | MutationInvalidateQueriesOptions
+          | null
+          | undefined;
 
         if (typeof invalidateQueries === 'function') {
           invalidateOptions = invalidateQueries(data, payload);
         } else {
           invalidateOptions = invalidateQueries;
+        }
+
+        if (!invalidateOptions) {
+          return;
         }
 
         if (invalidateOptions.allQueryKeys) {

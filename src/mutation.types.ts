@@ -76,7 +76,10 @@ export interface MutationConfig<
   abortSignal?: AbortSignal;
   invalidateQueries?:
     | MutationInvalidateQueriesOptions
-    | ((data: TData, payload: TVariables) => MutationInvalidateQueriesOptions);
+    | ((
+        data: TData,
+        payload: TVariables,
+      ) => MutationInvalidateQueriesOptions | null | undefined);
   onInit?: (mutation: Mutation<TData, TVariables, TError, TContext>) => void;
 }
 
