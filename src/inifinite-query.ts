@@ -49,7 +49,6 @@ export class InfiniteQuery<
     TData,
     TError,
     InfiniteData<TData, TPageParam>,
-    TData,
     TQueryKey,
     TPageParam
   >;

@@ -39,7 +39,6 @@ export interface InfiniteQueryDynamicOptions<
         TData,
         TError,
         InfiniteData<TData>,
-        TData,
         TQueryKey,
         TPageParam
       >,
@@ -68,7 +67,6 @@ export interface InfiniteQueryOptions<
     TData,
     TError,
     InfiniteData<TData, TPageParam>,
-    TData,
     TQueryKey,
     TPageParam
   > {}
@@ -93,7 +91,6 @@ export interface InfiniteQueryUpdateOptions<
       TData,
       TError,
       InfiniteData<TData>,
-      TData,
       TQueryKey,
       TPageParam
     >
@@ -142,7 +139,6 @@ export interface InfiniteQueryConfig<
           TData,
           TError,
           InfiniteData<TData>,
-          TData,
           TQueryKey,
           TPageParam
         >,

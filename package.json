@@ -40,7 +40,7 @@
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
   "peerDependencies": {
-    "@tanstack/query-core": "^5.67.2",
+    "@tanstack/query-core": "^5.80.7",
     "mobx": "^6.12.4"
   },
   "dependencies": {
