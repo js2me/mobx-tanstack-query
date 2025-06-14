@@ -413,4 +413,9 @@ export class InfiniteQuery<
 /**
  * @remarks ⚠️ use `InfiniteQuery`. This export will be removed in next major release
  */
-export const MobxInfiniteQuery = InfiniteQuery;
+export class MobxInfiniteQuery<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = any,
+  TPageParam = unknown,
+> extends InfiniteQuery<TData, TError, TQueryKey, TPageParam> {}

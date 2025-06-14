@@ -280,4 +280,9 @@ export class Mutation<
 /**
  * @remarks ⚠️ use `Mutation`. This export will be removed in next major release
  */
-export const MobxMutation = Mutation;
+export class MobxMutation<
+  TData = unknown,
+  TVariables = void,
+  TError = DefaultError,
+  TContext = unknown,
+> extends Mutation<TData, TVariables, TError, TContext> {}

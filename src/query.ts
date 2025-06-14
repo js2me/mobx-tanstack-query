@@ -457,4 +457,10 @@ export class Query<
 /**
  * @remarks ⚠️ use `Query`. This export will be removed in next major release
  */
-export const MobxQuery = Query;
+export class MobxQuery<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> extends Query<TQueryFnData, TError, TData, TQueryData, TQueryKey> {}
