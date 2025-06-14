@@ -91,7 +91,7 @@ export type MobxMutationConfig<
   TVariables = void,
   TError = DefaultError,
   TContext = unknown,
-> = MutationConfig<TData, TError, TVariables, TContext>;
+> = MutationConfig<TData, TVariables, TError, TContext>;
 
 export type MutationConfigFromFn<
   T extends (...args: any[]) => any,
