@@ -36,6 +36,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^2.1.6
         version: 2.1.6(vitest@2.1.4(@types/node@20.14.5)(jsdom@25.0.1))
+      commitfmt:
+        specifier: ^1.0.0
+        version: 1.0.0
       eslint:
         specifier: ^8.57.0
         version: 8.57.0
@@ -43,11 +46,14 @@ importers:
         specifier: ^1.0.6
         version: 1.0.6(eslint@8.57.0)(prettier@3.5.2)(typescript@5.4.5)
       js2me-exports-post-build-script:
-        specifier: ^2.0.18
-        version: 2.0.18
+        specifier: ^3.0.2
+        version: 3.0.2
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
+      lefthook:
+        specifier: ^1.11.13
+        version: 1.11.13
       nodemon:
         specifier: ^3.1.0
         version: 3.1.9
@@ -61,8 +67,8 @@ importers:
         specifier: ^2.1.4
         version: 2.1.4(@types/node@20.14.5)(jsdom@25.0.1)
       yummies:
-        specifier: ^3.0.23
-        version: 3.0.23
+        specifier: ^3.2.9
+        version: 3.2.9
 
 packages:
 
@@ -1566,6 +1572,40 @@ packages:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
 
+  commitfmt-darwin-arm64@1.0.0:
+    resolution: {integrity: sha512-z4lWdTpDj/8ddwJtdota1P9uDCuNx8CymJ4+4VKjX+sI9/lFy6dzp4EKLuJhWTlyyEgzDXPgpnEPr63dd5qtmA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  commitfmt-darwin-x64@1.0.0:
+    resolution: {integrity: sha512-hHfrrUCHdnTysm8iTeIF+RkC/QafYQ/OgU2A0E23XowzSRLw9Rylw617irvIDeT8AhUbbKRt70ATTlsgcxVptQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  commitfmt-linux-arm64@1.0.0:
+    resolution: {integrity: sha512-h+a+GGVjOQfnaYnGIOXVh8qPQoenRxrsvJrt54fms2xAmpfVnc9c8DJlsAe40O2qAQNxIvh2DM9gTI2jdR/6zQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  commitfmt-linux-x64@1.0.0:
+    resolution: {integrity: sha512-JwgAZOmrrf0Ly7MSKpi4kpEA3b/ipMCmf8xvk6/OlKJXtC3ceCiQDQL9tL4u2ovBIHRfQt+aWQyhTBBbEGc3KQ==}
+    cpu: [x64]
+    os: [linux]
+
+  commitfmt-windows-arm64@1.0.0:
+    resolution: {integrity: sha512-Trzmw0q7g45GY6KkBqCvVYcRT92Wx6WyPKceJCxB/8EpeBGx38DRCGgU9SDRxA7s2l7N2Irv22BGhC8SJQK+KA==}
+    cpu: [arm64]
+    os: [win32]
+
+  commitfmt-windows-x64@1.0.0:
+    resolution: {integrity: sha512-HIIT0GSQh59QPtV+mmG++i5cqVsVAW8OthySV9tqxyhl2yTbXRB817rmkOFuKQSe2CTySpv9Syyu74BdigReVA==}
+    cpu: [x64]
+    os: [win32]
+
+  commitfmt@1.0.0:
+    resolution: {integrity: sha512-nEXQT9aEkoYAHgdZBKAupWt5a2iFUy5w0eNJk6OjjzH9c3+SuGiwp2DATzh2hSjafogqoNz17fDqdtEseWsvZg==}
+    hasBin: true
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -2315,8 +2355,8 @@ packages:
       eslint: ^8.57.0
       prettier: ^3.3.3
 
-  js2me-exports-post-build-script@2.0.18:
-    resolution: {integrity: sha512-gpweGPEJwXwysYD0CQFRGkIPgl2NHnD8qSqSSpTLQihNV2KGLpuTHUjiGdMLzZYnrlpSDSCQoHfKj6ZsYNmigg==}
+  js2me-exports-post-build-script@3.0.2:
+    resolution: {integrity: sha512-HKHTLJ/D0JJgF9IYBArCuv43+nUQUkybuRhttpL3x4ubikgc9MBPT8burWZb9xOxEQdM9cejZyd7++etGvOYWA==}
 
   jsdom@25.0.1:
     resolution: {integrity: sha512-8i7LzZj7BF8uplX+ZyOlIz86V6TAsSs+np6m1kpW9u0JWi4z/1t+FzcK1aek+ybTnAC4KhBL4uXCNT0wcUIeCw==}
@@ -2376,6 +2416,60 @@ packages:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
 
+  lefthook-darwin-arm64@1.11.13:
+    resolution: {integrity: sha512-gHwHofXupCtzNLN+8esdWfFTnAEkmBxE/WKA0EwxPPJXdZYa1GUsiG5ipq/CdG/0j8ekYyM9Hzyrrk5BqJ42xw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  lefthook-darwin-x64@1.11.13:
+    resolution: {integrity: sha512-zYxkWNUirmTidhskY9J9AwxvdMi3YKH+TqZ3AQ1EOqkOwPBWJQW5PbnzsXDrd3YnrtZScYm/tE/moXJpEPPIpQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  lefthook-freebsd-arm64@1.11.13:
+    resolution: {integrity: sha512-gJzWnllcMcivusmPorEkXPpEciKotlBHn7QxWwYaSjss/U3YdZu+NTjDO30b3qeiVlyq4RAZ4BPKJODXxHHwUA==}
+    cpu: [arm64]
+    os: [freebsd]
+
+  lefthook-freebsd-x64@1.11.13:
+    resolution: {integrity: sha512-689XdchgtDvZQWFFx1szUvm/mqrq/v6laki0odq5FAfcSgUeLu3w+z6UicBS5l55eFJuQTDNKARFqrKJ04e+Vw==}
+    cpu: [x64]
+    os: [freebsd]
+
+  lefthook-linux-arm64@1.11.13:
+    resolution: {integrity: sha512-ujCLbaZg5S/Ao8KZAcNSb+Y3gl898ZEM0YKyiZmZo22dFFpm/5gcV46pF3xaqIw5IpH+3YYDTKDU+qTetmARyQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  lefthook-linux-x64@1.11.13:
+    resolution: {integrity: sha512-O5WdodeBtFOXQlvPcckqp4W/yqVM9DbVQBkvOxwSJlmsxO4sGYK1TqdxH9ihLB85B2kPPssZj9ze36/oizzhVQ==}
+    cpu: [x64]
+    os: [linux]
+
+  lefthook-openbsd-arm64@1.11.13:
+    resolution: {integrity: sha512-SyBpciUfvY/lUDbZu7L6MtL/SVG2+yMTckBgb4PdJQhJlisY0IsyOYdlTw2icPPrY7JnwdsFv8UW0EJOB76W4g==}
+    cpu: [arm64]
+    os: [openbsd]
+
+  lefthook-openbsd-x64@1.11.13:
+    resolution: {integrity: sha512-6+/0j6O2dzo9cjTWUKfL2J6hRR7Krna/ssqnW8cWh8QHZKO9WJn34epto9qgjeHwSysou8byI7Mwv5zOGthLCQ==}
+    cpu: [x64]
+    os: [openbsd]
+
+  lefthook-windows-arm64@1.11.13:
+    resolution: {integrity: sha512-w5TwZ8bsZ17uOMtYGc5oEb4tCHjNTSeSXRy6H9Yic8E7IsPZtZLkaZGnIIwgXFuhhrcCdc6FuTvKt2tyV7EW2g==}
+    cpu: [arm64]
+    os: [win32]
+
+  lefthook-windows-x64@1.11.13:
+    resolution: {integrity: sha512-7lvwnIs8CNOXKU4y3i1Pbqna+QegIORkSD2VCuHBNpIJ8H84NpjoG3tKU91IM/aI1a2eUvCk+dw+1rfMRz7Ytg==}
+    cpu: [x64]
+    os: [win32]
+
+  lefthook@1.11.13:
+    resolution: {integrity: sha512-SDTk3D4nW1XRpR9u9fdYQ/qj1xeZVIwZmIFdJUnyq+w9ZLdCCvIrOmtD8SFiJowSevISjQDC+f9nqyFXUxc0SQ==}
+    hasBin: true
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -2393,9 +2487,6 @@ packages:
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
-
-  lodash-es@4.17.21:
-    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
 
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
@@ -2490,8 +2581,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.1.2:
-    resolution: {integrity: sha512-b+CiXQCNMUGe0Ri64S9SXFcP9hogjAJ2Rd6GdVxhPLRm7mhGaM7VgOvCAJ1ZshfHbqVDI3uqTI5C8/GaKuLI7g==}
+  nanoid@5.1.5:
+    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -3292,8 +3383,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  yummies@3.0.23:
-    resolution: {integrity: sha512-iUrXJk1UqAaN2I0TogE5P6QpTvBHX+7mktM8F7D5e3YFVnRsW0hnA8Zwhnx8tZh38rKfOuP1TuQJtQOx1u/8ng==}
+  yummies@3.2.9:
+    resolution: {integrity: sha512-14cpiatWZqKKg1VqIbYJmv1cMGyGujhrUHdrrBmr/32nFsYrBafDzDM1n0fY5ht9jSnv7DMvNRZEwp8dSn5JyQ==}
 
 snapshots:
 
@@ -4954,6 +5045,33 @@ snapshots:
     dependencies:
       delayed-stream: 1.0.0
 
+  commitfmt-darwin-arm64@1.0.0:
+    optional: true
+
+  commitfmt-darwin-x64@1.0.0:
+    optional: true
+
+  commitfmt-linux-arm64@1.0.0:
+    optional: true
+
+  commitfmt-linux-x64@1.0.0:
+    optional: true
+
+  commitfmt-windows-arm64@1.0.0:
+    optional: true
+
+  commitfmt-windows-x64@1.0.0:
+    optional: true
+
+  commitfmt@1.0.0:
+    optionalDependencies:
+      commitfmt-darwin-arm64: 1.0.0
+      commitfmt-darwin-x64: 1.0.0
+      commitfmt-linux-arm64: 1.0.0
+      commitfmt-linux-x64: 1.0.0
+      commitfmt-windows-arm64: 1.0.0
+      commitfmt-windows-x64: 1.0.0
+
   concat-map@0.0.1: {}
 
   convert-source-map@2.0.0: {}
@@ -5937,7 +6055,7 @@ snapshots:
       - supports-color
       - typescript
 
-  js2me-exports-post-build-script@2.0.18:
+  js2me-exports-post-build-script@3.0.2:
     dependencies:
       simple-git: 3.27.0
     transitivePeerDependencies:
@@ -6008,6 +6126,49 @@ snapshots:
     dependencies:
       language-subtag-registry: 0.3.23
 
+  lefthook-darwin-arm64@1.11.13:
+    optional: true
+
+  lefthook-darwin-x64@1.11.13:
+    optional: true
+
+  lefthook-freebsd-arm64@1.11.13:
+    optional: true
+
+  lefthook-freebsd-x64@1.11.13:
+    optional: true
+
+  lefthook-linux-arm64@1.11.13:
+    optional: true
+
+  lefthook-linux-x64@1.11.13:
+    optional: true
+
+  lefthook-openbsd-arm64@1.11.13:
+    optional: true
+
+  lefthook-openbsd-x64@1.11.13:
+    optional: true
+
+  lefthook-windows-arm64@1.11.13:
+    optional: true
+
+  lefthook-windows-x64@1.11.13:
+    optional: true
+
+  lefthook@1.11.13:
+    optionalDependencies:
+      lefthook-darwin-arm64: 1.11.13
+      lefthook-darwin-x64: 1.11.13
+      lefthook-freebsd-arm64: 1.11.13
+      lefthook-freebsd-x64: 1.11.13
+      lefthook-linux-arm64: 1.11.13
+      lefthook-linux-x64: 1.11.13
+      lefthook-openbsd-arm64: 1.11.13
+      lefthook-openbsd-x64: 1.11.13
+      lefthook-windows-arm64: 1.11.13
+      lefthook-windows-x64: 1.11.13
+
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -6024,8 +6185,6 @@ snapshots:
   locate-path@6.0.0:
     dependencies:
       p-locate: 5.0.0
-
-  lodash-es@4.17.21: {}
 
   lodash.debounce@4.0.8: {}
 
@@ -6102,7 +6261,7 @@ snapshots:
 
   nanoid@3.3.8: {}
 
-  nanoid@5.1.2: {}
+  nanoid@5.1.5: {}
 
   natural-compare@1.4.0: {}
 
@@ -6984,13 +7143,11 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yummies@3.0.23:
+  yummies@3.2.9:
     dependencies:
       '@types/insane': 1.0.0
-      '@types/lodash-es': 4.17.12
       clsx: 2.1.1
       dayjs: 1.11.13
       insane: 2.6.2
-      lodash-es: 4.17.21
-      nanoid: 5.1.2
+      nanoid: 5.1.5
       tailwind-merge: 2.6.0

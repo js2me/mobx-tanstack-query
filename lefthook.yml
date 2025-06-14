@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{js,ts,jsx,tsx}"
+      run: pnpm exec eslint {staged_files} --fix
+      stage_fixed: true
+prepare-commit-msg:
+  commands:
+    format-commit-message:
+      run: pnpm exec commitfmt
+pre-push:
+  commands:
+    check-typings:
+      run: pnpm exec tsc --noEmit

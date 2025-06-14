@@ -2,6 +2,7 @@
   "name": "mobx-tanstack-query",
   "version": "5.2.2",
   "scripts": {
+    "postinstall": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
     "check": "eslint . --fix",
     "prebuild": "npm run clean && npm run check",
@@ -17,7 +18,8 @@
     "docs": "pnpm build && cd docs && pnpm dev",
     "docs:build": "pnpm build && cd docs && pnpm build",
     "docs:serve": "cd docs && pnpm preview",
-    "dev": "pnpm test:watch"
+    "dev": "pnpm test:watch",
+    "dev:install-hooks": "if [ -z \"$CI\" ]; then lefthook install; fi"
   },
   "keywords": [
     "mobx",
@@ -38,8 +40,8 @@
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
   "peerDependencies": {
-    "mobx": "^6.12.4",
-    "@tanstack/query-core": "^5.67.2"
+    "@tanstack/query-core": "^5.67.2",
+    "mobx": "^6.12.4"
   },
   "dependencies": {
     "linked-abort-controller": "^1.1.0"
@@ -51,15 +53,17 @@
     "@types/react": "^18.3.3",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "@vitest/coverage-istanbul": "^2.1.6",
-    "nodemon": "^3.1.0",
+    "commitfmt": "^1.0.0",
     "eslint": "^8.57.0",
     "js2me-eslint-config": "^1.0.6",
-    "js2me-exports-post-build-script": "^2.0.18",
+    "js2me-exports-post-build-script": "^3.0.2",
     "jsdom": "^25.0.1",
+    "lefthook": "^1.11.13",
+    "nodemon": "^3.1.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.4.5",
     "vitest": "^2.1.4",
-    "yummies": "^3.0.23"
+    "yummies": "^3.2.9"
   },
   "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
 }

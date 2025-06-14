@@ -1,0 +1,18 @@
+[lint.header]
+type-enum = ["chore", "ci", "feat", "fix", "refactor", "style", "test", "docs", "BREAKING CHANGE"]
+description-case = "lower-first"
+description-max-length = 72
+description-full-stop = true
+type-required = true
+
+[lint.body]
+max-line-length = 72
+case = "upper-first"
+
+[lint.footer]
+breaking-exclamation = true
+
+[[additional-footers]]
+key = "Ticket-ID"
+branch-pattern = "(?:.*)/(?<TICKET_ID>[A-Z0-9-]+)/?(?:.*)"
+value = "${{ TICKET_ID }}"
