@@ -2,7 +2,7 @@
   "name": "mobx-tanstack-query",
   "version": "5.3.0",
   "scripts": {
-    "postinstall": "pnpm dev:install-hooks",
+    "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
     "check": "eslint . --fix",
     "prebuild": "npm run clean && npm run check",
