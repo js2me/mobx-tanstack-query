@@ -59,7 +59,7 @@ export default defineConfig({
   // groupBy: 'tag-1',
   // groupBy: 'path-segment',
   // groupBy: 'path-segment-1',
-  filterRoutes: () => true,
+  filterEndpoints: () => true,
   // groupBy:  route => {
   //   const api = apis.find(api => api.urls.some(url => route.raw.route.startsWith(url)))
   //   return api?.name ?? 'other'
