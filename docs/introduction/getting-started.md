@@ -16,12 +16,12 @@ title: Getting started
 npm install @tanstack/query-core {packageJson.name}
 ```
 
-```bash [yarn]
-yarn add @tanstack/query-core {packageJson.name}
-```
-
 ```bash [pnpm]
 pnpm add @tanstack/query-core {packageJson.name}
+```
+
+```bash [yarn]
+yarn add @tanstack/query-core {packageJson.name}
 ```
 
 :::

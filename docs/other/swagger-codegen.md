@@ -23,12 +23,12 @@ This is not production ready.
 npm install mobx-tanstack-query-api
 ```
 
-```bash [yarn]
-yarn add mobx-tanstack-query-api
-```
-
 ```bash [pnpm]
 pnpm add mobx-tanstack-query-api
+```
+
+```bash [yarn]
+yarn add mobx-tanstack-query-api
 ```
 
 :::
@@ -74,14 +74,98 @@ export default defineConfig({
 ...
 "scripts": {
   ...
-  "api-codegen": "mobx-tanstack-query-api"
+  "dev:api-codegen": "mobx-tanstack-query-api"
   ...
 }
 ...
 ```
 
-#### Run   
+#### Run codegen   
 
-```bash
-npm run api-codegen
+::: code-group
+
+```bash [npm]
+npm run dev:api-codegen
+```
+
+```bash [pnpm]
+pnpm dev:api-codegen
+```
+
+```bash [yarn]
+yarn dev:api-codegen
+```
+
+:::
+
+#### Use queries and mutations  
+
+```ts
+import {
+  getFruits,
+  createFruit,
+  Tag,
+} from "@/shared/api/__generated__";
+
+export const fruitsQuery = getFruits.toQuery({
+  enableOnDemand: true,
+  params: {},
+})
+
+export const fruitCreateMutation = createFruit.toMutation({
+  invalidateEndpoints: {
+    tag: [Tag.Fruits]
+  }
+})
+```
+
+Another example with classes  
+
+```ts
+import { getFruits } from "@/shared/api/__generated__";
+
+export class Fruits {
+  private abortController = new AbortController();
+
+  @observable
+  accessor private params =  {
+    search: ''
+  }
+
+  private fruitsQuery = getFruits.toQuery({
+    abortSignal: this.abortController.signal,
+    enableOnDemand: true,
+    params: () => ({
+      query: {
+        search: this.params.search
+      }
+    }),
+  })
+
+  constructor(abortSignal?: AbortSignal) {
+    // or you can use linked-abort-controller package
+    abortSignal.addEventListener('abort', () => {
+      this.abortController.abort();
+    })
+  }
+
+  @computed.struct
+  get data() {
+    return this.fruitsQuery.result.data || [];
+  }
+
+  @computed.struct
+  get isLoading() {
+    return this.fruitsQuery.result.isLoading
+  }
+
+  destroy() {
+    this.abortController.abort();
+  }
+}
+
+
+const fruits = new FruitsModel();
+
+console.log(fruits.data); // enable query
 ```
