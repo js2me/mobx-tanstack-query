@@ -22,12 +22,11 @@ import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryOptionsParams } from './query-options';
 import {
   QueryConfig,
-  QueryDynamicOptions,
   QueryInvalidateParams,
   QueryOptions,
   QueryResetParams,
   QueryStartParams,
-  QueryUpdateOptions,
+  QueryUpdateOptionsAllVariants,
 } from './query.types';
 
 export class Query<
@@ -274,12 +273,13 @@ export class Query<
   }
 
   update(
-    optionsUpdate:
-      | Partial<
-          QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
-        >
-      | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
-      | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    optionsUpdate: QueryUpdateOptionsAllVariants<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
   ) {
     if (this.abortController.signal.aborted) {
       return;

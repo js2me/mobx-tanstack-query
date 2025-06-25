@@ -220,6 +220,17 @@ export type QueryFn<
   undefined
 >;
 
+export type QueryUpdateOptionsAllVariants<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> =
+  | Partial<QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>
+  | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
 /**
  * @remarks ⚠️ use `QueryFn`. This type will be removed in next major release
  */
