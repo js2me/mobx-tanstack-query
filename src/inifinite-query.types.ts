@@ -204,7 +204,7 @@ export interface InfiniteQueryFlattenConfig<
   TPageParam = unknown,
 > extends Omit<
     InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
-    'queryKey' | 'options'
+    'queryKey' | 'options' | 'queryClient'
   > {
   /**
    * TanStack Query manages query caching for you based on query keys.
