@@ -4,6 +4,7 @@ import {
   QueryKey,
   InfiniteData,
   DefaultedInfiniteQueryObserverOptions,
+  RefetchOptions,
 } from '@tanstack/query-core';
 
 import { InfiniteQuery } from './inifinite-query';
@@ -96,6 +97,14 @@ export interface InfiniteQueryUpdateOptions<
     >
   > {}
 
+export interface InfiniteQueryStartParams<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> extends InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>,
+    Pick<RefetchOptions, 'cancelRefetch'> {}
+
 /**
  * @remarks ⚠️ use `InfiniteQueryUpdateOptions`. This type will be removed in next major release
  */
@@ -117,6 +126,16 @@ export type InfiniteQueryConfigFromFn<
   TQueryKey,
   TPageParam
 >;
+
+export type InfiniteQueryUpdateOptionsAllVariants<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = any,
+  TPageParam = unknown,
+> =
+  | Partial<InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
+  | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
+  | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
 
 /**
  * @remarks ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release

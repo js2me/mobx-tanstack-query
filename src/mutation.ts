@@ -147,6 +147,14 @@ export class Mutation<
     return this.result;
   }
 
+  async start(
+    variables: TVariables,
+    options?: MutationOptions<TData, TError, TVariables, TContext>,
+  ) {
+    await this.mutationObserver.mutate(variables, options);
+    return this.result;
+  }
+
   /**
    * Modify this result so it matches the tanstack query result.
    */

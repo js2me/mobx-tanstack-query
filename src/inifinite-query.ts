@@ -22,11 +22,11 @@ import {
 
 import {
   InfiniteQueryConfig,
-  InfiniteQueryDynamicOptions,
   InfiniteQueryInvalidateParams,
   InfiniteQueryOptions,
   InfiniteQueryResetParams,
-  InfiniteQueryUpdateOptions,
+  InfiniteQueryStartParams,
+  InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
@@ -203,14 +203,6 @@ export class InfiniteQuery<
     );
   }
 
-  private checkIsEnabled() {
-    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
-      return false;
-    }
-
-    return this.holdedEnabledOption;
-  }
-
   fetchNextPage(options?: FetchNextPageOptions | undefined) {
     return this.queryObserver.fetchNextPage(options);
   }
@@ -220,10 +212,12 @@ export class InfiniteQuery<
   }
 
   update(
-    optionsUpdate:
-      | Partial<InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
-      | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-      | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+    optionsUpdate: InfiniteQueryUpdateOptionsAllVariants<
+      TData,
+      TError,
+      TQueryKey,
+      TPageParam
+    >,
   ) {
     if (this.abortController.signal.aborted) {
       return;
@@ -363,6 +357,15 @@ export class InfiniteQuery<
         signal: this.abortController.signal,
       },
     );
+  }
+
+  async start({
+    cancelRefetch,
+    ...params
+  }: InfiniteQueryStartParams<TData, TError, TQueryKey, TPageParam> = {}) {
+    this.update({ ...params });
+
+    return await this.refetch({ cancelRefetch });
   }
 
   protected handleAbort = () => {
