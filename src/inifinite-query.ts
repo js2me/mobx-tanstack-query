@@ -22,6 +22,7 @@ import {
 
 import {
   InfiniteQueryConfig,
+  InfiniteQueryFlattenConfig,
   InfiniteQueryInvalidateParams,
   InfiniteQueryOptions,
   InfiniteQueryResetParams,
@@ -44,6 +45,9 @@ export class InfiniteQuery<
     InfiniteData<TData, TPageParam>,
     TError
   >;
+
+  protected config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>;
+
   options: InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
   queryObserver: InfiniteQueryObserver<
     TData,
@@ -71,14 +75,42 @@ export class InfiniteQuery<
   private hooks?: QueryClientHooks;
 
   constructor(
-    protected config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
-  ) {
-    const {
+    config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+  );
+  constructor(
+    queryClient: AnyQueryClient,
+    config: () => InfiniteQueryFlattenConfig<
+      TData,
+      TError,
+      TQueryKey,
+      TPageParam
+    >,
+  );
+
+  constructor(...args: any[]) {
+    let queryClient: AnyQueryClient;
+    let config: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>;
+    let getDynamicOptions:
+      | InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>['options']
+      | undefined;
+
+    if (args.length === 2) {
+      queryClient = args[0];
+      config = args[1]();
+      getDynamicOptions = args[1];
+    } else {
+      queryClient = args[0].queryClient;
+      config = args[0];
+      getDynamicOptions = args[0].options;
+    }
+
+    const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
+
+    this.config = {
+      ...config,
       queryClient,
-      queryKey: queryKeyOrDynamicQueryKey,
-      options: getDynamicOptions,
-      ...restOptions
-    } = config;
+    };
+
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;

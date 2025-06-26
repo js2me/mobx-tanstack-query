@@ -197,6 +197,28 @@ export interface InfiniteQueryConfig<
   ) => InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
 }
 
+export interface InfiniteQueryFlattenConfig<
+  TData,
+  TError = DefaultError,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> extends Omit<
+    InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+    'queryKey' | 'options'
+  > {
+  /**
+   * TanStack Query manages query caching for you based on query keys.
+   * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
+   * As long as the query key is serializable, and unique to the query's data, you can use it!
+   *
+   * **Important:** If you define it as a function then it will be reactively updates query origin key every time
+   * when observable values inside the function changes
+   *
+   * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
+   */
+  queryKey?: TQueryKey;
+}
+
 /**
  * @remarks ⚠️ use `InfiniteQueryConfig`. This type will be removed in next major release
  */
