@@ -110,6 +110,7 @@ class InfiniteQueryMock<
 
 describe('InfiniteQuery', () => {
   it('should call queryFn without infinite query params', async () => {
+    // @ts-expect-error
     const query = new InfiniteQueryMock({
       queryKey: ['test'],
       queryFn: () => {},
@@ -131,6 +132,7 @@ describe('InfiniteQuery', () => {
     const query = new InfiniteQueryMock({
       queryKey: ['test'],
       initialPageParam: 0,
+      getNextPageParam: () => undefined,
       queryFn: () => {},
     });
 
@@ -149,6 +151,7 @@ describe('InfiniteQuery', () => {
   it('should call queryFn with getNextPageParam', async () => {
     const query = new InfiniteQueryMock({
       queryKey: ['test'],
+      initialPageParam: undefined,
       getNextPageParam: () => 1,
       queryFn: () => {},
     });
@@ -168,6 +171,7 @@ describe('InfiniteQuery', () => {
   it('should call queryFn with getNextPageParam returning null', async () => {
     const query = new InfiniteQueryMock({
       queryKey: ['test'],
+      initialPageParam: undefined,
       getNextPageParam: () => null,
       queryFn: async () => 'data',
     });
@@ -409,6 +413,7 @@ describe('InfiniteQuery', () => {
     it('should be reactive after change queryKey', async () => {
       const query = new InfiniteQueryMock({
         queryKey: ['test', 0 as number] as const,
+        initialPageParam: undefined,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         getNextPageParam: () => 1,
         queryFn: () => 100,

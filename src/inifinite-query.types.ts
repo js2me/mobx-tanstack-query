@@ -39,7 +39,7 @@ export interface InfiniteQueryDynamicOptions<
       InfiniteQueryObserverOptions<
         TData,
         TError,
-        InfiniteData<TData>,
+        InfiniteData<TData, TPageParam>,
         TQueryKey,
         TPageParam
       >,
@@ -91,7 +91,7 @@ export interface InfiniteQueryUpdateOptions<
     InfiniteQueryObserverOptions<
       TData,
       TError,
-      InfiniteData<TData>,
+      InfiniteData<TData, TPageParam>,
       TQueryKey,
       TPageParam
     >
@@ -152,17 +152,15 @@ export interface InfiniteQueryConfig<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> extends Partial<
-      Omit<
-        InfiniteQueryObserverOptions<
-          TData,
-          TError,
-          InfiniteData<TData>,
-          TQueryKey,
-          TPageParam
-        >,
-        'queryKey'
-      >
+> extends Omit<
+      InfiniteQueryObserverOptions<
+        TData,
+        TError,
+        InfiniteData<TData, TPageParam>,
+        TQueryKey,
+        TPageParam
+      >,
+      'queryKey'
     >,
     QueryFeatures {
   queryClient: AnyQueryClient;

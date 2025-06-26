@@ -24,7 +24,7 @@ export const createInfiniteQuery = <
   TPageParam = unknown,
 >(
   fn: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>['queryFn'],
-  params?: CreateInfiniteQueryParams<TData, TError, TQueryKey, TPageParam>,
+  params: CreateInfiniteQueryParams<TData, TError, TQueryKey, TPageParam>,
 ) => {
   return new InfiniteQuery({
     ...params,

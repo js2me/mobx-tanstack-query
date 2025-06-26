@@ -10,6 +10,7 @@ module.exports = {
     'unicorn/prevent-abbreviations': 'off',
     'sonarjs/no-redundant-optional': 'off',
     'sonarjs/deprecation': 'off',
-    'sonarjs/redundant-type-aliases': 'off'
+    'sonarjs/redundant-type-aliases': 'off',
+    'unicorn/no-useless-undefined': 'off'
   },
 };
