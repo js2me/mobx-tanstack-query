@@ -37,6 +37,6 @@ export class QueryClient extends QueryClientCore implements IQueryClientCore {
 }
 
 /**
- * @remarks ⚠️ use `QueryClient`. This export will be removed in next major release
+ * @deprecated ⚠️ use `QueryClient`. This export will be removed in next major release
  */
 export class MobxQueryClient extends QueryClient {}

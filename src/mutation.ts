@@ -286,7 +286,7 @@ export class Mutation<
 }
 
 /**
- * @remarks ⚠️ use `Mutation`. This export will be removed in next major release
+ * @deprecated ⚠️ use `Mutation`. This export will be removed in next major release
  */
 export class MobxMutation<
   TData = unknown,

@@ -16,7 +16,7 @@ export type IQueryClientCore = {
 };
 
 /**
- * @remarks ⚠️ use `IQueryClientCore`. This type will be removed in next major release
+ * @deprecated ⚠️ use `IQueryClientCore`. This type will be removed in next major release
  */
 export type IQueryClient = IQueryClientCore;
 
@@ -34,7 +34,7 @@ export interface DefaultOptions<TError = DefaultError>
 }
 
 /**
- * @remarks ⚠️ use `DefaultOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `DefaultOptions`. This type will be removed in next major release
  */
 export type MobxDefaultOptions<TError = DefaultError> = DefaultOptions<TError>;
 
@@ -50,7 +50,7 @@ export interface QueryClientHooks {
 }
 
 /**
- * @remarks ⚠️ use `QueryClientHooks`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryClientHooks`. This type will be removed in next major release
  */
 export type MobxQueryClientHooks = QueryClientHooks;
 
@@ -61,6 +61,6 @@ export interface QueryClientConfig
 }
 
 /**
- * @remarks ⚠️ use `QueryClientConfig`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryClientConfig`. This type will be removed in next major release
  */
 export type MobxQueryClientConfig = QueryClientConfig;

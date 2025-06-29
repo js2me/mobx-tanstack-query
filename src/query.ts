@@ -455,7 +455,7 @@ export class Query<
 }
 
 /**
- * @remarks ⚠️ use `Query`. This export will be removed in next major release
+ * @deprecated ⚠️ use `Query`. This export will be removed in next major release
  */
 export class MobxQuery<
   TQueryFnData = unknown,

@@ -496,7 +496,7 @@ export class InfiniteQuery<
 }
 
 /**
- * @remarks ⚠️ use `InfiniteQuery`. This export will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQuery`. This export will be removed in next major release
  */
 export class MobxInfiniteQuery<
   TData,

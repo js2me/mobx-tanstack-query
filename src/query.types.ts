@@ -15,7 +15,7 @@ export interface QueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
 
 /**
- * @remarks ⚠️ use `QueryInvalidateParams`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryInvalidateParams`. This type will be removed in next major release
  */
 export type MobxQueryInvalidateParams = QueryInvalidateParams;
 
@@ -23,7 +23,7 @@ export interface QueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
 /**
- * @remarks ⚠️ use `QueryResetParams`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryResetParams`. This type will be removed in next major release
  */
 export type MobxQueryResetParams = QueryResetParams;
 
@@ -43,7 +43,7 @@ export interface QueryDynamicOptions<
 }
 
 /**
- * @remarks ⚠️ use `QueryDynamicOptions`. This type will be removed in next major released
+ * @deprecated ⚠️ use `QueryDynamicOptions`. This type will be removed in next major released
  */
 export type MobxQueryDynamicOptions<
   TQueryFnData = unknown,
@@ -68,7 +68,7 @@ export interface QueryOptions<
   > {}
 
 /**
- * @remarks ⚠️ use `QueryOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryOptions`. This type will be removed in next major release
  */
 export type MobxQueryOptions<
   TQueryFnData = unknown,
@@ -89,7 +89,7 @@ export type QueryUpdateOptions<
 >;
 
 /**
- * @remarks ⚠️ use `QueryUpdateOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryUpdateOptions`. This type will be removed in next major release
  */
 export type MobxQueryUpdateOptions<
   TQueryFnData = unknown,
@@ -119,7 +119,7 @@ export interface QueryFeatures {
 }
 
 /**
- * @remarks ⚠️ use `QueryFeatures`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryFeatures`. This type will be removed in next major release
  */
 export type MobxQueryFeatures = QueryFeatures;
 
@@ -136,7 +136,7 @@ export type QueryConfigFromFn<
 >;
 
 /**
- * @remarks ⚠️ use `QueryConfigFromFn`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryConfigFromFn`. This type will be removed in next major release
  */
 export type MobxQueryConfigFromFn<
   TFunction extends (...args: any[]) => any,
@@ -199,7 +199,7 @@ export interface QueryConfig<
 }
 
 /**
- * @remarks ⚠️ use `QueryConfig`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryConfig`. This type will be removed in next major release
  */
 export type MobxQueryConfig<
   TQueryFnData = unknown,
@@ -232,7 +232,7 @@ export type QueryUpdateOptionsAllVariants<
   | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 /**
- * @remarks ⚠️ use `QueryFn`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryFn`. This type will be removed in next major release
  */
 export type MobxQueryFn<
   TQueryFnData = unknown,
@@ -245,7 +245,7 @@ export type MobxQueryFn<
 export type AnyQuery = Query<any, any, any, any, any>;
 
 /**
- * @remarks ⚠️ use `AnyQuery`. This type will be removed in next major release
+ * @deprecated ⚠️ use `AnyQuery`. This type will be removed in next major release
  */
 export type AnyMobxQuery = AnyQuery;
 
@@ -265,7 +265,7 @@ export interface QueryStartParams<
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
 /**
- * @remarks ⚠️ use `QueryStartParams`. This type will be removed in next major release
+ * @deprecated ⚠️ use `QueryStartParams`. This type will be removed in next major release
  */
 export type MobxQueryStartParams<
   TQueryFnData = unknown,

@@ -31,7 +31,7 @@ export interface MutationFeatures {
 }
 
 /**
- * @remarks ⚠️ use `MutationFeatures`. This type will be removed in next major release
+ * @deprecated ⚠️ use `MutationFeatures`. This type will be removed in next major release
  */
 export type MobxMutationFeatures = MutationFeatures;
 
@@ -43,7 +43,7 @@ export interface MutationInvalidateQueriesOptions
 }
 
 /**
- * @remarks ⚠️ use `MutationInvalidateQueriesOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `MutationInvalidateQueriesOptions`. This type will be removed in next major release
  */
 export type MobxMutationInvalidateQueriesOptions =
   MutationInvalidateQueriesOptions;
@@ -54,7 +54,7 @@ export type MutationFn<TData = unknown, TVariables = unknown> = (
 ) => Promise<TData>;
 
 /**
- * @remarks ⚠️ use `MutationFn`. This type will be removed in next major release
+ * @deprecated ⚠️ use `MutationFn`. This type will be removed in next major release
  */
 export type MobxMutationFunction<
   TData = unknown,
@@ -84,7 +84,7 @@ export interface MutationConfig<
 }
 
 /**
- * @remarks ⚠️ use `MutationConfig`. This type will be removed in next major release
+ * @deprecated ⚠️ use `MutationConfig`. This type will be removed in next major release
  */
 export type MobxMutationConfig<
   TData = unknown,
@@ -105,7 +105,7 @@ export type MutationConfigFromFn<
 >;
 
 /**
- * @remarks ⚠️ use `MutationConfigFromFn`. This type will be removed in next major release
+ * @deprecated ⚠️ use `MutationConfigFromFn`. This type will be removed in next major release
  */
 export type MobxMutationConfigFromFn<
   T extends (...args: any[]) => any,

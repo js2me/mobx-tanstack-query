@@ -19,14 +19,14 @@ import {
 export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 
 /**
- * @remarks ⚠️ use `InfiniteQueryInvalidateParams`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryInvalidateParams`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryInvalidateParams = InfiniteQueryInvalidateParams;
 
 export interface InfiniteQueryResetParams extends QueryResetParams {}
 
 /**
- * @remarks ⚠️ use `InfiniteQueryResetParams`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryResetParams`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryResetParams = InfiniteQueryResetParams;
 
@@ -72,7 +72,7 @@ export interface InfiniteQueryDynamicOptions<
 }
 
 /**
- * @remarks ⚠️ use `InfiniteQueryDynamicOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryDynamicOptions`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryDynamicOptions<
   TData,
@@ -112,7 +112,7 @@ export interface InfiniteQueryOptions<
     > {}
 
 /**
- * @remarks ⚠️ use `InfiniteQueryOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryOptions`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryOptions<
   TData,
@@ -169,7 +169,7 @@ export interface InfiniteQueryStartParams<
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
 /**
- * @remarks ⚠️ use `InfiniteQueryUpdateOptions`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryUpdateOptions`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryUpdateOptions<
   TData,
@@ -226,7 +226,7 @@ export type InfiniteQueryUpdateOptionsAllVariants<
     >;
 
 /**
- * @remarks ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryConfigFromFn<
   TFn extends (...args: any[]) => any,
@@ -317,7 +317,7 @@ export interface InfiniteQueryFlattenConfig<
 }
 
 /**
- * @remarks ⚠️ use `InfiniteQueryConfig`. This type will be removed in next major release
+ * @deprecated ⚠️ use `InfiniteQueryConfig`. This type will be removed in next major release
  */
 export type MobxInfiniteQueryConfig<
   TData,
