@@ -40,10 +40,12 @@ export type MobxDefaultOptions<TError = DefaultError> = DefaultOptions<TError>;
 
 export interface QueryClientHooks {
   onQueryInit?: (query: AnyQuery) => void;
-  onInfiniteQueryInit?: (query: InfiniteQuery<any, any, any, any>) => void;
+  onInfiniteQueryInit?: (query: InfiniteQuery<any, any, any, any, any>) => void;
   onMutationInit?: (query: Mutation<any, any, any, any>) => void;
   onQueryDestroy?: (query: AnyQuery) => void;
-  onInfiniteQueryDestroy?: (query: InfiniteQuery<any, any, any, any>) => void;
+  onInfiniteQueryDestroy?: (
+    query: InfiniteQuery<any, any, any, any, any>,
+  ) => void;
   onMutationDestroy?: (query: Mutation<any, any, any, any>) => void;
 }
 

@@ -11,6 +11,7 @@ module.exports = {
     'sonarjs/no-redundant-optional': 'off',
     'sonarjs/deprecation': 'off',
     'sonarjs/redundant-type-aliases': 'off',
-    'unicorn/no-useless-undefined': 'off'
+    'unicorn/no-useless-undefined': 'off',
+    'sonarjs/assertions-in-tests': 'off'
   },
 };

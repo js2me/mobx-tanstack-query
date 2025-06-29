@@ -1,10 +1,11 @@
 import {
   DefaultError,
-  InfiniteQueryObserverOptions,
+  InfiniteQueryObserverOptions as LibInfiniteQueryObserverOptions,
   QueryKey,
   InfiniteData,
-  DefaultedInfiniteQueryObserverOptions,
+  DefaultedInfiniteQueryObserverOptions as LibDefaultedInfiniteQueryObserverOptions,
   RefetchOptions,
+  ThrowOnError,
 } from '@tanstack/query-core';
 
 import { InfiniteQuery } from './inifinite-query';
@@ -29,23 +30,44 @@ export interface InfiniteQueryResetParams extends QueryResetParams {}
  */
 export type MobxInfiniteQueryResetParams = InfiniteQueryResetParams;
 
-export interface InfiniteQueryDynamicOptions<
-  TData,
+type InfiniteQueryOptionTypeFixes<
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> = {
+  throwOnError?: ThrowOnError<TQueryFnData, TError, TData, TQueryKey>;
+};
+
+export interface InfiniteQueryDynamicOptions<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 > extends Partial<
-    Omit<
-      InfiniteQueryObserverOptions<
-        TData,
-        TError,
-        InfiniteData<TData, TPageParam>,
-        TQueryKey,
-        TPageParam
-      >,
-      'queryFn' | 'enabled' | 'queryKeyHashFn'
-    >
-  > {
+      Omit<
+        LibInfiniteQueryObserverOptions<
+          TQueryFnData,
+          TError,
+          TData,
+          TQueryKey,
+          TPageParam
+        >,
+        | 'queryFn'
+        | 'enabled'
+        | 'queryKeyHashFn'
+        | keyof InfiniteQueryOptionTypeFixes
+      >
+    >,
+    InfiniteQueryOptionTypeFixes<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    > {
   enabled?: boolean;
 }
 
@@ -57,20 +79,37 @@ export type MobxInfiniteQueryDynamicOptions<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
+> = InfiniteQueryDynamicOptions<
+  TData,
+  TError,
+  TPageParam,
+  InfiniteData<TData, TPageParam>,
+  TQueryKey
+>;
 
 export interface InfiniteQueryOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> extends DefaultedInfiniteQueryObserverOptions<
-    TData,
-    TError,
-    InfiniteData<TData, TPageParam>,
-    TQueryKey,
-    TPageParam
-  > {}
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> extends Omit<
+      LibDefaultedInfiniteQueryObserverOptions<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryKey,
+        TPageParam
+      >,
+      keyof InfiniteQueryOptionTypeFixes
+    >,
+    InfiniteQueryOptionTypeFixes<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    > {}
 
 /**
  * @remarks ⚠️ use `InfiniteQueryOptions`. This type will be removed in next major release
@@ -80,29 +119,53 @@ export type MobxInfiniteQueryOptions<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>;
+> = InfiniteQueryOptions<
+  TData,
+  TError,
+  TPageParam,
+  InfiniteData<TData, TPageParam>,
+  TQueryKey
+>;
 
 export interface InfiniteQueryUpdateOptions<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> extends Partial<
-    InfiniteQueryObserverOptions<
-      TData,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> extends Omit<
+      Partial<
+        LibInfiniteQueryObserverOptions<
+          TData,
+          TError,
+          InfiniteData<TData, TPageParam>,
+          TQueryKey,
+          TPageParam
+        >
+      >,
+      keyof InfiniteQueryOptionTypeFixes
+    >,
+    InfiniteQueryOptionTypeFixes<
+      TQueryFnData,
       TError,
-      InfiniteData<TData, TPageParam>,
-      TQueryKey,
-      TPageParam
-    >
-  > {}
+      TPageParam,
+      TData,
+      TQueryKey
+    > {}
 
 export interface InfiniteQueryStartParams<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> extends InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> extends InfiniteQueryUpdateOptions<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    >,
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
 /**
@@ -113,7 +176,13 @@ export type MobxInfiniteQueryUpdateOptions<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>;
+> = InfiniteQueryUpdateOptions<
+  TData,
+  TError,
+  TPageParam,
+  InfiniteData<TData, TPageParam>,
+  TQueryKey
+>;
 
 export type InfiniteQueryConfigFromFn<
   TFn extends (...args: any[]) => any,
@@ -123,19 +192,38 @@ export type InfiniteQueryConfigFromFn<
 > = InfiniteQueryConfig<
   ReturnType<TFn> extends Promise<infer TData> ? TData : ReturnType<TFn>,
   TError,
-  TQueryKey,
-  TPageParam
+  TPageParam,
+  InfiniteData<
+    ReturnType<TFn> extends Promise<infer TData> ? TData : ReturnType<TFn>,
+    TPageParam
+  >,
+  TQueryKey
 >;
 
 export type InfiniteQueryUpdateOptionsAllVariants<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 > =
-  | Partial<InfiniteQueryOptions<TData, TError, TQueryKey, TPageParam>>
-  | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-  | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
+  | Partial<
+      InfiniteQueryOptions<TQueryFnData, TError, TPageParam, TData, TQueryKey>
+    >
+  | InfiniteQueryUpdateOptions<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    >
+  | InfiniteQueryDynamicOptions<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    >;
 
 /**
  * @remarks ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release
@@ -148,15 +236,16 @@ export type MobxInfiniteQueryConfigFromFn<
 > = InfiniteQueryConfigFromFn<TFn, TError, TQueryKey, TPageParam>;
 
 export interface InfiniteQueryConfig<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 > extends Omit<
-      InfiniteQueryObserverOptions<
-        TData,
+      LibInfiniteQueryObserverOptions<
+        TQueryFnData,
         TError,
-        InfiniteData<TData, TPageParam>,
+        TData,
         TQueryKey,
         TPageParam
       >,
@@ -175,9 +264,11 @@ export interface InfiniteQueryConfig<
    * @link https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#simple-query-keys
    */
   queryKey?: TQueryKey | (() => TQueryKey);
-  onInit?: (query: InfiniteQuery<TData, TError, TQueryKey, TPageParam>) => void;
+  onInit?: (
+    query: InfiniteQuery<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
+  ) => void;
   abortSignal?: AbortSignal;
-  onDone?: (data: InfiniteData<TData, TPageParam>, payload: void) => void;
+  onDone?: (data: TData, payload: void) => void;
   onError?: (error: TError, payload: void) => void;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
@@ -186,22 +277,30 @@ export interface InfiniteQueryConfig<
   options?: (
     query: NoInfer<
       InfiniteQuery<
-        NoInfer<TData>,
+        NoInfer<TQueryFnData>,
         NoInfer<TError>,
-        NoInfer<TQueryKey>,
-        NoInfer<TPageParam>
+        NoInfer<TPageParam>,
+        NoInfer<TData>,
+        NoInfer<TQueryKey>
       >
     >,
-  ) => InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>;
+  ) => InfiniteQueryDynamicOptions<
+    TQueryFnData,
+    TError,
+    TPageParam,
+    TData,
+    TQueryKey
+  >;
 }
 
 export interface InfiniteQueryFlattenConfig<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 > extends Omit<
-    InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+    InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
     'queryKey' | 'options' | 'queryClient'
   > {
   /**
@@ -225,13 +324,20 @@ export type MobxInfiniteQueryConfig<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>;
+> = InfiniteQueryConfig<
+  TData,
+  TError,
+  TPageParam,
+  InfiniteData<TData, TPageParam>,
+  TQueryKey
+>;
 
 export type InferInfiniteQuery<
   T extends
-    | InfiniteQueryConfig<any, any, any, any>
-    | InfiniteQuery<any, any, any>,
+    | InfiniteQueryConfig<any, any, any, any, any>
+    | InfiniteQuery<any, any, any, any, any>,
   TInferValue extends
+    | 'query-data'
     | 'data'
     | 'key'
     | 'page-param'
@@ -240,34 +346,18 @@ export type InferInfiniteQuery<
     | 'config',
 > =
   T extends InfiniteQueryConfig<
-    infer TData,
+    infer TQueryFnData,
     infer TError,
-    infer TQueryKey,
-    infer TPageParam
+    infer TPageParam,
+    infer TData,
+    infer TQueryKey
   >
     ? TInferValue extends 'config'
       ? T
       : TInferValue extends 'data'
         ? TData
-        : TInferValue extends 'key'
-          ? TQueryKey
-          : TInferValue extends 'page-param'
-            ? TPageParam
-            : TInferValue extends 'error'
-              ? TError
-              : TInferValue extends 'query'
-                ? InfiniteQuery<TData, TError, TQueryKey, TPageParam>
-                : never
-    : T extends InfiniteQuery<
-          infer TData,
-          infer TError,
-          infer TQueryKey,
-          infer TPageParam
-        >
-      ? TInferValue extends 'config'
-        ? InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>
-        : TInferValue extends 'data'
-          ? TData
+        : TInferValue extends 'query-data'
+          ? TQueryFnData
           : TInferValue extends 'key'
             ? TQueryKey
             : TInferValue extends 'page-param'
@@ -275,6 +365,40 @@ export type InferInfiniteQuery<
               : TInferValue extends 'error'
                 ? TError
                 : TInferValue extends 'query'
-                  ? T
+                  ? InfiniteQuery<
+                      TQueryFnData,
+                      TError,
+                      TPageParam,
+                      TData,
+                      TQueryKey
+                    >
                   : never
+    : T extends InfiniteQuery<
+          infer TQueryFnData,
+          infer TError,
+          infer TPageParam,
+          infer TData,
+          infer TQueryKey
+        >
+      ? TInferValue extends 'config'
+        ? InfiniteQueryConfig<
+            TQueryFnData,
+            TError,
+            TPageParam,
+            TData,
+            TQueryKey
+          >
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'query-data'
+            ? TQueryFnData
+            : TInferValue extends 'key'
+              ? TQueryKey
+              : TInferValue extends 'page-param'
+                ? TPageParam
+                : TInferValue extends 'error'
+                  ? TError
+                  : TInferValue extends 'query'
+                    ? T
+                    : never
       : never;

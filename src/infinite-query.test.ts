@@ -2,27 +2,29 @@ import {
   DefaultError,
   FetchNextPageOptions,
   FetchPreviousPageOptions,
+  InfiniteData,
+  Query,
   QueryClient,
   QueryKey,
   RefetchOptions,
 } from '@tanstack/query-core';
 import { when } from 'mobx';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { InfiniteQuery } from './inifinite-query';
 import {
   InfiniteQueryConfig,
-  InfiniteQueryDynamicOptions,
-  InfiniteQueryUpdateOptions,
+  InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { QueryInvalidateParams } from './query.types';
 
 class InfiniteQueryMock<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
   TPageParam = unknown,
-> extends InfiniteQuery<TData, TError, TQueryKey, TPageParam> {
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> extends InfiniteQuery<TQueryFnData, TError, TPageParam, TData, TQueryKey> {
   spies = {
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
@@ -38,7 +40,7 @@ class InfiniteQueryMock<
 
   constructor(
     options: Omit<
-      InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+      InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
       'queryClient'
     >,
   ) {
@@ -74,9 +76,13 @@ class InfiniteQueryMock<
   }
 
   update(
-    options:
-      | InfiniteQueryUpdateOptions<TData, TError, TQueryKey, TPageParam>
-      | InfiniteQueryDynamicOptions<TData, TError, TQueryKey, TPageParam>,
+    options: InfiniteQueryUpdateOptionsAllVariants<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    >,
   ) {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
@@ -427,6 +433,129 @@ describe('InfiniteQuery', () => {
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
       query.dispose();
+    });
+  });
+
+  describe('typings', () => {
+    it('should work fine "result" typings with "select" property', () => {
+      type Foo = { foo: 1 };
+
+      const getFoo = (): Foo[] => [];
+
+      const infiniteQuery = new InfiniteQuery({
+        queryClient: new QueryClient({}),
+        select: (data) => ({
+          pageParams: data.pageParams,
+          pages: data.pages,
+          kek: 1,
+        }),
+        initialPageParam: { offset: 0, limit: 10 },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        getNextPageParam: (page, allPages, lastPageParam) => {
+          if (globalThis) {
+            return null;
+          }
+          return { offset: 10, limit: 10 };
+        },
+        queryKey: [''],
+        enableOnDemand: true,
+        queryFn: async () => {
+          return getFoo();
+        },
+      });
+
+      expectTypeOf(infiniteQuery.result.data).toEqualTypeOf<
+        | undefined
+        | {
+            pageParams: {
+              offset: number;
+              limit: number;
+            }[];
+            pages: Foo[][];
+            kek: number;
+          }
+      >();
+    });
+
+    it('should work fine "result" typings without "select" property', () => {
+      type Foo = { foo: 1 };
+
+      const getFoo = (): Foo[] => [];
+
+      const infiniteQuery = new InfiniteQuery({
+        queryClient: new QueryClient({}),
+        initialPageParam: { offset: 0, limit: 10 },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        getNextPageParam: (page, allPages, lastPageParam) => {
+          if (globalThis) {
+            return null;
+          }
+          return { offset: 10, limit: 10 };
+        },
+        queryKey: [''],
+        enableOnDemand: true,
+        queryFn: async () => {
+          return getFoo();
+        },
+      });
+
+      expectTypeOf(infiniteQuery.result.data).toEqualTypeOf<
+        | undefined
+        | {
+            pageParams: {
+              offset: number;
+              limit: number;
+            }[];
+            pages: Foo[][];
+          }
+      >();
+    });
+
+    it('update() method parameters (throwOnError)', () => {
+      type Foo = { foo: 1 };
+
+      const getFoo = (): Foo[] => [];
+
+      const infiniteQuery = new InfiniteQuery({
+        queryClient: new QueryClient({}),
+        initialPageParam: { offset: 0, limit: 10 },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        getNextPageParam: (page, allPages, lastPageParam) => {
+          if (globalThis) {
+            return null;
+          }
+          return { offset: 10, limit: 10 };
+        },
+        queryKey: [''],
+        enableOnDemand: true,
+        queryFn: async () => {
+          return getFoo();
+        },
+      });
+
+      const updateOptions = {
+        throwOnError: (
+          error: Error,
+          query: Query<
+            Foo[],
+            Error,
+            InfiniteData<
+              Foo[],
+              {
+                offset: number;
+                limit: number;
+              }
+            >,
+            string[]
+          >,
+        ) => {
+          return Boolean(error && query);
+        },
+      };
+
+      expectTypeOf(updateOptions).toMatchTypeOf<
+        Parameters<typeof infiniteQuery.update>[0]
+      >();
     });
   });
 });

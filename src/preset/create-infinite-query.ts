@@ -1,4 +1,9 @@
-import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
+import {
+  DefaultError,
+  InfiniteData,
+  QueryClient,
+  QueryKey,
+} from '@tanstack/query-core';
 
 import { InfiniteQuery } from '../inifinite-query';
 import { InfiniteQueryConfig } from '../inifinite-query.types';
@@ -6,25 +11,39 @@ import { InfiniteQueryConfig } from '../inifinite-query.types';
 import { queryClient } from './query-client';
 
 export type CreateInfiniteQueryParams<
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 > = Omit<
-  InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>,
+  InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
   'queryClient' | 'queryFn'
 > & {
   queryClient?: QueryClient;
 };
 
 export const createInfiniteQuery = <
-  TData,
+  TQueryFnData = unknown,
   TError = DefaultError,
-  TQueryKey extends QueryKey = any,
   TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
 >(
-  fn: InfiniteQueryConfig<TData, TError, TQueryKey, TPageParam>['queryFn'],
-  params: CreateInfiniteQueryParams<TData, TError, TQueryKey, TPageParam>,
+  fn: InfiniteQueryConfig<
+    TQueryFnData,
+    TError,
+    TPageParam,
+    TData,
+    TQueryKey
+  >['queryFn'],
+  params: CreateInfiniteQueryParams<
+    TQueryFnData,
+    TError,
+    TPageParam,
+    TData,
+    TQueryKey
+  >,
 ) => {
   return new InfiniteQuery({
     ...params,
