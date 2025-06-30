@@ -442,8 +442,10 @@ describe('InfiniteQuery', () => {
 
       const getFoo = (): Foo[] => [];
 
+      const queryClient = new QueryClient({});
+
       const infiniteQuery = new InfiniteQuery({
-        queryClient: new QueryClient({}),
+        queryClient,
         select: (data) => ({
           pageParams: data.pageParams,
           pages: data.pages,
@@ -472,6 +474,68 @@ describe('InfiniteQuery', () => {
               limit: number;
             }[];
             pages: Foo[][];
+            kek: number;
+          }
+      >();
+
+      type Foo2 = {
+        foo2: { bar: 1 }[];
+        rofls: string;
+      };
+
+      const getFoo2 = (): Foo2 => null as any;
+
+      const infiniteQueryAnother = new InfiniteQuery({
+        queryClient,
+        enableOnDemand: true,
+        abortSignal: new AbortController().signal,
+        queryFn: async ({ pageParam, signal }) => {
+          // eslint-disable-next-line sonarjs/no-invalid-await
+          const response = await getFoo2();
+          return { ...response, lastSearch: 'aaa', pageParam, signal };
+        },
+        select: (data) => ({
+          pageParams: data.pageParams,
+          pages: data.pages,
+          kek: 1,
+        }),
+        queryKey: ['1', '2', '3'],
+        initialPageParam: { offset: 0, limit: 30 },
+        getNextPageParam: (page) => {
+          expectTypeOf(page).branded.toEqualTypeOf<
+            Foo2 & {
+              lastSearch: string;
+              signal: AbortSignal;
+              pageParam: { offset: number; limit: number };
+            }
+          >();
+
+          return {
+            limit: 1,
+            offset: 1,
+          };
+        },
+      });
+
+      expectTypeOf(infiniteQueryAnother.result.data).branded.toEqualTypeOf<
+        | undefined
+        | {
+            pageParams: {
+              offset: number;
+              limit: number;
+            }[];
+            pages: {
+              lastSearch: string;
+              pageParam: {
+                offset: number;
+                limit: number;
+              };
+              signal: AbortSignal;
+              foo2: {
+                bar: 1;
+              }[];
+              rofls: string;
+            }[];
             kek: number;
           }
       >();
