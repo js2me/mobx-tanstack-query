@@ -79,7 +79,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           tag_name: ${{ steps.after-tag.outputs.new_tag }}
-          release_name: Release ${{ steps.after-tag.outputs.new_tag }}
+          release_name: ${{ steps.after-tag.outputs.new_tag }}
           body: |
             ## [Changelog for release notes](https://github.com/js2me/mobx-tanstack-query/blob/master/CHANGELOG.md#${{ steps.version_anchor.outputs.anchor_version }})  
             Changes: https://github.com/${{ github.repository }}/compare/${{ steps.before-tag.outputs.last_tag }}...${{ steps.after-tag.outputs.new_tag }}
