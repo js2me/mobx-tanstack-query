@@ -11,3 +11,9 @@ doc:
 	rm -rf .vitepress/cache && \
 	pnpm i && \
 	pnpm dev
+doc-build:
+	cd docs && \
+	rm -rf node_modules && \
+	rm -rf .vitepress/cache && \
+	pnpm i && \
+	pnpm build

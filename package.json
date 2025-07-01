@@ -16,7 +16,8 @@
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "docs": "pnpm build && cd docs && pnpm dev",
-    "docs:build": "pnpm build && cd docs && pnpm build",
+    "docs:install": "cd docs && pnpm i",
+    "docs:build": "cd docs && pnpm build",
     "docs:serve": "cd docs && pnpm preview",
     "dev": "pnpm test:watch",
     "dev:install-hooks": "if [ -z \"$CI\" ]; then lefthook install; fi"
