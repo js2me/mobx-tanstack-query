@@ -36,7 +36,7 @@ jobs:
         continue-on-error: false
         run: |
           git fetch --tags
-          echo "last_tag=$(git describe --tags --abbrev=0 || echo '')" >> $GITHUB_OUTPUT
+          echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
       - name: Create Release Pull Request
         uses: changesets/action@v1
