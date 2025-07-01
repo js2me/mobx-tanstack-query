@@ -1,9 +1,10 @@
 name: Version or Publish
 
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    workflows: ["Builds, tests & co"]
+    types: [completed]
+    branches: [master]
 
 concurrency: ${{ github.workflow }}
 

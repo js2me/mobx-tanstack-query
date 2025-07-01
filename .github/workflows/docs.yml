@@ -1,10 +1,10 @@
 name: Deploy docs to Pages
 
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Version or Publish"]
+    types: [completed]
+    branches: [master]
 
 permissions: read-all
 
