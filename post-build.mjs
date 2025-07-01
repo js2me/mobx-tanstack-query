@@ -10,6 +10,10 @@ postBuildScript({
     if (process.env.PUBLISH) {
       $('pnpm test');
 
+      if (!process.env.CI) {
+        $('pnpm changeset version');
+      }
+
       publishScript({
         nextVersion: versionsDiff?.next ?? packageJson.version,
         currVersion: versionsDiff?.current,

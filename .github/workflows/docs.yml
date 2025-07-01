@@ -1,4 +1,4 @@
-name: Deploy typedoc to Pages
+name: Deploy docs to Pages
 
 on:
   push:

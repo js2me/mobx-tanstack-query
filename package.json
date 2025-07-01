@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "6.0.1",
+  "version": "6.0.0",
   "scripts": {
     "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
@@ -9,6 +9,7 @@
     "build:watch": "pnpm build && nodemon --watch src --ext ts --exec \"tsc && node ./post-build.mjs\"",
     "build": "tsc && node ./post-build.mjs",
     "pub": "PUBLISH=true pnpm run build",
+    "pub-ci": "PUBLISH=true CI=true pnpm run build",
     "pub:patch": "PUBLISH=true PUBLISH_VERSION=patch pnpm run build",
     "pub:minor": "PUBLISH=true PUBLISH_VERSION=minor pnpm run build",
     "pub:major": "PUBLISH=true PUBLISH_VERSION=major pnpm run build",
