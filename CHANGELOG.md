@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.0.1
+
+### Patch Changes
+
+- [`99abe23`](https://github.com/js2me/mobx-tanstack-query/commit/99abe233be600eaefd3754ad9258b717753364fa) Thanks [@js2me](https://github.com/js2me)! - ci/cd: github workflows
+
 ## 6.0.0
 
 ### Major Changes
