@@ -13,13 +13,19 @@ postBuildScript({
         $('pnpm changeset version');
       }
 
+      const nextVersion = versionsDiff?.next ?? packageJson.version;
+
       publishScript({
         gitTagFormat: '<tag>',
-        nextVersion: versionsDiff?.next ?? packageJson.version,
+        nextVersion: nextVersion,
         currVersion: versionsDiff?.current,
         packageManager: 'pnpm',
         commitAllCurrentChanges: true,
         createTag: true,
+        safe: true,
+        onAlreadyPublishedThisVersion: () => {
+          console.warn(`${nextVersion} already published`);
+        },
         githubRepoLink: 'https://github.com/js2me/mobx-tanstack-query',
         cleanupCommand: 'pnpm clean',
         targetPackageJson
