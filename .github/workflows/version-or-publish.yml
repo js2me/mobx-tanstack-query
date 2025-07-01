@@ -59,7 +59,12 @@ jobs:
         continue-on-error: false
         run: |
           git fetch --tags
-          echo "new_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          tag=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | head -n 1)
+          if [ -z "$tag" ]; then
+            echo "new_tag=$last_tag" >> $GITHUB_OUTPUT
+          else
+            echo "new_tag=$tag" >> $GITHUB_OUTPUT
+          fi
 
       - name: Convert version to anchor format
         id: version_anchor
