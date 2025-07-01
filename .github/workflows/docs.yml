@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows: ["Version or Publish"]
     types: [completed]
-    branches: [master]
 
 permissions: read-all
 
