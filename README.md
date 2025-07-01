@@ -34,11 +34,6 @@ const query = new Query({
 ```
 
 
-## Contributing Guide    
+## Contribution Guide    
 
-1. Fork repository   
-2. Switch to `master` branch
-3. Fix bugs or create features
-4. Use command `pnpm changeset` to describe what you do   
-5. Commit with message using [Conventional commits](https://www.conventionalcommits.org/)  
-6. Open PR!   
+Want to contribute ? [Follow this guide](https://github.com/js2me/mobx-tanstack-query/blob/master/CONTRIBUTING.md)  
