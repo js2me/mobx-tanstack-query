@@ -31,8 +31,16 @@ jobs:
       - run: corepack enable
       - run: pnpm i
 
+      - name: Get latest tag before changeset
+        id: before-tag
+        continue-on-error: false
+        run: |
+          git fetch --tags
+          echo "last_tag=$(git describe --tags --abbrev=0 || echo '')" >> $GITHUB_OUTPUT
+
       - name: Create Release Pull Request
         uses: changesets/action@v1
+        continue-on-error: false
         with:
           version: pnpm changeset version
           publish: pnpm pub-ci
@@ -40,3 +48,35 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get latest tag after changeset
+        id: after-tag
+        continue-on-error: false
+        run: |
+          git fetch --tags
+          echo "new_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+
+      - name: Convert version to anchor format
+        id: version_anchor
+        run: |
+          clean_version="${VERSION#v}"
+          anchor_version="${clean_version//./}"
+          echo "anchor_version=$anchor_version" >> $GITHUB_OUTPUT
+        env:
+          VERSION: ${{ steps.after-tag.outputs.new_tag }}
+
+
+      - name: Create GitHub Release
+        if: steps.before-tag.outputs.last_tag != steps.after-tag.outputs.new_tag
+        continue-on-error: false
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.after-tag.outputs.new_tag }}
+          release_name: Release ${{ steps.after-tag.outputs.new_tag }}
+          body: |
+            ## [Changelog for release notes](https://github.com/js2me/mobx-tanstack-query/blob/master/CHANGELOG.md#${{ steps.version_anchor.outputs.anchor_version }})  
+            Changes: https://github.com/${{ github.repository }}/compare/${{ steps.before-tag.outputs.last_tag }}...${{ steps.after-tag.outputs.new_tag }}
+          draft: false
+          prerelease: false

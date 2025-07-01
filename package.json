@@ -60,7 +60,7 @@
     "commitfmt": "^1.0.0",
     "eslint": "^8.57.0",
     "js2me-eslint-config": "^1.0.6",
-    "js2me-exports-post-build-script": "^3.0.2",
+    "js2me-exports-post-build-script": "^3.0.3",
     "jsdom": "^25.0.1",
     "lefthook": "^1.11.13",
     "nodemon": "^3.1.0",

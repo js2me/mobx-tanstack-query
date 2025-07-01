@@ -15,6 +15,7 @@ postBuildScript({
       }
 
       publishScript({
+        gitTagFormat: '<tag>',
         nextVersion: versionsDiff?.next ?? packageJson.version,
         currVersion: versionsDiff?.current,
         packageManager: 'pnpm',
