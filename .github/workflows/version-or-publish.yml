@@ -1,0 +1,41 @@
+name: Version or Publish
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency: ${{ github.workflow }}
+
+permissions: read-all
+
+jobs:
+  release:
+    if: ${{ github.repository_owner == 'js2me' }}
+    permissions:
+      contents: write # to create release
+      id-token: write # to generate provenance
+      issues: write # to post issue comments
+      pull-requests: write # to create pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+
+      - name: Set-up Node.js
+        uses: actions/setup-node@v4
+        with:
+          check-latest: true
+          node-version-file: .nvmrc
+
+      - run: corepack enable
+      - run: pnpm i
+
+      - name: Create Release Pull Request
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm pub
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
