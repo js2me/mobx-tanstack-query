@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.0.4
+
+### Patch Changes
+
+- [`ca0ce21`](https://github.com/js2me/mobx-tanstack-query/commit/ca0ce2100c8263851c7b87b3e7f610787e7f9bf7) Thanks [@js2me](https://github.com/js2me)! - add dynamicOptionsUpdateDelay Query feature
+
 ## 6.0.3
 
 ### Patch Changes
