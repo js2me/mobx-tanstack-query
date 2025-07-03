@@ -116,6 +116,12 @@ export interface QueryFeatures {
    * Enable query only if result is requested
    */
   enableOnDemand?: boolean;
+
+  /**
+   * `delay` for dynamic options
+   * @see https://mobx.js.org/reactions.html#delay-_autorun-reaction_
+   */
+  dynamicOptionsUpdateDelay?: number;
 }
 
 /**

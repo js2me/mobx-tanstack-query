@@ -190,6 +190,7 @@ export class InfiniteQuery<
         },
         {
           signal: this.abortController.signal,
+          delay: this.config.dynamicOptionsUpdateDelay,
         },
       );
     } else {
@@ -216,6 +217,7 @@ export class InfiniteQuery<
     if (getDynamicOptions) {
       reaction(() => getDynamicOptions(this), this.update, {
         signal: this.abortController.signal,
+        delay: this.config.dynamicOptionsUpdateDelay,
       });
     }
 

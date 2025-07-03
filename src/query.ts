@@ -169,6 +169,7 @@ export class Query<
         },
         {
           signal: this.abortController.signal,
+          delay: this.config.dynamicOptionsUpdateDelay,
         },
       );
     } else {
@@ -199,6 +200,7 @@ export class Query<
     if (getDynamicOptions) {
       reaction(() => getDynamicOptions(this), this.update, {
         signal: this.abortController.signal,
+        delay: this.config.dynamicOptionsUpdateDelay,
       });
     }
 
