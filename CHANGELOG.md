@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.0.10
+
+### Patch Changes
+
+- [`99cc685`](https://github.com/js2me/mobx-tanstack-query/commit/99cc685f6c11181e9e042458bd93a664ae1e1bc7) Thanks [@js2me](https://github.com/js2me)! - docs: fix logo size
+
 ## 6.0.9
 
 ### Patch Changes
