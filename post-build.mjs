@@ -1,4 +1,5 @@
 import { postBuildScript, publishScript, getInfoFromChangelog } from 'js2me-exports-post-build-script';
+import path from 'path';
 
 postBuildScript({
   buildDir: 'dist',
@@ -32,7 +33,7 @@ postBuildScript({
 
       if (process.env.CI) {
         if (publishOutput.publishedGitTag) {
-          const { whatChangesText } = getInfoFromChangelog(nextVersion, `${targetPackageJson.locationDir}/CHANGELOG.md`);
+          const { whatChangesText } = getInfoFromChangelog(nextVersion, path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'));
           process.env.PUBLISHED_VERSION_RELEASE_NOTES = whatChangesText;
         }
       }
