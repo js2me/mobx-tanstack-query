@@ -49,7 +49,10 @@ jobs:
         id: pub-or-release-pr
         with:
           version: pnpm changeset version
-          publish: pnpm pub-ci # на этом этапе в ноде пишется process.env.PUBLISHED_GIT_TAG и process.env.PUBLISHED_VERSION_RELEASE_NOTES
+          publish: |
+            pnpm pub-ci
+            echo "$PUBLISHED_GIT_TAG" > .github/tag.txt
+            echo "$PUBLISHED_VERSION_RELEASE_NOTES" > .github/notes.txt
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -58,25 +61,17 @@ jobs:
       - name: Export release variables
         id: export-release
         run: |
-          # Проверяем существование переменных
-          echo $PUBLISHED_GIT_TAG
-
-          if [ -n "$PUBLISHED_GIT_TAG" ]; then
-            echo "tag=$PUBLISHED_GIT_TAG" >> $GITHUB_OUTPUT
-          else
-            echo "tag=" >> $GITHUB_OUTPUT
+          if [ -f .github/tag.txt ]; then
+            TAG=$(cat .github/tag.txt)
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
           fi
           
-          # Обрабатываем release notes
-          if [ -n "$PUBLISHED_VERSION_RELEASE_NOTES" ]; then
-            NOTES="$PUBLISHED_VERSION_RELEASE_NOTES"
-            # Экранирование для GitHub Actions
+          if [ -f .github/notes.txt ]; then
+            NOTES=$(cat .github/notes.txt)
             NOTES="${NOTES//'%'/'%25'}"
             NOTES="${NOTES//$'\n'/'%0A'}"
             NOTES="${NOTES//$'\r'/'%0D'}"
             echo "notes=$NOTES" >> $GITHUB_OUTPUT
-          else
-            echo "notes=" >> $GITHUB_OUTPUT
           fi
 
       - name: Create GitHub Release
