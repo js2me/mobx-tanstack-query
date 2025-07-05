@@ -46,47 +46,46 @@ jobs:
       - name: Create Release Pull Request
         uses: changesets/action@v1
         continue-on-error: false
+        id: pub-or-release-pr
         with:
           version: pnpm changeset version
-          publish: pnpm pub-ci
+          publish: pnpm pub-ci # на этом этапе в ноде пишется process.env.PUBLISHED_GIT_TAG и process.env.PUBLISHED_VERSION_RELEASE_NOTES
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Get latest tag after changeset
-        id: after-tag
-        continue-on-error: false
+      - name: Export release variables
+        id: export-release
         run: |
-          git fetch --tags
-          tag=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | head -n 1)
-          if [ -z "$tag" ]; then
-            echo "new_tag=$last_tag" >> $GITHUB_OUTPUT
+          # Проверяем существование переменных
+          if [ -n "$PUBLISHED_GIT_TAG" ]; then
+            echo "tag=$PUBLISHED_GIT_TAG" >> $GITHUB_OUTPUT
           else
-            echo "new_tag=$tag" >> $GITHUB_OUTPUT
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Обрабатываем release notes
+          if [ -n "$PUBLISHED_VERSION_RELEASE_NOTES" ]; then
+            NOTES="$PUBLISHED_VERSION_RELEASE_NOTES"
+            # Экранирование для GitHub Actions
+            NOTES="${NOTES//'%'/'%25'}"
+            NOTES="${NOTES//$'\n'/'%0A'}"
+            NOTES="${NOTES//$'\r'/'%0D'}"
+            echo "notes=$NOTES" >> $GITHUB_OUTPUT
+          else
+            echo "notes=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Convert version to anchor format
-        id: version_anchor
-        run: |
-          clean_version="${VERSION#v}"
-          anchor_version="${clean_version//./}"
-          echo "anchor_version=$anchor_version" >> $GITHUB_OUTPUT
-        env:
-          VERSION: ${{ steps.after-tag.outputs.new_tag }}
-
-
       - name: Create GitHub Release
-        if: steps.before-tag.outputs.last_tag != steps.after-tag.outputs.new_tag
+        if: steps.export-release.outputs.tag != ''
         continue-on-error: false
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ steps.after-tag.outputs.new_tag }}
-          release_name: ${{ steps.after-tag.outputs.new_tag }}
-          body: |
-            ## [Changelog for release notes](https://github.com/js2me/mobx-tanstack-query/blob/master/CHANGELOG.md#${{ steps.version_anchor.outputs.anchor_version }})  
-            Changes: https://github.com/${{ github.repository }}/compare/${{ steps.before-tag.outputs.last_tag }}...${{ steps.after-tag.outputs.new_tag }}
+          tag_name: ${{ steps.export-release.outputs.tag }}
+          release_name: ${{ steps.export-release.outputs.tag }}
+          body: ${{ steps.export-release.outputs.notes }}
           draft: false
           prerelease: false

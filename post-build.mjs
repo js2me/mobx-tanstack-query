@@ -1,4 +1,4 @@
-import { postBuildScript, publishScript } from 'js2me-exports-post-build-script';
+import { postBuildScript, publishScript, getInfoFromChangelog } from 'js2me-exports-post-build-script';
 
 postBuildScript({
   buildDir: 'dist',
@@ -6,19 +6,18 @@ postBuildScript({
   srcDirName: 'src',
   filesToCopy: ['LICENSE', 'README.md', 'assets'],
   updateVersion: process.env.PUBLISH_VERSION,
-  onDone: (versionsDiff, { $ }, packageJson, { targetPackageJson }) => {
+  onDone: (versionsDiff, targetPackageJson, { $ }) => {
     if (process.env.PUBLISH) {
       if (!process.env.CI) {
         $('pnpm test');
         $('pnpm changeset version');
       }
 
-      const nextVersion = versionsDiff?.next ?? packageJson.version;
+      const nextVersion = versionsDiff?.next ?? targetPackageJson.data.version;
 
-      publishScript({
+      const publishOutput = publishScript({
         gitTagFormat: '<tag>',
         nextVersion: nextVersion,
-        currVersion: versionsDiff?.current,
         packageManager: 'pnpm',
         commitAllCurrentChanges: true,
         createTag: true,
@@ -29,7 +28,14 @@ postBuildScript({
         githubRepoLink: 'https://github.com/js2me/mobx-tanstack-query',
         cleanupCommand: 'pnpm clean',
         targetPackageJson
-      })
+      });
+
+      if (process.env.CI) {
+        if (publishOutput.publishedGitTag) {
+          const { whatChangesText } = getInfoFromChangelog(nextVersion, `${targetPackageJson.locationDir}/CHANGELOG.md`);
+          process.env.PUBLISHED_VERSION_RELEASE_NOTES = whatChangesText;
+        }
+      }
     }
   }
 });
