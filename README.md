@@ -1,4 +1,4 @@
-<img src="assets/logo.png" align="right" height="156" alt="logo" />
+<img src="assets/logo.png" align="right" width="176" alt="logo" />
 
 # mobx-tanstack-query  
 
