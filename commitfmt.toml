@@ -1,5 +1,5 @@
 [lint.header]
-type-enum = ["chore", "ci", "feat", "fix", "refactor", "style", "test", "docs", "BREAKING CHANGE"]
+type-enum = ["chore", "ci", "feat", "fix", "refactor", "style", "test", "docs"]
 description-case = "lower-first"
 description-max-length = 72
 description-full-stop = true
