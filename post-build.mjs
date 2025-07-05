@@ -1,4 +1,4 @@
-import { postBuildScript, publishScript, getInfoFromChangelog } from 'js2me-exports-post-build-script';
+import { postBuildScript, publishScript, getInfoFromChangelog, publishGhRelease } from 'js2me-exports-post-build-script';
 import path from 'path';
 
 postBuildScript({
@@ -33,10 +33,26 @@ postBuildScript({
 
       if (process.env.CI) {
         if (publishOutput.publishedGitTag) {
-          const { whatChangesText } = getInfoFromChangelog(nextVersion, path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'));
-          process.env.PUBLISHED_VERSION_RELEASE_NOTES = whatChangesText;
+          const { whatChangesText } = getInfoFromChangelog(
+            nextVersion,
+            path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'),
+            targetPackageJson.repositoryUrl
+          );
 
-          console.info('publish', process.env.PUBLISHED_VERSION_RELEASE_NOTES, process.env.PUBLISHED_GIT_TAG)
+          publishGhRelease({
+            authToken: process.env.GITHUB_TOKEN,
+            body: whatChangesText,
+            owner: targetPackageJson.ghRepoData.user,
+            repo: targetPackageJson.ghRepoData.packageName,
+            version: nextVersion,
+          })
+            .then((r) =>{
+              console.info('published new gh release',r)
+            })
+            .catch((err) =>{
+              console.error('failed to publish new gh release', err);
+              process.exit(1);
+            })
         }
       }
     }

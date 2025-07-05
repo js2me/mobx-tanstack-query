@@ -49,40 +49,8 @@ jobs:
         id: pub-or-release-pr
         with:
           version: pnpm changeset version
-          publish: |
-            pnpm pub-ci
-            echo "$PUBLISHED_GIT_TAG" > .github/tag.txt
-            echo "$PUBLISHED_VERSION_RELEASE_NOTES" > .github/notes.txt
+          publish: pnpm pub-ci
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Export release variables
-        id: export-release
-        run: |
-          if [ -f .github/tag.txt ]; then
-            TAG=$(cat .github/tag.txt)
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
-          fi
-          
-          if [ -f .github/notes.txt ]; then
-            NOTES=$(cat .github/notes.txt)
-            NOTES="${NOTES//'%'/'%25'}"
-            NOTES="${NOTES//$'\n'/'%0A'}"
-            NOTES="${NOTES//$'\r'/'%0D'}"
-            echo "notes=$NOTES" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create GitHub Release
-        if: steps.export-release.outputs.tag != ''
-        continue-on-error: false
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          tag_name: ${{ steps.export-release.outputs.tag }}
-          release_name: ${{ steps.export-release.outputs.tag }}
-          body: ${{ steps.export-release.outputs.notes }}
-          draft: false
-          prerelease: false
