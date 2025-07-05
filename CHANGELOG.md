@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.0.5
+
+### Patch Changes
+
+- [`55b1873`](https://github.com/js2me/mobx-tanstack-query/commit/55b1873f39831b2bc3cf3ad0dd229c048b0cae79) Thanks [@js2me](https://github.com/js2me)! - ci: better publish gh release (try)
+
 ## 6.0.4
 
 ### Patch Changes
