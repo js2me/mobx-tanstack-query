@@ -59,6 +59,8 @@ jobs:
         id: export-release
         run: |
           # Проверяем существование переменных
+          echo $PUBLISHED_GIT_TAG
+
           if [ -n "$PUBLISHED_GIT_TAG" ]; then
             echo "tag=$PUBLISHED_GIT_TAG" >> $GITHUB_OUTPUT
           else

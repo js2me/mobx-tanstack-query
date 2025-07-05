@@ -35,6 +35,8 @@ postBuildScript({
         if (publishOutput.publishedGitTag) {
           const { whatChangesText } = getInfoFromChangelog(nextVersion, path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'));
           process.env.PUBLISHED_VERSION_RELEASE_NOTES = whatChangesText;
+
+          console.info('publish', process.env.PUBLISHED_VERSION_RELEASE_NOTES, process.env.PUBLISHED_GIT_TAG)
         }
       }
     }
