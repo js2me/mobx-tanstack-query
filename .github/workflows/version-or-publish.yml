@@ -11,7 +11,7 @@ permissions: read-all
 
 jobs:
   release:
-    if: ${{ github.repository_owner == 'js2me' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.head_branch == 'master' && github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: write # to create release
       id-token: write # to generate provenance
