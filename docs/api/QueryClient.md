@@ -92,3 +92,54 @@ Use `QueryClient` if you need:
 - Customization of query/mutation lifecycle
 - Tracking entity initialization/destruction events
 - Advanced configuration for `MobX`-powered queries and mutations.
+
+
+## Persistence   
+
+If you need persistence you can use built-in TanStack query feature like `createSyncStoragePersister` or `createAsyncStoragePersister`   
+Follow this guide from original TanStack query documentation:   
+https://tanstack.com/query/latest/docs/framework/react/plugins/createSyncStoragePersister#api   
+
+
+### Example of implementation   
+
+1. Install TanStack's persister dependencies:   
+
+::: code-group
+
+```bash [npm]
+npm install @tanstack/query-async-storage-persister @tanstack/react-query-persist-client
+```
+
+```bash [pnpm]
+pnpm add @tanstack/query-async-storage-persister @tanstack/react-query-persist-client
+```
+
+```bash [yarn]
+yarn add @tanstack/query-async-storage-persister @tanstack/react-query-persist-client
+```
+
+:::
+
+2. Create `QueryClient` instance and attach "persistence" feature to it  
+
+```ts{2,3,4,6,10}
+import { QueryClient } from "mobx-tanstack-query";
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import { compress, decompress } from 'lz-string' 
+
+export const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: Infinity } },
+})
+
+persistQueryClient({
+  queryClient: queryClient as any,
+  persister: createAsyncStoragePersister({
+    storage: window.localStorage,
+    serialize: (data) => compress(JSON.stringify(data)),
+    deserialize: (data) => JSON.parse(decompress(data)),
+  }),
+  maxAge: Infinity,
+});
+```
