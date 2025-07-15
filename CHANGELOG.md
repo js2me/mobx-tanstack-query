@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.0.11
+
+### Patch Changes
+
+- [`35e255b`](https://github.com/js2me/mobx-tanstack-query/commit/35e255b5ac81ef7125a452625e12a9202ceadc93) Thanks [@js2me](https://github.com/js2me)! - fix is result requested change mobx warning due to abort
+
 ## 6.0.10
 
 ### Patch Changes
