@@ -142,6 +142,7 @@ export class Query<
 
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
+    action(this, 'handleAbort');
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
