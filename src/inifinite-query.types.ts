@@ -16,6 +16,16 @@ import {
   QueryResetParams,
 } from './query.types';
 
+export type InfiniteQueryErrorListener<TError = DefaultError> = (
+  error: TError,
+  payload: void,
+) => void;
+
+export type InfiniteQueryDoneListener<TData = unknown> = (
+  data: TData,
+  payload: void,
+) => void;
+
 export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 
 /**
@@ -268,8 +278,8 @@ export interface InfiniteQueryConfig<
     query: InfiniteQuery<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
   ) => void;
   abortSignal?: AbortSignal;
-  onDone?: (data: TData, payload: void) => void;
-  onError?: (error: TError, payload: void) => void;
+  onDone?: InfiniteQueryDoneListener<TData>;
+  onError?: InfiniteQueryErrorListener<TError>;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
    * (reaction -> setOptions)

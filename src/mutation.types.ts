@@ -28,6 +28,13 @@ export interface MutationFeatures {
    * Reset mutation when destroy or abort signal is called
    */
   resetOnDestroy?: boolean;
+  /**
+   * **EXPERIMENTAL**
+   *
+   * Make all mutation reactions and subscriptions lazy.
+   * They exists only when mutation result is observed.
+   */
+  lazy?: boolean;
 }
 
 /**
@@ -60,6 +67,30 @@ export type MobxMutationFunction<
   TData = unknown,
   TVariables = unknown,
 > = MutationFn<TData, TVariables>;
+
+export type MutationSettledListener<
+  TData = unknown,
+  TError = DefaultError,
+  TVariables = void,
+  TContext = unknown,
+> = (
+  data: TData | undefined,
+  error: TError | null,
+  variables: TVariables,
+  context: TContext | undefined,
+) => void;
+
+export type MutationErrorListener<
+  TError = DefaultError,
+  TVariables = void,
+  TContext = unknown,
+> = (error: TError, payload: TVariables, context: TContext | undefined) => void;
+
+export type MutationDoneListener<
+  TData = unknown,
+  TVariables = void,
+  TContext = unknown,
+> = (data: TData, payload: TVariables, context: TContext | undefined) => void;
 
 export interface MutationConfig<
   TData = unknown,
