@@ -1,5 +1,15 @@
 # mobx-tanstack-query
 
+## 6.1.0
+
+### Minor Changes
+
+- [#30](https://github.com/js2me/mobx-tanstack-query/pull/30) [`bee7713`](https://github.com/js2me/mobx-tanstack-query/commit/bee77135d9879250f4221a3c23696ead6753852b) Thanks [@js2me](https://github.com/js2me)! - added `lazy` option for queries and mutations which work on lazy observables from mobx
+
+### Patch Changes
+
+- [#30](https://github.com/js2me/mobx-tanstack-query/pull/30) [`bee7713`](https://github.com/js2me/mobx-tanstack-query/commit/bee77135d9879250f4221a3c23696ead6753852b) Thanks [@js2me](https://github.com/js2me)! - remove a lot of useless reactions (replaced it by more simple callbacks)
+
 ## 6.0.11
 
 ### Patch Changes
