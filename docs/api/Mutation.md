@@ -1,10 +1,12 @@
-# Mutation  
+# Mutation
 
-Class wrapper for [@tanstack-query/core mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with **MobX** reactivity   
+Class wrapper for [@tanstack-query/core mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with **MobX** reactivity
 
-[Reference to source code](/src/mutation.ts)  
+**All documentation about properties and methods of mutation can be found in the original documentation [here](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation)**
 
-## Usage  
+[Reference to source code](/src/mutation.ts)
+
+## Usage
 
 Create an instance of `Mutation` with [`mutationFn`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) parameter
 
@@ -36,12 +38,13 @@ const petCreateMutation = new Mutation({
 const result = await petCreateMutation.mutate('Fluffy');
 console.info(result.data, result.isPending, result.isError);
 
-```  
+```
 
-## Built-in Features  
+## Built-in Features
 
-### `abortSignal` option   
-This field is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class   
+### `abortSignal` option
+
+This field is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class
 
 ```ts
 const abortController = new AbortController();
@@ -61,27 +64,46 @@ abortController.abort();
 
 This is alternative for `destroy` method
 
-### `destroy()` method   
-This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class   
+### `lazy` option
 
-This is alternative for `abortSignal` option   
+This option enables "lazy" mode of the mutation. That means that all subscriptions and reaction will be created only when you request result for this mutation.
 
-### method `mutate(variables, options?)`  
-Runs the mutation. (Works the as `mutate` function in [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))  
+Example:
 
-### hook `onDone()`  
-Subscribe when mutation has been successfully finished  
+```ts
+const mutation = createMutation(queryClient, () => ({
+  lazy: true,
+  mutationFn: async () => {
+    // api call
+  },
+}));
 
-### hook `onError()`  
-Subscribe when mutation has been finished with failure  
+// happens nothing
+// no reactions and subscriptions will be created
+```
 
-### method `reset()`  
-Reset current mutation  
+### `destroy()` method
 
-### property `result` <Badge type="info" text="observable.deep" />  
-Mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))   
+This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class
 
+This is alternative for `abortSignal` option
 
+### method `mutate(variables, options?)`
 
+Runs the mutation. (Works the as `mutate` function in [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))
 
+### hook `onDone()`
 
+Subscribe when mutation has been successfully finished
+
+### hook `onError()`
+
+Subscribe when mutation has been finished with failure
+
+### method `reset()`
+
+Reset current mutation
+
+### property `result` <Badge type="info" text="observable.deep" />
+
+Mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))

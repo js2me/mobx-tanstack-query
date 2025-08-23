@@ -27,7 +27,7 @@ import {
   test,
   vi,
 } from 'vitest';
-import { waitAsync } from 'yummies/async';
+import { sleep, waitAsync } from 'yummies/async';
 
 import { createQuery } from './preset';
 import { Query } from './query';
@@ -291,11 +291,51 @@ describe('Query', () => {
       query.dispose();
     });
 
+    it('should be DISABLED from default query options (from query client) (lazy:true)', async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            enabled: false,
+          },
+        },
+      });
+      const query = new QueryMock(
+        {
+          queryKey: ['test', 0 as number] as const,
+          queryFn: () => 100,
+          lazy: true,
+        },
+        queryClient,
+      );
+
+      expect(query.spies.queryFn).toBeCalledTimes(0);
+
+      query.dispose();
+    });
+
     it('should be reactive after change queryKey', async () => {
       const query = new QueryMock({
         queryKey: ['test', 0 as number] as const,
         enabled: ({ queryKey }) => queryKey[1] > 0,
         queryFn: () => 100,
+      });
+
+      query.update({ queryKey: ['test', 1] as const });
+
+      await when(() => !query._rawResult.isLoading);
+
+      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).nthReturnedWith(1, 100);
+
+      query.dispose();
+    });
+
+    it('should be reactive after change queryKey (lazy:true)', async () => {
+      const query = new QueryMock({
+        queryKey: ['test', 0 as number] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+        lazy: true,
       });
 
       query.update({ queryKey: ['test', 1] as const });
@@ -323,6 +363,39 @@ describe('Query', () => {
           queryKey: [...disabledQuery.options.queryKey, 'dependent'],
         }),
         queryFn: ({ queryKey }) => queryKey,
+      });
+
+      await when(() => !disabledQuery._rawResult.isLoading);
+      await when(() => !dependentQuery._rawResult.isLoading);
+
+      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
+        'test',
+        1,
+        'dependent',
+      ]);
+
+      disabledQuery.dispose();
+      dependentQuery.dispose();
+    });
+
+    it('should be reactive dependent on another query (runs before declartion) (lazy: true)', async () => {
+      const disabledQuery = new QueryMock({
+        queryKey: ['test', 0 as number] as const,
+        enabled: ({ queryKey }) => queryKey[1] > 0,
+        queryFn: () => 100,
+        lazy: true,
+      });
+
+      disabledQuery.update({ queryKey: ['test', 1] as const });
+
+      const dependentQuery = new QueryMock({
+        options: () => ({
+          enabled: !!disabledQuery.options.enabled,
+          queryKey: [...disabledQuery.options.queryKey, 'dependent'],
+        }),
+        queryFn: ({ queryKey }) => queryKey,
+        lazy: true,
       });
 
       await when(() => !disabledQuery._rawResult.isLoading);
@@ -371,6 +444,87 @@ describe('Query', () => {
       tempDisabledQuery.dispose();
       dependentQuery.dispose();
     });
+  });
+
+  it('should be reactive dependent on another query (runs after declaration) (updating lazy query)', async () => {
+    const tempDisabledQuery = new QueryMock({
+      queryKey: ['test', 0 as number] as const,
+      enabled: ({ queryKey }) => queryKey[1] > 0,
+      queryFn: () => 100,
+      lazy: true,
+    });
+
+    const dependentQuery = new QueryMock({
+      options: () => ({
+        enabled: !!tempDisabledQuery.options.enabled,
+        queryKey: [...tempDisabledQuery.options.queryKey, 'dependent'],
+      }),
+      queryFn: ({ queryKey }) => queryKey,
+    });
+
+    tempDisabledQuery.update({ queryKey: ['test', 1] as const });
+
+    await when(() => !tempDisabledQuery._rawResult.isLoading);
+    await when(() => !dependentQuery._rawResult.isLoading);
+
+    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    // результат с 0 потому что options.enabled у первой квери - это функция и
+    // !!tempDisabledQuery.options.enabled будет всегда true
+    expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
+      'test',
+      0,
+      'dependent',
+    ]);
+
+    tempDisabledQuery.dispose();
+    dependentQuery.dispose();
+  });
+
+  it('should NOT be reactive dependent on another query because lazy queries has not subscriptions', async () => {
+    const tempDisabledQuery = new QueryMock({
+      queryKey: ['test', 0 as number] as const,
+      enabled: ({ queryKey }) => queryKey[1] > 0,
+      queryFn: () => 100,
+      lazy: true,
+    });
+
+    const dependentQuery = new QueryMock({
+      options: () => {
+        return {
+          enabled: !!tempDisabledQuery.options.enabled,
+          queryKey: [...tempDisabledQuery.options.queryKey, 'dependent'],
+        };
+      },
+      queryFn: ({ queryKey }) => {
+        return queryKey;
+      },
+      lazy: true,
+    });
+
+    tempDisabledQuery.update({ queryKey: ['test', 1] as const });
+
+    await sleep(100);
+
+    expect(dependentQuery.spies.queryFn).toBeCalledTimes(0);
+
+    await sleep(100);
+
+    // НО когда мы начнем следить за кверей то все заработает
+    reaction(
+      () => dependentQuery.result.data,
+      () => {},
+      { fireImmediately: true },
+    );
+
+    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
+      'test',
+      1,
+      'dependent',
+    ]);
+
+    tempDisabledQuery.dispose();
+    dependentQuery.dispose();
   });
 
   describe('"options" reactive parameter', () => {
@@ -834,8 +988,6 @@ describe('Query', () => {
           },
         },
       } as Record<string, any>;
-
-      console.info('asdfdsaf', task.name);
 
       const query = new QueryMock(
         {
@@ -1420,6 +1572,7 @@ describe('Query', () => {
       abortController1.abort();
 
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1447,6 +1600,7 @@ describe('Query', () => {
         status: 'pending',
       });
       expect(query2.result).toStrictEqual({
+        ...query2.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1475,6 +1629,7 @@ describe('Query', () => {
       });
       await waitAsync(10);
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1502,6 +1657,7 @@ describe('Query', () => {
         status: 'pending',
       });
       expect(query2.result).toStrictEqual({
+        ...query2.result,
         data: 'foo',
         dataUpdatedAt: query2.result.dataUpdatedAt,
         error: null,
@@ -1530,6 +1686,7 @@ describe('Query', () => {
       });
       await waitAsync(10);
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1582,6 +1739,7 @@ describe('Query', () => {
       abortController1.abort();
 
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1609,6 +1767,7 @@ describe('Query', () => {
         status: 'pending',
       });
       expect(query2.result).toStrictEqual({
+        ...query2.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1637,6 +1796,7 @@ describe('Query', () => {
       });
       await waitAsync(10);
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
@@ -1664,6 +1824,7 @@ describe('Query', () => {
         status: 'pending',
       });
       expect(query2.result).toStrictEqual({
+        ...query2.result,
         data: 'foo',
         dataUpdatedAt: query2.result.dataUpdatedAt,
         error: null,
@@ -1692,6 +1853,7 @@ describe('Query', () => {
       });
       await waitAsync(10);
       expect(query1.result).toStrictEqual({
+        ...query1.result,
         data: undefined,
         dataUpdatedAt: 0,
         error: null,

@@ -13,6 +13,8 @@ import {
   action,
   makeObservable,
   observable,
+  onBecomeObserved,
+  onBecomeUnobserved,
   reaction,
   runInAction,
 } from 'mobx';
@@ -22,12 +24,16 @@ import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryOptionsParams } from './query-options';
 import {
   QueryConfig,
+  QueryDoneListener,
+  QueryErrorListener,
   QueryInvalidateParams,
   QueryOptions,
   QueryResetParams,
   QueryStartParams,
   QueryUpdateOptionsAllVariants,
 } from './query.types';
+
+const enableHolder = () => false;
 
 export class Query<
   TQueryFnData = unknown,
@@ -37,7 +43,7 @@ export class Query<
   TQueryKey extends QueryKey = QueryKey,
 > implements Disposable
 {
-  protected abortController: AbortController;
+  protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
 
   protected _result: QueryObserverResult<TData, TError>;
@@ -51,9 +57,9 @@ export class Query<
     TQueryKey
   >;
 
-  isResultRequsted: boolean;
-
   private isEnabledOnResultDemand: boolean;
+  isResultRequsted: boolean;
+  private isLazy?: boolean;
 
   /**
    * This parameter is responsible for holding the enabled value,
@@ -68,6 +74,8 @@ export class Query<
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
+  private errorListeners: QueryErrorListener<TError>[];
+  private doneListeners: QueryDoneListener<TData>[];
 
   protected config: QueryConfig<
     TQueryFnData,
@@ -132,12 +140,20 @@ export class Query<
     this._result = undefined as any;
     this.isResultRequsted = false;
     this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
+    this.errorListeners = [];
+    this.doneListeners = [];
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
+    this.isLazy = this.config.lazy;
 
-    if ('queryFeatures' in queryClient && config.enableOnDemand == null) {
-      this.isEnabledOnResultDemand =
-        queryClient.queryFeatures.enableOnDemand ?? false;
+    if ('queryFeatures' in queryClient) {
+      if (this.config.lazy === undefined) {
+        this.isLazy = queryClient.queryFeatures.lazy ?? false;
+      }
+      if (config.enableOnDemand === undefined) {
+        this.isEnabledOnResultDemand =
+          queryClient.queryFeatures.enableOnDemand ?? false;
+      }
     }
 
     observable.deep(this, '_result');
@@ -149,31 +165,30 @@ export class Query<
 
     makeObservable(this);
 
-    this.options = this.queryClient.defaultQueryOptions({
-      ...restOptions,
-      ...getDynamicOptions?.(this),
-    } as any);
+    const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
+
+    this.options = this.queryClient.defaultQueryOptions(restOptions as any);
 
     this.options.structuralSharing = this.options.structuralSharing ?? false;
 
-    this.processOptions(this.options);
+    const getAllDynamicOptions =
+      getDynamicOptions || isQueryKeyDynamic
+        ? () => {
+            const freshDynamicOptions = {
+              ...getDynamicOptions?.(this),
+            };
 
-    if (typeof queryKeyOrDynamicQueryKey === 'function') {
-      this.options.queryKey = queryKeyOrDynamicQueryKey();
+            if (isQueryKeyDynamic) {
+              freshDynamicOptions.queryKey = queryKeyOrDynamicQueryKey();
+            }
 
-      reaction(
-        () => queryKeyOrDynamicQueryKey(),
-        (queryKey) => {
-          this.update({
-            queryKey,
-          });
-        },
-        {
-          signal: this.abortController.signal,
-          delay: this.config.dynamicOptionsUpdateDelay,
-        },
-      );
-    } else {
+            return freshDynamicOptions;
+          }
+        : undefined;
+
+    if (getAllDynamicOptions) {
+      Object.assign(this.options, getAllDynamicOptions());
+    } else if (!isQueryKeyDynamic) {
       this.options.queryKey =
         queryKeyOrDynamicQueryKey ?? this.options.queryKey ?? [];
     }
@@ -183,6 +198,8 @@ export class Query<
       restOptions.notifyOnChangeProps ??
       queryClient.getDefaultOptions().queries?.notifyOnChangeProps ??
       'all';
+
+    this.processOptions(this.options);
 
     this.queryObserver = new QueryObserver<
       TQueryFnData,
@@ -194,40 +211,72 @@ export class Query<
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    this._observerSubscription = this.queryObserver.subscribe(
-      this.updateResult,
-    );
+    if (this.isLazy) {
+      let dynamicOptionsDisposeFn: VoidFunction | undefined;
 
-    if (getDynamicOptions) {
-      reaction(() => getDynamicOptions(this), this.update, {
-        signal: this.abortController.signal,
-        delay: this.config.dynamicOptionsUpdateDelay,
-      });
-    }
-
-    if (this.isEnabledOnResultDemand) {
-      reaction(
-        () => this.isResultRequsted,
-        (isRequested) => {
-          if (isRequested) {
-            this.update(getDynamicOptions?.(this) ?? {});
+      onBecomeObserved(this, '_result', () => {
+        if (!this._observerSubscription) {
+          if (getAllDynamicOptions) {
+            this.update(getAllDynamicOptions());
           }
-        },
-        {
+          this._observerSubscription = this.queryObserver.subscribe(
+            this.updateResult,
+          );
+          if (getAllDynamicOptions) {
+            dynamicOptionsDisposeFn = reaction(
+              getAllDynamicOptions,
+              this.update,
+              {
+                delay: this.config.dynamicOptionsUpdateDelay,
+                signal: config.abortSignal,
+                fireImmediately: true,
+              },
+            );
+          }
+        }
+      });
+
+      const cleanup = () => {
+        if (this._observerSubscription) {
+          dynamicOptionsDisposeFn?.();
+          this._observerSubscription();
+          this._observerSubscription = undefined;
+          dynamicOptionsDisposeFn = undefined;
+          config.abortSignal?.removeEventListener('abort', cleanup);
+        }
+      };
+
+      onBecomeUnobserved(this, '_result', cleanup);
+      config.abortSignal?.addEventListener('abort', cleanup);
+    } else {
+      if (isQueryKeyDynamic) {
+        reaction(
+          queryKeyOrDynamicQueryKey,
+          (queryKey) => this.update({ queryKey }),
+          {
+            signal: this.abortController.signal,
+            delay: this.config.dynamicOptionsUpdateDelay,
+          },
+        );
+      }
+      if (getDynamicOptions) {
+        reaction(() => getDynamicOptions(this), this.update, {
           signal: this.abortController.signal,
-          fireImmediately: true,
-        },
+          delay: this.config.dynamicOptionsUpdateDelay,
+        });
+      }
+      this._observerSubscription = this.queryObserver.subscribe(
+        this.updateResult,
       );
+      this.abortController.signal.addEventListener('abort', this.handleAbort);
     }
 
     if (config.onDone) {
-      this.onDone(config.onDone);
+      this.doneListeners.push(config.onDone);
     }
     if (config.onError) {
-      this.onError(config.onError);
+      this.errorListeners.push(config.onError);
     }
-
-    this.abortController.signal.addEventListener('abort', this.handleAbort);
 
     this.config.onInit?.(this);
     this.hooks?.onQueryInit?.(this);
@@ -298,11 +347,13 @@ export class Query<
     this.options = nextOptions;
 
     this.queryObserver.setOptions(this.options);
+
+    if (this.isLazy) {
+      this.updateResult(this.queryObserver.getCurrentResult());
+    }
   }
 
   private isEnableHolded = false;
-
-  private enableHolder = () => false;
 
   private processOptions = (
     options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
@@ -314,14 +365,14 @@ export class Query<
     // to do this, we hold the original value of the enabled option
     // and set enabled to false until the user requests the result (this.isResultRequsted)
     if (this.isEnabledOnResultDemand) {
-      if (this.isEnableHolded && options.enabled !== this.enableHolder) {
+      if (this.isEnableHolded && options.enabled !== enableHolder) {
         this.holdedEnabledOption = options.enabled;
       }
 
       if (this.isResultRequsted) {
         if (this.isEnableHolded) {
           options.enabled =
-            this.holdedEnabledOption === this.enableHolder
+            this.holdedEnabledOption === enableHolder
               ? undefined
               : this.holdedEnabledOption;
           this.isEnableHolded = false;
@@ -329,18 +380,19 @@ export class Query<
       } else {
         this.isEnableHolded = true;
         this.holdedEnabledOption = options.enabled;
-        options.enabled = this.enableHolder;
+        options.enabled = enableHolder;
       }
     }
   };
 
   public get result() {
-    if (!this.isResultRequsted) {
+    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
       runInAction(() => {
         this.isResultRequsted = true;
       });
+      this.update({});
     }
-    return this._result;
+    return this._result || this.queryObserver.getCurrentResult();
   }
 
   /**
@@ -348,6 +400,12 @@ export class Query<
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
     this._result = result;
+
+    if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
+      this.doneListeners.forEach((fn) => fn(result.data!, void 0));
+    } else if (result.error) {
+      this.errorListeners.forEach((fn) => fn(result.error!, void 0));
+    }
   }
 
   async reset(params?: QueryResetParams) {
@@ -366,42 +424,21 @@ export class Query<
     } as any);
   }
 
-  onDone(onDoneCallback: (data: TData, payload: void) => void): void {
-    reaction(
-      () => {
-        const { error, isSuccess, fetchStatus } = this._result;
-        return isSuccess && !error && fetchStatus === 'idle';
-      },
-      (isDone) => {
-        if (isDone) {
-          onDoneCallback(this._result.data!, void 0);
-        }
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+  onDone(doneListener: QueryDoneListener<TData>): void {
+    this.doneListeners.push(doneListener);
   }
 
-  onError(onErrorCallback: (error: TError, payload: void) => void): void {
-    reaction(
-      () => this._result.error,
-      (error) => {
-        if (error) {
-          onErrorCallback(error, void 0);
-        }
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+  onError(errorListener: QueryErrorListener<TError>): void {
+    this.errorListeners.push(errorListener);
   }
 
   protected handleAbort = () => {
     this._observerSubscription?.();
 
+    this.doneListeners = [];
+    this.errorListeners = [];
+
     this.queryObserver.destroy();
-    this.isResultRequsted = false;
 
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
@@ -421,10 +458,6 @@ export class Query<
     this.hooks?.onQueryDestroy?.(this);
   };
 
-  destroy() {
-    this.abortController.abort();
-  }
-
   async start({
     cancelRefetch,
     ...params
@@ -438,6 +471,10 @@ export class Query<
     this.update({ ...params });
 
     return await this.refetch({ cancelRefetch });
+  }
+
+  destroy() {
+    this.abortController?.abort();
   }
 
   /**

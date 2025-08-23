@@ -6,11 +6,21 @@ import {
   MutationOptions,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
-import { action, makeObservable, observable, reaction } from 'mobx';
+import {
+  action,
+  makeObservable,
+  observable,
+  onBecomeObserved,
+  onBecomeUnobserved,
+} from 'mobx';
 
 import {
   MutationConfig,
+  MutationDoneListener,
+  MutationErrorListener,
+  MutationFeatures,
   MutationInvalidateQueriesOptions,
+  MutationSettledListener,
 } from './mutation.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
@@ -21,13 +31,25 @@ export class Mutation<
   TContext = unknown,
 > implements Disposable
 {
-  protected abortController: AbortController;
+  protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
   mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;
 
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
+
+  private isLazy?: boolean;
+  private isResetOnDestroy?: MutationFeatures['resetOnDestroy'];
+
+  private settledListeners: MutationSettledListener<
+    TData,
+    TError,
+    TVariables,
+    TContext
+  >[];
+  private errorListeners: MutationErrorListener<TError, TVariables, TContext>[];
+  private doneListeners: MutationDoneListener<TData, TVariables, TContext>[];
 
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
@@ -45,21 +67,38 @@ export class Mutation<
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
+    this.isLazy = this.config.lazy;
+    this.settledListeners = [];
+    this.errorListeners = [];
+    this.doneListeners = [];
+    this.isResetOnDestroy =
+      this.config.resetOnDestroy ?? this.config.resetOnDispose;
 
     observable.deep(this, 'result');
     action.bound(this, 'updateResult');
 
     makeObservable(this);
 
-    const invalidateByKey =
-      providedInvalidateByKey ??
-      ('mutationFeatures' in queryClient
-        ? queryClient.mutationFeatures.invalidateByKey
-        : null);
+    let invalidateByKey: MutationFeatures['invalidateByKey'] =
+      providedInvalidateByKey;
+
+    if ('mutationFeatures' in queryClient) {
+      if (providedInvalidateByKey === undefined) {
+        invalidateByKey = queryClient.mutationFeatures.invalidateByKey;
+      }
+      if (this.config.lazy === undefined) {
+        this.isLazy = queryClient.mutationFeatures.lazy;
+      }
+      if (this.isResetOnDestroy === undefined) {
+        this.isResetOnDestroy =
+          queryClient.mutationFeatures.resetOnDestroy ??
+          queryClient.mutationFeatures.resetOnDispose;
+      }
+
+      this.hooks = queryClient.hooks;
+    }
 
     this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
-    this.hooks =
-      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
 
     this.mutationObserver = new MutationObserver<
       TData,
@@ -76,21 +115,28 @@ export class Mutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    this._observerSubscription = this.mutationObserver.subscribe(
-      this.updateResult,
-    );
+    if (this.isLazy) {
+      onBecomeObserved(this, 'result', () => {
+        if (!this._observerSubscription) {
+          this.updateResult(this.mutationObserver.getCurrentResult());
+          this._observerSubscription = this.mutationObserver.subscribe(
+            this.updateResult,
+          );
+        }
+      });
+      onBecomeUnobserved(this, 'result', () => {
+        if (this._observerSubscription) {
+          this._observerSubscription?.();
+          this._observerSubscription = undefined;
+        }
+      });
+    } else {
+      this._observerSubscription = this.mutationObserver.subscribe(
+        this.updateResult,
+      );
 
-    this.abortController.signal.addEventListener('abort', () => {
-      this._observerSubscription?.();
-
-      if (
-        config.resetOnDispose ||
-        ('mutationFeatures' in queryClient &&
-          queryClient.mutationFeatures.resetOnDispose)
-      ) {
-        this.reset();
-      }
-    });
+      this.abortController.signal.addEventListener('abort', this.handleAbort);
+    }
 
     if (invalidateQueries) {
       this.onDone((data, payload) => {
@@ -143,7 +189,25 @@ export class Mutation<
     variables: TVariables,
     options?: MutationOptions<TData, TError, TVariables, TContext>,
   ) {
-    await this.mutationObserver.mutate(variables, options);
+    if (this.isLazy) {
+      let error: any;
+
+      try {
+        await this.mutationObserver.mutate(variables, options);
+      } catch (error_) {
+        error = error_;
+      }
+
+      const result = this.mutationObserver.getCurrentResult();
+      this.updateResult(result);
+
+      if (error && this.mutationOptions.throwOnError) {
+        throw error;
+      }
+    } else {
+      await this.mutationObserver.mutate(variables, options);
+    }
+
     return this.result;
   }
 
@@ -151,93 +215,46 @@ export class Mutation<
     variables: TVariables,
     options?: MutationOptions<TData, TError, TVariables, TContext>,
   ) {
-    await this.mutationObserver.mutate(variables, options);
-    return this.result;
+    return await this.mutate(variables, options);
   }
 
   /**
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(
-    nextResult: MutationObserverResult<TData, TError, TVariables, TContext>,
+    result: MutationObserverResult<TData, TError, TVariables, TContext>,
   ) {
-    this.result = nextResult || {};
+    this.result = result || {};
+
+    if (result.isSuccess && !result.error) {
+      this.doneListeners.forEach((fn) =>
+        fn(result.data!, result.variables!, result.context),
+      );
+    } else if (result.error) {
+      this.errorListeners.forEach((fn) =>
+        fn(result.error!, result.variables!, result.context),
+      );
+    }
+
+    if (!result.isPending && (result.isError || result.isSuccess)) {
+      this.settledListeners.forEach((fn) =>
+        fn(result.data!, result.error, result.variables!, result.context),
+      );
+    }
   }
 
   onSettled(
-    onSettledCallback: (
-      data: TData | undefined,
-      error: TError | null,
-      variables: TVariables,
-      context: TContext | undefined,
-    ) => void,
+    listener: MutationSettledListener<TData, TError, TVariables, TContext>,
   ): void {
-    reaction(
-      () => {
-        const { isSuccess, isError, isPending } = this.result;
-        return !isPending && (isSuccess || isError);
-      },
-      (isSettled) => {
-        if (isSettled) {
-          onSettledCallback(
-            this.result.data,
-            this.result.error,
-            this.result.variables!,
-            this.result.context,
-          );
-        }
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+    this.settledListeners.push(listener);
   }
 
-  onDone(
-    onDoneCallback: (
-      data: TData,
-      payload: TVariables,
-      context: TContext | undefined,
-    ) => void,
-  ): void {
-    reaction(
-      () => {
-        const { error, isSuccess } = this.result;
-        return isSuccess && !error;
-      },
-      (isDone) => {
-        if (isDone) {
-          onDoneCallback(
-            this.result.data!,
-            this.result.variables!,
-            this.result.context,
-          );
-        }
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+  onDone(listener: MutationDoneListener<TData, TVariables, TContext>): void {
+    this.doneListeners.push(listener);
   }
 
-  onError(
-    onErrorCallback: (
-      error: TError,
-      payload: TVariables,
-      context: TContext | undefined,
-    ) => void,
-  ): void {
-    reaction(
-      () => this.result.error,
-      (error) => {
-        if (error) {
-          onErrorCallback(error, this.result.variables!, this.result.context);
-        }
-      },
-      {
-        signal: this.abortController.signal,
-      },
-    );
+  onError(listener: MutationErrorListener<TError, TVariables, TContext>): void {
+    this.errorListeners.push(listener);
   }
 
   reset() {
@@ -247,16 +264,11 @@ export class Mutation<
   protected handleAbort = () => {
     this._observerSubscription?.();
 
-    let isNeedToReset =
-      this.config.resetOnDestroy || this.config.resetOnDispose;
+    this.doneListeners = [];
+    this.errorListeners = [];
+    this.settledListeners = [];
 
-    if ('mutationFeatures' in this.queryClient && !isNeedToReset) {
-      isNeedToReset =
-        this.queryClient.mutationFeatures.resetOnDestroy ||
-        this.queryClient.mutationFeatures.resetOnDispose;
-    }
-
-    if (isNeedToReset) {
+    if (this.isResetOnDestroy) {
       this.reset();
     }
 

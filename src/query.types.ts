@@ -122,6 +122,13 @@ export interface QueryFeatures {
    * @see https://mobx.js.org/reactions.html#delay-_autorun-reaction_
    */
   dynamicOptionsUpdateDelay?: number;
+  /**
+   * **EXPERIMENTAL**
+   *
+   * Make all query reactions and subscriptions lazy.
+   * They exists only when query result is observed.
+   */
+  lazy?: boolean;
 }
 
 /**
@@ -149,6 +156,16 @@ export type MobxQueryConfigFromFn<
   TError = DefaultError,
   TQueryKey extends QueryKey = QueryKey,
 > = QueryConfigFromFn<TFunction, TError, TQueryKey>;
+
+export type QueryErrorListener<TError = DefaultError> = (
+  error: TError,
+  payload: void,
+) => void;
+
+export type QueryDoneListener<TData = unknown> = (
+  data: TData,
+  payload: void,
+) => void;
 
 export interface QueryConfig<
   TQueryFnData = unknown,
@@ -185,8 +202,8 @@ export interface QueryConfig<
     query: Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) => void;
   abortSignal?: AbortSignal;
-  onDone?: (data: TData, payload: void) => void;
-  onError?: (error: TError, payload: void) => void;
+  onDone?: QueryDoneListener<TData>;
+  onError?: QueryErrorListener<TError>;
   /**
    * Dynamic query parameters, when result of this function changed query will be updated
    * (reaction -> setOptions)
