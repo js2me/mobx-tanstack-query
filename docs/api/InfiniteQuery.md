@@ -4,6 +4,8 @@ Class wrapper for [@tanstack-query/core infinite queries](https://tanstack.com/q
 
 [_See docs for Query_](/api/Query)  
 
+**All documentation about properties and methods of infinite query can be found in the original documentation [here](https://tanstack.com/query/latest/docs/framework/react/reference/useInfiniteQuery)**  
+
 [Reference to source code](/src/infinite-query.ts)  
 
 ## Usage  
