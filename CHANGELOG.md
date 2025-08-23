@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.1.1
+
+### Patch Changes
+
+- [`602366a`](https://github.com/js2me/mobx-tanstack-query/commit/602366aedba8b9ad8a2b20ddac8b1263054b3969) Thanks [@js2me](https://github.com/js2me)! - make isLazy as protected property
+
 ## 6.1.0
 
 ### Minor Changes
