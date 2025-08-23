@@ -75,8 +75,8 @@ export class InfiniteQuery<
   >;
 
   private isEnabledOnResultDemand: boolean;
-  private isResultRequsted: boolean;
-  private isLazy?: boolean;
+  isResultRequsted: boolean;
+  protected isLazy?: boolean;
 
   /**
    * This parameter is responsible for holding the enabled value,
@@ -91,8 +91,8 @@ export class InfiniteQuery<
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
-  private errorListeners: InfiniteQueryErrorListener<TError>[];
-  private doneListeners: InfiniteQueryDoneListener<TData>[];
+  protected errorListeners: InfiniteQueryErrorListener<TError>[];
+  protected doneListeners: InfiniteQueryDoneListener<TData>[];
 
   constructor(
     config: InfiniteQueryConfig<

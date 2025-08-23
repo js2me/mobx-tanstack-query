@@ -59,7 +59,7 @@ export class Query<
 
   private isEnabledOnResultDemand: boolean;
   isResultRequsted: boolean;
-  private isLazy?: boolean;
+  protected isLazy?: boolean;
 
   /**
    * This parameter is responsible for holding the enabled value,
@@ -74,8 +74,8 @@ export class Query<
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
-  private errorListeners: QueryErrorListener<TError>[];
-  private doneListeners: QueryDoneListener<TData>[];
+  protected errorListeners: QueryErrorListener<TError>[];
+  protected doneListeners: QueryDoneListener<TData>[];
 
   protected config: QueryConfig<
     TQueryFnData,

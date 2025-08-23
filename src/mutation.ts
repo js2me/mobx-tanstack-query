@@ -39,17 +39,21 @@ export class Mutation<
 
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
-  private isLazy?: boolean;
-  private isResetOnDestroy?: MutationFeatures['resetOnDestroy'];
+  protected isLazy?: boolean;
+  protected isResetOnDestroy?: MutationFeatures['resetOnDestroy'];
 
-  private settledListeners: MutationSettledListener<
+  protected settledListeners: MutationSettledListener<
     TData,
     TError,
     TVariables,
     TContext
   >[];
-  private errorListeners: MutationErrorListener<TError, TVariables, TContext>[];
-  private doneListeners: MutationDoneListener<TData, TVariables, TContext>[];
+  protected errorListeners: MutationErrorListener<
+    TError,
+    TVariables,
+    TContext
+  >[];
+  protected doneListeners: MutationDoneListener<TData, TVariables, TContext>[];
 
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
