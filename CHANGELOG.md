@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.2.1
+
+### Patch Changes
+
+- [`537ac91`](https://github.com/js2me/mobx-tanstack-query/commit/537ac91df47a34df675708c706783820849a9b1d) Thanks [@js2me](https://github.com/js2me)! - add small docs for `transformError` option
+
+- [`537ac91`](https://github.com/js2me/mobx-tanstack-query/commit/537ac91df47a34df675708c706783820849a9b1d) Thanks [@js2me](https://github.com/js2me)! - added docs for `Query` properties
+
 ## 6.2.0
 
 ### Minor Changes
