@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.1.2
+
+### Patch Changes
+
+- [`534042e`](https://github.com/js2me/mobx-tanstack-query/commit/534042eea27055262942d084841bbd94b36f07b4) Thanks [@js2me](https://github.com/js2me)! - fixed lazy queries cleanup functions
+
 ## 6.1.1
 
 ### Patch Changes
