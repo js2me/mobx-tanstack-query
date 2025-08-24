@@ -19,8 +19,6 @@ import {
   makeObservable,
   observable,
   runInAction,
-  onBecomeUnobserved,
-  onBecomeObserved,
 } from 'mobx';
 
 import {
@@ -35,6 +33,7 @@ import {
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
+import { lazyObserve } from './utils/lazy-observe';
 
 const enableHolder = () => false;
 
@@ -231,41 +230,36 @@ export class InfiniteQuery<
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
     if (this.isLazy) {
-      let dynamicOptionsDisposeFn: VoidFunction | undefined;
-
-      onBecomeObserved(this, '_result', () => {
-        if (!this._observerSubscription) {
-          if (getAllDynamicOptions) {
-            this.update(getAllDynamicOptions());
-          }
-          this._observerSubscription = this.queryObserver.subscribe(
-            this.updateResult,
-          );
-          if (getAllDynamicOptions) {
-            dynamicOptionsDisposeFn = reaction(
-              getAllDynamicOptions,
-              this.update,
-              {
+      const cleanup = lazyObserve({
+        context: this,
+        property: '_result',
+        onStart: () => {
+          if (!this._observerSubscription) {
+            if (getAllDynamicOptions) {
+              this.update(getAllDynamicOptions());
+            }
+            this._observerSubscription = this.queryObserver.subscribe(
+              this.updateResult,
+            );
+            if (getAllDynamicOptions) {
+              return reaction(getAllDynamicOptions, this.update, {
                 delay: this.config.dynamicOptionsUpdateDelay,
                 signal: config.abortSignal,
                 fireImmediately: true,
-              },
-            );
+              });
+            }
           }
-        }
+        },
+        onEnd: (disposeFn, cleanup) => {
+          if (this._observerSubscription) {
+            disposeFn?.();
+            this._observerSubscription();
+            this._observerSubscription = undefined;
+            config.abortSignal?.removeEventListener('abort', cleanup);
+          }
+        },
       });
 
-      const cleanup = () => {
-        if (this._observerSubscription) {
-          dynamicOptionsDisposeFn?.();
-          this._observerSubscription();
-          this._observerSubscription = undefined;
-          dynamicOptionsDisposeFn = undefined;
-          config.abortSignal?.removeEventListener('abort', cleanup);
-        }
-      };
-
-      onBecomeUnobserved(this, '_result', cleanup);
       config.abortSignal?.addEventListener('abort', cleanup);
     } else {
       if (isQueryKeyDynamic) {

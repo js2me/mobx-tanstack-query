@@ -6,13 +6,7 @@ import {
   MutationOptions,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
-import {
-  action,
-  makeObservable,
-  observable,
-  onBecomeObserved,
-  onBecomeUnobserved,
-} from 'mobx';
+import { action, makeObservable, observable } from 'mobx';
 
 import {
   MutationConfig,
@@ -23,6 +17,7 @@ import {
   MutationSettledListener,
 } from './mutation.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
+import { lazyObserve } from './utils/lazy-observe';
 
 export class Mutation<
   TData = unknown,
@@ -120,20 +115,25 @@ export class Mutation<
     this.updateResult(this.mutationObserver.getCurrentResult());
 
     if (this.isLazy) {
-      onBecomeObserved(this, 'result', () => {
-        if (!this._observerSubscription) {
-          this.updateResult(this.mutationObserver.getCurrentResult());
-          this._observerSubscription = this.mutationObserver.subscribe(
-            this.updateResult,
-          );
-        }
+      const cleanup = lazyObserve({
+        context: this,
+        property: 'result',
+        onStart: () => {
+          if (!this._observerSubscription) {
+            this.updateResult(this.mutationObserver.getCurrentResult());
+            this._observerSubscription = this.mutationObserver.subscribe(
+              this.updateResult,
+            );
+          }
+        },
+        onEnd: () => {
+          if (this._observerSubscription) {
+            this._observerSubscription?.();
+            this._observerSubscription = undefined;
+          }
+        },
       });
-      onBecomeUnobserved(this, 'result', () => {
-        if (this._observerSubscription) {
-          this._observerSubscription?.();
-          this._observerSubscription = undefined;
-        }
-      });
+      config.abortSignal?.addEventListener('abort', cleanup);
     } else {
       this._observerSubscription = this.mutationObserver.subscribe(
         this.updateResult,
