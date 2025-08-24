@@ -129,6 +129,7 @@ export interface QueryFeatures {
    * They exists only when query result is observed.
    */
   lazy?: boolean;
+  transformError?: (error: any) => any;
 }
 
 /**

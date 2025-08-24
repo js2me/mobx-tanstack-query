@@ -4,6 +4,8 @@ import {
   MutationObserverOptions,
   MutationObserverResult,
   MutationOptions,
+  MutationObserverBaseResult,
+  MutationStatus,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable } from 'mobx';
@@ -19,12 +21,34 @@ import {
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { lazyObserve } from './utils/lazy-observe';
 
+const originalMutationProperties = [
+  'data',
+  'variables',
+  'error',
+  'isError',
+  'isIdle',
+  'isPending',
+  'isSuccess',
+  'status',
+  'context',
+  'failureCount',
+  'failureReason',
+  'isPaused',
+  'submittedAt',
+] as const satisfies (keyof MutationObserverBaseResult)[];
+
 export class Mutation<
-  TData = unknown,
-  TVariables = void,
-  TError = DefaultError,
-  TContext = unknown,
-> implements Disposable
+    TData = unknown,
+    TVariables = void,
+    TError = DefaultError,
+    TContext = unknown,
+  >
+  implements
+    Disposable,
+    Pick<
+      MutationObserverBaseResult<TData, TError, TVariables, TContext>,
+      (typeof originalMutationProperties)[number]
+    >
 {
   protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
@@ -53,6 +77,55 @@ export class Mutation<
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
 
+  /**
+   * The last successfully resolved data for the mutation.
+   */
+  data!: TData | undefined;
+  /**
+   * The variables object passed to the `mutationFn`.
+   */
+  variables!: TVariables | undefined;
+  /**
+   * The error object for the mutation, if an error was encountered.
+   * - Defaults to `null`.
+   */
+  error!: TError | null;
+  /**
+   * A boolean variable derived from `status`.
+   * - `true` if the last mutation attempt resulted in an error.
+   */
+  isError!: boolean;
+  /**
+   * A boolean variable derived from `status`.
+   * - `true` if the mutation is in its initial state prior to executing.
+   */
+  isIdle!: boolean;
+  /**
+   * A boolean variable derived from `status`.
+   * - `true` if the mutation is currently executing.
+   */
+  isPending!: boolean;
+  /**
+   * A boolean variable derived from `status`.
+   * - `true` if the last mutation attempt was successful.
+   */
+  isSuccess!: boolean;
+  /**
+   * The status of the mutation.
+   * - Will be:
+   *   - `idle` initial status prior to the mutation function executing.
+   *   - `pending` if the mutation is currently executing.
+   *   - `error` if the last mutation attempt resulted in an error.
+   *   - `success` if the last mutation attempt was successful.
+   */
+  status!: MutationStatus;
+
+  context!: TContext | undefined;
+  failureCount!: number;
+  failureReason!: TError | null;
+  isPaused!: boolean;
+  submittedAt!: number;
+
   constructor(
     protected config: MutationConfig<TData, TVariables, TError, TContext>,
   ) {
@@ -73,10 +146,8 @@ export class Mutation<
     this.isResetOnDestroy =
       this.config.resetOnDestroy ?? this.config.resetOnDispose;
 
-    observable.deep(this, 'result');
-    action.bound(this, 'updateResult');
-
-    makeObservable(this);
+    let transformError: MutationFeatures['transformError'] =
+      config.transformError;
 
     let invalidateByKey: MutationFeatures['invalidateByKey'] =
       providedInvalidateByKey;
@@ -93,9 +164,29 @@ export class Mutation<
           queryClient.mutationFeatures.resetOnDestroy ??
           queryClient.mutationFeatures.resetOnDispose;
       }
+      if (!transformError) {
+        transformError = queryClient.queryFeatures.transformError;
+      }
 
       this.hooks = queryClient.hooks;
     }
+
+    observable.deep(this, 'result');
+    action.bound(this, 'updateResult');
+
+    originalMutationProperties.forEach((property) => {
+      if (property === 'error' && transformError) {
+        Object.defineProperty(this, property, {
+          get: () => transformError(this.result[property]),
+        });
+      } else {
+        Object.defineProperty(this, property, {
+          get: () => this.result[property],
+        });
+      }
+    });
+
+    makeObservable(this);
 
     this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
 

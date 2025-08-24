@@ -7,6 +7,9 @@ import {
   RefetchOptions,
   SetDataOptions,
   Updater,
+  QueryObserverBaseResult,
+  FetchStatus,
+  QueryStatus,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
@@ -17,6 +20,7 @@ import {
   runInAction,
 } from 'mobx';
 
+import { enableHolder } from './constants';
 import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryOptionsParams } from './query-options';
@@ -24,6 +28,7 @@ import {
   QueryConfig,
   QueryDoneListener,
   QueryErrorListener,
+  QueryFeatures,
   QueryInvalidateParams,
   QueryOptions,
   QueryResetParams,
@@ -32,15 +37,43 @@ import {
 } from './query.types';
 import { lazyObserve } from './utils/lazy-observe';
 
-const enableHolder = () => false;
+const originalQueryProperties = [
+  'data',
+  'dataUpdatedAt',
+  'error',
+  'errorUpdatedAt',
+  'failureCount',
+  'failureReason',
+  'errorUpdateCount',
+  'isError',
+  'isFetched',
+  'isFetching',
+  'isLoading',
+  'isPending',
+  'isLoadingError',
+  'isPaused',
+  'isPlaceholderData',
+  'isRefetchError',
+  'isRefetching',
+  'isStale',
+  'isSuccess',
+  'status',
+  'fetchStatus',
+] as const satisfies (keyof QueryObserverBaseResult)[];
 
 export class Query<
-  TQueryFnData = unknown,
-  TError = DefaultError,
-  TData = TQueryFnData,
-  TQueryData = TQueryFnData,
-  TQueryKey extends QueryKey = QueryKey,
-> implements Disposable
+    TQueryFnData = unknown,
+    TError = DefaultError,
+    TData = TQueryFnData,
+    TQueryData = TQueryFnData,
+    TQueryKey extends QueryKey = QueryKey,
+  >
+  implements
+    Disposable,
+    Pick<
+      QueryObserverBaseResult<TData, TError>,
+      (typeof originalQueryProperties)[number]
+    >
 {
   protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
@@ -83,6 +116,109 @@ export class Query<
     TQueryData,
     TQueryKey
   >;
+
+  /**
+   * The last successfully resolved data for the query.
+   */
+  data!: TData | undefined;
+  /**
+   * The timestamp for when the query most recently returned the `status` as `"success"`.
+   */
+  dataUpdatedAt!: number;
+  /**
+   * The error object for the query, if an error was thrown.
+   * - Defaults to `null`.
+   */
+  error!: TError | null;
+  /**
+   * The timestamp for when the query most recently returned the `status` as `"error"`.
+   */
+  errorUpdatedAt!: number;
+  /**
+   * The failure count for the query.
+   * - Incremented every time the query fails.
+   * - Reset to `0` when the query succeeds.
+   */
+  failureCount!: number;
+  /**
+   * The failure reason for the query retry.
+   * - Reset to `null` when the query succeeds.
+   */
+  failureReason!: TError | null;
+  /**
+   * The sum of all errors.
+   */
+  errorUpdateCount!: number;
+  /**
+   * A derived boolean from the `status` variable, provided for convenience.
+   * - `true` if the query attempt resulted in an error.
+   */
+  isError!: boolean;
+  /**
+   * Will be `true` if the query has been fetched.
+   */
+  isFetched!: boolean;
+  /**
+   * A derived boolean from the `fetchStatus` variable, provided for convenience.
+   * - `true` whenever the `queryFn` is executing, which includes initial `pending` as well as background refetch.
+   */
+  isFetching!: boolean;
+  /**
+   * Is `true` whenever the first fetch for a query is in-flight.
+   * - Is the same as `isFetching && isPending`.
+   */
+  isLoading!: boolean;
+  /**
+   * Will be `pending` if there's no cached data and no query attempt was finished yet.
+   */
+  isPending!: boolean;
+  /**
+   * Will be `true` if the query failed while fetching for the first time.
+   */
+  isLoadingError!: boolean;
+  /**
+   * A derived boolean from the `fetchStatus` variable, provided for convenience.
+   * - The query wanted to fetch, but has been `paused`.
+   */
+  isPaused!: boolean;
+  /**
+   * Will be `true` if the data shown is the placeholder data.
+   */
+  isPlaceholderData!: boolean;
+  /**
+   * Will be `true` if the query failed while refetching.
+   */
+  isRefetchError!: boolean;
+  /**
+   * Is `true` whenever a background refetch is in-flight, which _does not_ include initial `pending`.
+   * - Is the same as `isFetching && !isPending`.
+   */
+  isRefetching!: boolean;
+  /**
+   * Will be `true` if the data in the cache is invalidated or if the data is older than the given `staleTime`.
+   */
+  isStale!: boolean;
+  /**
+   * A derived boolean from the `status` variable, provided for convenience.
+   * - `true` if the query has received a response with no errors and is ready to display its data.
+   */
+  isSuccess!: boolean;
+  /**
+   * The status of the query.
+   * - Will be:
+   *   - `pending` if there's no cached data and no query attempt was finished yet.
+   *   - `error` if the query attempt resulted in an error.
+   *   - `success` if the query has received a response with no errors and is ready to display its data.
+   */
+  status!: QueryStatus;
+  /**
+   * The fetch status of the query.
+   * - `fetching`: Is `true` whenever the queryFn is executing, which includes initial `pending` as well as background refetch.
+   * - `paused`: The query wanted to fetch, but has been `paused`.
+   * - `idle`: The query is not fetching.
+   * - See [Network Mode](https://tanstack.com/query/latest/docs/framework/react/guides/network-mode) for more information.
+   */
+  fetchStatus!: FetchStatus;
 
   constructor(
     config: QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
@@ -144,6 +280,7 @@ export class Query<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
     this.isLazy = this.config.lazy;
+    let transformError: QueryFeatures['transformError'] = config.transformError;
 
     if ('queryFeatures' in queryClient) {
       if (this.config.lazy === undefined) {
@@ -153,6 +290,9 @@ export class Query<
         this.isEnabledOnResultDemand =
           queryClient.queryFeatures.enableOnDemand ?? false;
       }
+      if (!transformError) {
+        transformError = queryClient.queryFeatures.transformError;
+      }
     }
 
     observable.deep(this, '_result');
@@ -161,6 +301,18 @@ export class Query<
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
+
+    originalQueryProperties.forEach((property) => {
+      if (property === 'error' && transformError) {
+        Object.defineProperty(this, property, {
+          get: () => transformError(this.result[property]),
+        });
+      } else {
+        Object.defineProperty(this, property, {
+          get: () => this.result[property],
+        });
+      }
+    });
 
     makeObservable(this);
 

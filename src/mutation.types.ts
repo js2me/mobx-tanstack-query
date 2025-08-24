@@ -35,6 +35,7 @@ export interface MutationFeatures {
    * They exists only when mutation result is observed.
    */
   lazy?: boolean;
+  transformError?: (error: any) => any;
 }
 
 /**
