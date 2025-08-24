@@ -4,7 +4,7 @@ title: Getting started
 
 # Getting started
 
-## Installation  
+## Installation
 
 ::: warning Peer Dependency
 @tanstack/query-core is a required peer dependency
@@ -34,12 +34,13 @@ It offers first-class support for React hooks and follows modern React patterns.
 
 The current React integration is implemented via `MobX` React bindings.
 
-## Creating instance of [`QueryClient`](/api/QueryClient)   
-This is extended version of original [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)   
+## Creating instance of [`QueryClient`](/api/QueryClient)
+
+This is extended version of original [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)
 
 ```ts
 import { QueryClient } from "mobx-tanstack-query";
-import { hashKey } from '@tanstack/query-core';
+import { hashKey } from "@tanstack/query-core";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,7 +67,7 @@ export const queryClient = new QueryClient({
 ## Writing first queries
 
 ```ts
-import { Query } from 'mobx-tanstack-query';
+import { Query } from "mobx-tanstack-query";
 
 const fruitQuery = new Query({
   queryClient,
@@ -74,21 +75,21 @@ const fruitQuery = new Query({
     const response = await fetch(`/api/fruits/${queryKey[1]}`);
     return await response.json();
   },
-  queryKey: ['fruits', 'apple'],
-})
+  queryKey: ["fruits", "apple"],
+});
 ```
 
-## Using with classes   
+## Using with classes
 
 ```ts
 import { observable, action } from "mobx";
-import { Query } from 'mobx-tanstack-query';
+import { Query } from "mobx-tanstack-query";
 
 class MyViewModel {
   abortController = new AbortController();
 
   @observable
-  accessor fruitName = 'apple';
+  accessor fruitName = "apple";
 
   fruitQuery = new Query({
     queryClient,
@@ -99,9 +100,9 @@ class MyViewModel {
     },
     options: () => ({
       enabled: !!this.fruitName,
-      queryKey: ['fruits', this.fruitName],
-    })
-  })
+      queryKey: ["fruits", this.fruitName],
+    }),
+  });
 
   @action
   setFruitName(fruitName: string) {
@@ -114,16 +115,12 @@ class MyViewModel {
 }
 ```
 
-## Using in React  
+## Using in React
 
 ```tsx
 import { observer } from "mobx-react-lite";
 
 const App = observer(() => {
-  return (
-    <div>
-      {fruitQuery.result.data?.name}
-    </div>
-  )
-})
+  return <div>{fruitQuery.data?.name}</div>;
+});
 ```

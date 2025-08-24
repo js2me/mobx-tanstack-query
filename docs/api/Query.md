@@ -82,8 +82,8 @@ const petsQuery = new Query({
 ...
 
 console.log(
-  petsQuery.result.data,
-  petsQuery.result.isLoading
+  petsQuery.data,
+  petsQuery.isLoading
 )
 ```
 
@@ -92,6 +92,368 @@ This means that the query will immediately call the `queryFn` function,
 i.e., make a request to `fetchPets`  
 This is the default behavior of queries according to the [**query documtation**](https://tanstack.com/query/latest/docs/framework/react/guides/queries)  
 :::
+
+## Properties and methods
+
+#### `data: TData | undefined`
+
+The last successfully resolved data for the query.
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+console.log(query.data);
+```
+
+#### `dataUpdatedAt: number`
+
+The timestamp for when the query most recently returned the `status` as `"success"`.
+
+#### `error: TError | null`
+
+The error object for the query, if an error was thrown.
+
+- Defaults to `null`.
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+console.log(query.error);
+```
+
+::: info You can transform output of this property using `transformError` option
+:::
+
+#### `errorUpdatedAt: number`
+
+The timestamp for when the query most recently returned the `status` as `"error"`.
+
+#### `failureCount: number`
+
+The failure count for the query.
+
+- Incremented every time the query fails.
+- Reset to `0` when the query succeeds.
+
+#### `failureReason: TError | null`
+
+The failure reason for the query retry.
+
+- Reset to `null` when the query succeeds.
+
+#### `errorUpdateCount: number`
+
+The sum of all errors.
+
+#### `isError: boolean`
+
+A derived boolean from the `status` variable, provided for convenience.
+
+- `true` if the query attempt resulted in an error.
+
+#### `isFetched: boolean`
+
+Will be `true` if the query has been fetched.
+
+#### `isFetching: boolean`
+
+A derived boolean from the `fetchStatus` variable, provided for convenience.
+
+- `true` whenever the `queryFn` is executing, which includes initial `pending` as well as background refetch.
+
+#### `isLoading: boolean`
+
+Is `true` whenever the first fetch for a query is in-flight.
+
+- Is the same as `isFetching && isPending`.
+
+#### `isLoadingError: boolean`
+
+Will be `true` if the query failed while fetching for the first time.
+
+#### `isPaused: boolean`
+
+A derived boolean from the `fetchStatus` variable, provided for convenience.
+
+- The query wanted to fetch, but has been `paused`.
+
+#### `isPlaceholderData: boolean`
+
+Will be `true` if the data shown is the placeholder data.
+
+#### `isRefetchError: boolean`
+
+Will be `true` if the query failed while refetching.
+
+#### `isRefetching: boolean`
+
+Is `true` whenever a background refetch is in-flight, which _does not_ include initial `pending`.
+
+- Is the same as `isFetching && !isPending`.
+
+#### `isStale: boolean`
+
+Will be `true` if the data in the cache is invalidated or if the data is older than the given `staleTime`.
+
+#### `isSuccess: boolean`
+
+A derived boolean from the `status` variable, provided for convenience.
+
+- `true` if the query has received a response with no errors and is ready to display its data.
+
+#### `status: QueryStatus`
+
+The status of the query.
+
+- Will be:
+  - `pending` if there's no cached data and no query attempt was finished yet.
+  - `error` if the query attempt resulted in an error.
+  - `success` if the query has received a response with no errors and is ready to display its data.
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+console.log(query.status); // "pending" initially
+// After some time when the query resolves:
+console.log(query.status); // "success" if successful
+// Or:
+console.log(query.status); // "error" if there was an error
+```
+
+#### `fetchStatus: FetchStatus`
+
+The fetch status of the query.
+
+- `fetching`: Is `true` whenever the queryFn is executing, which includes initial `pending` as well as background refetch.
+- `paused`: The query wanted to fetch, but has been `paused`.
+- `idle`: The query is not fetching.
+- See [Network Mode](https://tanstack.com/query/latest/docs/framework/react/guides/network-mode) for more information.
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+console.log(query.fetchStatus); // "idle" initially
+// During fetch:
+console.log(query.fetchStatus); // "fetching" when query is executing
+// When fetch is paused:
+console.log(query.fetchStatus); // "paused" when query is paused
+```
+
+Explanation of difference between `fetchStatus` and `status`:
+- `status` indicates the overall result state of the query: "pending", "error", or "success"
+- `fetchStatus` indicates the current fetching state of the query: "fetching", "paused", or "idle"
+- A query can be in "fetching" state while still having a "pending" status, or it can be in "idle" state while having an "error" or "success" status
+
+#### `options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>`
+
+The options used to configure the query.
+
+#### `queryObserver: QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>`
+
+The underlying query observer instance.
+
+#### `isResultRequsted: boolean` <Badge type="info" text="observable.ref" />
+
+Any time when you trying to get access to `result` property this field sets as `true`  
+This field is needed for `enableOnDemand` option  
+
+#### `result: QueryObserverResult<TData, TError>`
+
+**Observable** query result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
+
+#### `setData(updater: Updater<NoInfer<TQueryFnData> | undefined, NoInfer<TQueryFnData> | undefined>, options?: SetDataOptions): TQueryFnData | undefined`
+
+Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Update data with a function
+query.setData((oldData) => ({
+  ...oldData,
+  name: "Fluffy"
+}));
+
+// Update data with a new value
+query.setData({
+  id: 1,
+  name: "Fluffy"
+});
+```
+
+#### `update(optionsUpdate: QueryUpdateOptionsAllVariants<TQueryFnData, TError, TData, TQueryData, TQueryKey>): void`
+
+Update options for query (Uses [QueryObserver](https://tanstack.com/query/latest/docs/reference/QueriesObserver).setOptions)
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Update query options
+query.update({
+  enabled: false,
+  staleTime: 10000
+});
+```
+
+#### `refetch(options?: RefetchOptions): Promise<QueryObserverResult<TData, TError>>`
+
+Refetch the query data.
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Refetch the query
+const result = await query.refetch();
+console.log(result.data);
+```
+
+#### `reset(params?: QueryResetParams): Promise<void>`
+
+Reset current query (Uses [queryClient.resetQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries))
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Reset the query
+await query.reset();
+```
+
+#### `invalidate(params?: QueryInvalidateParams): Promise<void>`
+
+Invalidate current query (Uses [queryClient.invalidateQueries](https://tanstack.com/query/latest/docs/reference/QueryClient/#queryclientinvalidatequeries))
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Invalidate the query
+await query.invalidate();
+```
+
+#### `onDone(doneListener: QueryDoneListener<TData>): void`
+
+Subscribe when query has been successfully fetched data
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Subscribe to successful fetch
+query.onDone((data) => {
+  console.log('Query completed successfully:', data);
+});
+```
+
+#### `onError(errorListener: QueryErrorListener<TError>): void`
+
+Subscribe when query has been failed fetched data
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Subscribe to fetch errors
+query.onError((error) => {
+  console.log('Query failed:', error);
+});
+```
+
+#### `start(params?: QueryStartParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>): Promise<QueryObserverResult<TData, TError>>`
+
+Enable query if it is disabled then fetch the query.  
+This method is helpful if you want manually control fetching your query
+
+Example:
+
+```ts
+const query = new Query({
+  queryClient,
+  queryKey: ["pets", undefined as string | undefined] as const,
+  enabled: false,
+  queryFn: async ({ queryKey }) => {
+    const petName = queryKey[1]!;
+    const response = await petsApi.getPetByName(petName);
+    return await response.json();
+  },
+});
+
+// Manually start the query
+const result = await query.start({
+  queryKey: ["pets", "Fluffy"],
+});
+console.log(result.data);
+```
+
+#### `destroy(): void`
+
+This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Query` class
+
+This is alternative for `abortSignal` option
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Clean up the query
+query.destroy();
+```
+
 
 ## Recommendations
 
@@ -159,7 +521,7 @@ const query = new Query({
   enableOnDemand: true,
 });
 // happens nothing
-query.result.data; // from this code line query starts fetching data
+query.data; // from this code line query starts fetching data
 ```
 
 This option works as is if query will be "enabled", otherwise you should enable this query.
@@ -170,7 +532,7 @@ const query = new Query({
   enableOnDemand: true,
   queryFn: () => {},
 });
-query.result.data; // nothing happened because query is disabled.
+query.data; // nothing happened because query is disabled.
 ```
 
 But if you set `enabled` as `true` and option `enableOnDemand` will be `true` too then query will be fetched only after user will try to get access to result.
@@ -185,7 +547,7 @@ const query = new Query({
 // query is not fetched
 ...
 // query is not fetched
-query.result.data; // query starts execute the queryFn
+query.data; // query starts execute the queryFn
 ```
 
 ### dynamic `options`

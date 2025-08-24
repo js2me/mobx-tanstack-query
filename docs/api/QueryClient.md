@@ -38,6 +38,7 @@ interface QueryClientConfig {
 Features configurations exclusively for [`Query`](/api/Query)/[`InfiniteQuery`](/api/InfiniteQuery)
 
 Example:
+
 ```ts
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       staleTime: 0,
       retry: false,
+      // transformError: (error) => error,
     },
   },
 });
@@ -61,6 +63,7 @@ export const queryClient = new QueryClient({
 Features configurations exclusively for [`Mutation`](/api/Mutation)
 
 Example:
+
 ```ts
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +71,7 @@ export const queryClient = new QueryClient({
       // invalidateByKey: true,
       // resetOnDestroy: true,
       lazy: true,
+      // transformError: (error) => error,
     },
   },
 });
