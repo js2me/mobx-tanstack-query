@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.2.0
+
+### Minor Changes
+
+- [`9ef86a1`](https://github.com/js2me/mobx-tanstack-query/commit/9ef86a1e3cf45af6e62cfb9479ba31143c6ef10e) Thanks [@js2me](https://github.com/js2me)! - ability to get access to query\mutation result properties using query._ or mutation._ properties access
+
+- [`9ef86a1`](https://github.com/js2me/mobx-tanstack-query/commit/9ef86a1e3cf45af6e62cfb9479ba31143c6ef10e) Thanks [@js2me](https://github.com/js2me)! - `transformError` option for queries and mutations
+
 ## 6.1.2
 
 ### Patch Changes
