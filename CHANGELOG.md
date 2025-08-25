@@ -1,5 +1,21 @@
 # mobx-tanstack-query
 
+## 6.3.0
+
+### Minor Changes
+
+- [`5b0af46`](https://github.com/js2me/mobx-tanstack-query/commit/5b0af46ad5d834a75d14e77ffde7c4c42c363821) Thanks [@js2me](https://github.com/js2me)! - make `mutate` method in Mutation as bounded method
+
+- [`5b0af46`](https://github.com/js2me/mobx-tanstack-query/commit/5b0af46ad5d834a75d14e77ffde7c4c42c363821) Thanks [@js2me](https://github.com/js2me)! - make `start` as bounded method for queries
+
+- [`5b0af46`](https://github.com/js2me/mobx-tanstack-query/commit/5b0af46ad5d834a75d14e77ffde7c4c42c363821) Thanks [@js2me](https://github.com/js2me)! - make `refetch` as bounded method for queries
+
+- [`5b0af46`](https://github.com/js2me/mobx-tanstack-query/commit/5b0af46ad5d834a75d14e77ffde7c4c42c363821) Thanks [@js2me](https://github.com/js2me)! - make `start` method in Mutation as bounded method
+
+### Patch Changes
+
+- [`5b0af46`](https://github.com/js2me/mobx-tanstack-query/commit/5b0af46ad5d834a75d14e77ffde7c4c42c363821) Thanks [@js2me](https://github.com/js2me)! - fixed query `start()` method (duplicate request calls) and ignoring updating query params
+
 ## 6.2.2
 
 ### Patch Changes
