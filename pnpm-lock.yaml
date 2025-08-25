@@ -18,8 +18,8 @@ importers:
         specifier: ^6.12.4
         version: 6.13.6
       yummies:
-        specifier: ^4.12.0
-        version: 4.12.0(mobx@6.13.6)
+        specifier: ^4.12.2
+        version: 4.12.2(mobx@6.13.6)
     devDependencies:
       '@changesets/changelog-github':
         specifier: ^0.5.1
@@ -4239,8 +4239,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  yummies@4.12.0:
-    resolution: {integrity: sha512-bjKUV8tsK++PxKM9cfpkkkD8QKhHeBKSJjvHiHWaQ9JPQf8nkknk2bHjRmV/1IF32xDKAkeNIlp0E/bt+sTrzA==}
+  yummies@4.12.2:
+    resolution: {integrity: sha512-1nScL9ZAFHh/1UzCgKr3aZsnTxIuieTnbrF9XXzHgMPqQNEs8JY8HvvRXF3XkQht+DFOMtAsLxIR86YzJNd6EA==}
     peerDependencies:
       mobx: ^6.12.4
     peerDependenciesMeta:
@@ -9025,7 +9025,7 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yummies@4.12.0(mobx@6.13.6):
+  yummies@4.12.2(mobx@6.13.6):
     dependencies:
       '@types/insane': 1.0.0
       class-variance-authority: 0.7.1
