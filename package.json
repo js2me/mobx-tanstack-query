@@ -46,7 +46,8 @@
     "mobx": "^6.12.4"
   },
   "dependencies": {
-    "linked-abort-controller": "^1.1.0"
+    "linked-abort-controller": "^1.1.0",
+    "yummies": "^4.12.0"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
@@ -66,8 +67,7 @@
     "nodemon": "^3.1.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.4.5",
-    "vitest": "^2.1.4",
-    "yummies": "^3.2.9"
+    "vitest": "^2.1.4"
   },
   "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
 }

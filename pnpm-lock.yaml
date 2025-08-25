@@ -17,6 +17,9 @@ importers:
       mobx:
         specifier: ^6.12.4
         version: 6.13.6
+      yummies:
+        specifier: ^4.12.0
+        version: 4.12.0(mobx@6.13.6)
     devDependencies:
       '@changesets/changelog-github':
         specifier: ^0.5.1
@@ -72,9 +75,6 @@ importers:
       vitest:
         specifier: ^2.1.4
         version: 2.1.4(@types/node@20.14.5)(jsdom@25.0.1)
-      yummies:
-        specifier: ^3.2.9
-        version: 3.2.9
 
 packages:
 
@@ -1781,6 +1781,9 @@ packages:
   ci-info@4.1.0:
     resolution: {integrity: sha512-HutrvTNsF48wnxkzERIXOe5/mlcfFcbfCmwcg6CJnizbSue78AbDt+1cgl26zwn61WFxhcPykPfZrbqjGmBb4A==}
     engines: {node: '>=8'}
+
+  class-variance-authority@0.7.1:
+    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
 
   clean-regexp@1.0.0:
     resolution: {integrity: sha512-GfisEZEJvzKrmGWkvfhgzcz/BllN1USeqD2V6tg14OAOgaCD2Z/PUEuxnAZ/nPvmaHRG7a8y77p1T/IRQ4D1Hw==}
@@ -3836,8 +3839,8 @@ packages:
     resolution: {integrity: sha512-vrozgXDQwYO72vHjUb/HnFbQx1exDjoKzqx23aXEg2a9VIg2TSFZ8FmeZpTjUCFMYw7mpX4BE2SFu8wI7asYsw==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  tailwind-merge@2.6.0:
-    resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
+  tailwind-merge@3.3.1:
+    resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -4236,8 +4239,13 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  yummies@3.2.9:
-    resolution: {integrity: sha512-14cpiatWZqKKg1VqIbYJmv1cMGyGujhrUHdrrBmr/32nFsYrBafDzDM1n0fY5ht9jSnv7DMvNRZEwp8dSn5JyQ==}
+  yummies@4.12.0:
+    resolution: {integrity: sha512-bjKUV8tsK++PxKM9cfpkkkD8QKhHeBKSJjvHiHWaQ9JPQf8nkknk2bHjRmV/1IF32xDKAkeNIlp0E/bt+sTrzA==}
+    peerDependencies:
+      mobx: ^6.12.4
+    peerDependenciesMeta:
+      mobx:
+        optional: true
 
 snapshots:
 
@@ -6245,6 +6253,10 @@ snapshots:
   ci-info@3.9.0: {}
 
   ci-info@4.1.0: {}
+
+  class-variance-authority@0.7.1:
+    dependencies:
+      clsx: 2.1.1
 
   clean-regexp@1.0.0:
     dependencies:
@@ -8589,7 +8601,7 @@ snapshots:
       '@pkgr/core': 0.1.1
       tslib: 2.8.1
 
-  tailwind-merge@2.6.0: {}
+  tailwind-merge@3.3.1: {}
 
   tapable@2.2.1: {}
 
@@ -9013,11 +9025,14 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yummies@3.2.9:
+  yummies@4.12.0(mobx@6.13.6):
     dependencies:
       '@types/insane': 1.0.0
+      class-variance-authority: 0.7.1
       clsx: 2.1.1
       dayjs: 1.11.13
       insane: 2.6.2
       nanoid: 5.1.5
-      tailwind-merge: 2.6.0
+      tailwind-merge: 3.3.1
+    optionalDependencies:
+      mobx: 6.13.6

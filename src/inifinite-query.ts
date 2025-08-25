@@ -23,6 +23,7 @@ import {
   observable,
   runInAction,
 } from 'mobx';
+import { lazyObserve } from 'yummies/mobx';
 
 import { enableHolder } from './constants';
 import {
@@ -38,7 +39,6 @@ import {
 } from './inifinite-query.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
-import { lazyObserve } from './utils/lazy-observe';
 
 const originalQueryProperties = [
   'data',

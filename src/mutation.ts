@@ -9,6 +9,7 @@ import {
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable } from 'mobx';
+import { lazyObserve } from 'yummies/mobx';
 
 import {
   MutationConfig,
@@ -19,7 +20,6 @@ import {
   MutationSettledListener,
 } from './mutation.types';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
-import { lazyObserve } from './utils/lazy-observe';
 
 const originalMutationProperties = [
   'data',
