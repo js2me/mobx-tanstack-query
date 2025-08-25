@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.2.2
+
+### Patch Changes
+
+- [`3a10696`](https://github.com/js2me/mobx-tanstack-query/commit/3a10696883a9fd5515c4db2681651e32066319e9) Thanks [@js2me](https://github.com/js2me)! - [internal] move lazyObserve util to yummies/mobx package
+
 ## 6.2.1
 
 ### Patch Changes
