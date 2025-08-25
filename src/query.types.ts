@@ -5,7 +5,6 @@ import {
   QueryFilters,
   QueryKey,
   QueryObserverOptions,
-  RefetchOptions,
 } from '@tanstack/query-core';
 
 import type { Query } from './query';
@@ -280,13 +279,12 @@ export interface QueryStartParams<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > extends QueryUpdateOptions<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >,
-    Pick<RefetchOptions, 'cancelRefetch'> {}
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > {}
 
 /**
  * @deprecated ⚠️ use `QueryStartParams`. This type will be removed in next major release

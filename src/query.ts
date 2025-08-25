@@ -18,6 +18,7 @@ import {
   observable,
   reaction,
   runInAction,
+  when,
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
@@ -301,6 +302,8 @@ export class Query<
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
+    this.refetch = this.refetch.bind(this);
+    this.start = this.start.bind(this);
 
     originalQueryProperties.forEach((property) => {
       if (property === 'error' && transformError) {
@@ -414,7 +417,9 @@ export class Query<
       this._observerSubscription = this.queryObserver.subscribe(
         this.updateResult,
       );
-      this.abortController.signal.addEventListener('abort', this.handleAbort);
+      this.abortController.signal.addEventListener('abort', () =>
+        this.handleAbort(),
+      );
     }
 
     if (config.onDone) {
@@ -430,16 +435,10 @@ export class Query<
 
   async refetch(options?: RefetchOptions) {
     const result = await this.queryObserver.refetch(options);
-    const query = this.queryObserver.getCurrentQuery();
+    const throwableError = this.getCurrentThrowableError(options);
 
-    if (
-      query.state.error &&
-      (options?.throwOnError ||
-        this.options.throwOnError === true ||
-        (typeof this.options.throwOnError === 'function' &&
-          this.options.throwOnError(query.state.error, query)))
-    ) {
-      throw query.state.error;
+    if (throwableError) {
+      throw throwableError;
     }
 
     return result;
@@ -454,6 +453,22 @@ export class Query<
     }
 
     return hashKey(queryKey);
+  }
+
+  protected getCurrentThrowableError(options?: RefetchOptions) {
+    const query = this.queryObserver.getCurrentQuery();
+
+    if (
+      query.state.error &&
+      (options?.throwOnError ||
+        this.options.throwOnError === true ||
+        (typeof this.options.throwOnError === 'function' &&
+          this.options.throwOnError(query.state.error, query)))
+    ) {
+      return query.state.error;
+    }
+
+    return undefined;
   }
 
   setData(
@@ -501,9 +516,9 @@ export class Query<
 
   private isEnableHolded = false;
 
-  private processOptions = (
+  private processOptions(
     options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  ) => {
+  ) {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
     // If the on-demand query mode is enabled (when using the result property)
@@ -529,7 +544,7 @@ export class Query<
         options.enabled = enableHolder;
       }
     }
-  };
+  }
 
   public get result() {
     if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
@@ -578,7 +593,7 @@ export class Query<
     this.errorListeners.push(errorListener);
   }
 
-  protected handleAbort = () => {
+  protected handleAbort() {
     this._observerSubscription?.();
 
     this.doneListeners = [];
@@ -602,21 +617,32 @@ export class Query<
     delete this._observerSubscription;
 
     this.hooks?.onQueryDestroy?.(this);
-  };
+  }
 
-  async start({
-    cancelRefetch,
-    ...params
-  }: QueryStartParams<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  > = {}) {
+  async start(
+    params: QueryStartParams<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    > = {},
+  ) {
     this.update({ ...params });
 
-    return await this.refetch({ cancelRefetch });
+    if (this.result.isFetching) {
+      await when(() => !this.result.isFetching, {
+        signal: this.abortController.signal,
+      });
+      const throwableError = this.getCurrentThrowableError();
+      if (throwableError) {
+        throw throwableError;
+      }
+    } else {
+      await this.refetch();
+    }
+
+    return this.result;
   }
 
   destroy() {

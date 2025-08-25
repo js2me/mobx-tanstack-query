@@ -173,6 +173,8 @@ export class Mutation<
 
     observable.deep(this, 'result');
     action.bound(this, 'updateResult');
+    this.mutate = this.mutate.bind(this);
+    this.start = this.start.bind(this);
 
     originalMutationProperties.forEach((property) => {
       if (property === 'error' && transformError) {

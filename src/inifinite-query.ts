@@ -3,7 +3,6 @@ import {
   DefaultError,
   FetchNextPageOptions,
   FetchPreviousPageOptions,
-  hashKey,
   InfiniteQueryObserver,
   QueryKey,
   InfiniteQueryObserverResult,
@@ -25,7 +24,6 @@ import {
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
-import { enableHolder } from './constants';
 import {
   InfiniteQueryConfig,
   InfiniteQueryDoneListener,
@@ -37,6 +35,7 @@ import {
   InfiniteQueryStartParams,
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
+import { Query } from './query';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
 
@@ -348,6 +347,8 @@ export class InfiniteQuery<
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
+    this.refetch = this.refetch.bind(this);
+    this.start = this.start.bind(this);
 
     originalQueryProperties.forEach((property) => {
       if (this[property]) return;
@@ -466,7 +467,9 @@ export class InfiniteQuery<
       this._observerSubscription = this.queryObserver.subscribe(
         this.updateResult,
       );
-      this.abortController.signal.addEventListener('abort', this.handleAbort);
+      this.abortController.signal.addEventListener('abort', () =>
+        this.handleAbort(),
+      );
     }
 
     if (config.onDone) {
@@ -490,11 +493,8 @@ export class InfiniteQuery<
       TQueryKey
     >,
   ) {
-    if (options.queryKeyHashFn) {
-      return options.queryKeyHashFn(queryKey);
-    }
-
-    return hashKey(queryKey);
+    // @ts-ignore
+    return Query.prototype.createQueryHash.call(this, queryKey, options);
   }
 
   setData(
@@ -531,36 +531,12 @@ export class InfiniteQuery<
       TQueryKey
     >,
   ) {
-    if (this.abortController.signal.aborted) {
-      return;
-    }
-
-    const nextOptions = {
-      ...this.options,
-      ...optionsUpdate,
-    } as InfiniteQueryOptions<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TQueryKey
-    >;
-
-    this.processOptions(nextOptions);
-
-    this.options = nextOptions;
-
-    // @ts-expect-error
-    this.queryObserver.setOptions(this.options);
-
-    if (this.isLazy) {
-      this.updateResult(this.queryObserver.getCurrentResult());
-    }
+    return Query.prototype.update.call(this, optionsUpdate);
   }
 
   private isEnableHolded = false;
 
-  private processOptions = (
+  private processOptions(
     options: InfiniteQueryOptions<
       TQueryFnData,
       TError,
@@ -568,33 +544,10 @@ export class InfiniteQuery<
       TData,
       TQueryKey
     >,
-  ) => {
-    options.queryHash = this.createQueryHash(options.queryKey, options);
-
-    // If the on-demand query mode is enabled (when using the result property)
-    // then, if the user does not request the result, the queries should not be executed
-    // to do this, we hold the original value of the enabled option
-    // and set enabled to false until the user requests the result (this.isResultRequsted)
-    if (this.isEnabledOnResultDemand) {
-      if (this.isEnableHolded && options.enabled !== enableHolder) {
-        this.holdedEnabledOption = options.enabled;
-      }
-
-      if (this.isResultRequsted) {
-        if (this.isEnableHolded) {
-          options.enabled =
-            this.holdedEnabledOption === enableHolder
-              ? undefined
-              : this.holdedEnabledOption;
-          this.isEnableHolded = false;
-        }
-      } else {
-        this.isEnableHolded = true;
-        this.holdedEnabledOption = options.enabled;
-        options.enabled = enableHolder;
-      }
-    }
-  };
+  ) {
+    // @ts-ignore works the same
+    return Query.prototype.processOptions.call(this, options);
+  }
 
   public get result() {
     if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
@@ -610,47 +563,20 @@ export class InfiniteQuery<
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(result: InfiniteQueryObserverResult<TData, TError>) {
-    this._result = result || {};
-
-    if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
-      this.doneListeners.forEach((fn) => fn(result.data!, void 0));
-    } else if (result.error) {
-      this.errorListeners.forEach((fn) => fn(result.error!, void 0));
-    }
+    // @ts-ignore
+    return Query.prototype.updateResult.call(this, result);
   }
 
   async refetch(options?: RefetchOptions) {
-    const result = await this.queryObserver.refetch(options);
-    const query = this.queryObserver.getCurrentQuery();
-
-    if (
-      query.state.error &&
-      (options?.throwOnError ||
-        this.options.throwOnError === true ||
-        (typeof this.options.throwOnError === 'function' &&
-          // @ts-expect-error
-          this.options.throwOnError(query.state.error, query)))
-    ) {
-      throw query.state.error;
-    }
-
-    return result;
+    return await Query.prototype.refetch.call(this, options);
   }
 
   async reset(params?: InfiniteQueryResetParams) {
-    await this.queryClient.resetQueries({
-      queryKey: this.options.queryKey,
-      exact: true,
-      ...params,
-    } as any);
+    return await Query.prototype.reset.call(this, params);
   }
 
   async invalidate(options?: InfiniteQueryInvalidateParams) {
-    await this.queryClient.invalidateQueries({
-      exact: true,
-      queryKey: this.options.queryKey,
-      ...options,
-    } as any);
+    return await Query.prototype.invalidate.call(this, options);
   }
 
   onDone(doneListener: InfiniteQueryDoneListener<TData>): void {
@@ -661,22 +587,19 @@ export class InfiniteQuery<
     this.errorListeners.push(errorListener);
   }
 
-  async start({
-    cancelRefetch,
-    ...params
-  }: InfiniteQueryStartParams<
-    TQueryFnData,
-    TError,
-    TPageParam,
-    TData,
-    TQueryKey
-  > = {}) {
-    this.update({ ...params });
-
-    return await this.refetch({ cancelRefetch });
+  async start(
+    params: InfiniteQueryStartParams<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    > = {},
+  ) {
+    return await Query.prototype.start.call(this, params);
   }
 
-  protected handleAbort = () => {
+  protected handleAbort() {
     this._observerSubscription?.();
 
     this.doneListeners = [];
@@ -700,7 +623,7 @@ export class InfiniteQuery<
 
     delete this._observerSubscription;
     this.hooks?.onInfiniteQueryDestroy?.(this);
-  };
+  }
 
   destroy() {
     this.abortController.abort();
