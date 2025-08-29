@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.3.1
+
+### Patch Changes
+
+- [`43f1870`](https://github.com/js2me/mobx-tanstack-query/commit/43f1870d6f6d60a983bb4b794fef2c8223d9a0f1) Thanks [@js2me](https://github.com/js2me)! - fixed mixing static query key pass for queries
+
 ## 6.3.0
 
 ### Minor Changes
