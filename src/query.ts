@@ -321,6 +321,12 @@ export class Query<
 
     const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
 
+    if (!isQueryKeyDynamic) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+      restOptions.queryKey = queryKeyOrDynamicQueryKey;
+    }
+
     this.options = this.queryClient.defaultQueryOptions(restOptions as any);
 
     this.options.structuralSharing = this.options.structuralSharing ?? false;

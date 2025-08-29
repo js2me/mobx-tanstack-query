@@ -12,6 +12,7 @@ import {
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   computed,
+  makeAutoObservable,
   makeObservable,
   observable,
   reaction,
@@ -20,6 +21,7 @@ import {
 } from 'mobx';
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   expectTypeOf,
@@ -93,7 +95,7 @@ class QueryMock<
 
   invalidate(params?: QueryInvalidateParams | undefined): Promise<void> {
     this.spies.invalidate(params);
-    return super.invalidate();
+    return super.invalidate(params);
   }
 
   update(
@@ -119,7 +121,7 @@ class QueryMock<
   }
 
   dispose(): void {
-    const result = super.dispose();
+    const result = super.destroy();
     this.spies.dispose.mockReturnValue(result)();
     return result;
   }
@@ -185,7 +187,7 @@ describe('Query', () => {
 
     expect(query.result.isFetched).toBeTruthy();
 
-    query.dispose();
+    query.destroy();
   });
 
   it('"result" field to be defined', async () => {
@@ -198,7 +200,7 @@ describe('Query', () => {
 
     expect(query.result).toBeDefined();
 
-    query.dispose();
+    query.destroy();
   });
 
   it('"result" field should be reactive', async () => {
@@ -220,7 +222,7 @@ describe('Query', () => {
     expect(reactionSpy).toBeCalledWith({ ...query.result });
 
     dispose();
-    query.dispose();
+    query.destroy();
   });
 
   describe('"queryKey" reactive parameter', () => {
@@ -245,7 +247,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 1);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('should rerun queryFn after queryKey change', async () => {
@@ -265,7 +267,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
-      query.dispose();
+      query.destroy();
     });
   });
 
@@ -288,7 +290,7 @@ describe('Query', () => {
 
       expect(query.spies.queryFn).toBeCalledTimes(0);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('should be DISABLED from default query options (from query client) (lazy:true)', async () => {
@@ -310,7 +312,7 @@ describe('Query', () => {
 
       expect(query.spies.queryFn).toBeCalledTimes(0);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('should be reactive after change queryKey', async () => {
@@ -327,7 +329,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('should be reactive after change queryKey (lazy:true)', async () => {
@@ -345,7 +347,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('should be reactive dependent on another query (runs before declartion)', async () => {
@@ -375,8 +377,8 @@ describe('Query', () => {
         'dependent',
       ]);
 
-      disabledQuery.dispose();
-      dependentQuery.dispose();
+      disabledQuery.destroy();
+      dependentQuery.destroy();
     });
 
     it('should be reactive dependent on another query (runs before declartion) (lazy: true)', async () => {
@@ -408,8 +410,8 @@ describe('Query', () => {
         'dependent',
       ]);
 
-      disabledQuery.dispose();
-      dependentQuery.dispose();
+      disabledQuery.destroy();
+      dependentQuery.destroy();
     });
 
     it('should be reactive dependent on another query (runs after declaration)', async () => {
@@ -441,8 +443,8 @@ describe('Query', () => {
         'dependent',
       ]);
 
-      tempDisabledQuery.dispose();
-      dependentQuery.dispose();
+      tempDisabledQuery.destroy();
+      dependentQuery.destroy();
     });
   });
 
@@ -476,8 +478,8 @@ describe('Query', () => {
       'dependent',
     ]);
 
-    tempDisabledQuery.dispose();
-    dependentQuery.dispose();
+    tempDisabledQuery.destroy();
+    dependentQuery.destroy();
   });
 
   it('should NOT be reactive dependent on another query because lazy queries has not subscriptions', async () => {
@@ -523,8 +525,72 @@ describe('Query', () => {
       'dependent',
     ]);
 
-    tempDisabledQuery.dispose();
-    dependentQuery.dispose();
+    tempDisabledQuery.destroy();
+    dependentQuery.destroy();
+  });
+
+  it('missing "queryKey" bug', async () => {
+    const abortController = new AbortController();
+    const params = {
+      pageNumber: 0,
+      pageLimit: 1,
+      status: '1',
+    };
+
+    makeAutoObservable(params);
+
+    const enabledValue = observable.box(false);
+
+    const queryFn = vi.fn().mockResolvedValue(1);
+
+    const mockQuery = new Query({
+      queryClient: new QueryClient({}),
+      abortSignal: abortController.signal,
+      queryKey: ['missing-query-key-bug'] as const,
+      options: () => ({
+        enabled: enabledValue.get(),
+      }),
+      queryFn,
+      onInit: (query) => {
+        reaction(
+          () => [params.pageNumber, params.pageLimit, params.status],
+          () => {
+            query.refetch();
+          },
+          { signal: abortController.signal },
+        );
+      },
+    });
+
+    expect(mockQuery.options.queryKey).toStrictEqual(['missing-query-key-bug']);
+
+    enabledValue.set(true);
+
+    await sleep();
+
+    expect(mockQuery.options.queryKey).toStrictEqual(['missing-query-key-bug']);
+
+    expect(queryFn).toBeCalledTimes(1);
+
+    runInAction(() => {
+      params.pageNumber = 1;
+    });
+
+    runInAction(() => {
+      params.pageNumber = 2;
+    });
+
+    runInAction(() => {
+      params.pageNumber = 3;
+    });
+
+    expect(queryFn).toBeCalledTimes(4);
+
+    await sleep();
+
+    expect(queryFn).toBeCalledTimes(4);
+
+    abortController.abort();
   });
 
   describe('"options" reactive parameter', () => {
@@ -551,7 +617,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 10);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('"options.enabled" should change "enabled" statement for query (enabled as boolean in options)', async () => {
@@ -575,7 +641,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
-      query.dispose();
+      query.destroy();
     });
 
     it('"options.enabled" should change "enabled" statement for query (enabled as query based fn)', async () => {
@@ -599,7 +665,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, true);
 
-      query.dispose();
+      query.destroy();
     });
   });
 
@@ -615,7 +681,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": false)', async () => {
@@ -629,7 +695,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": fn -> false)', async () => {
@@ -643,7 +709,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": fn -> true)', async () => {
@@ -657,7 +723,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": true)', async () => {
@@ -671,7 +737,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": false in dynamic options)', async () => {
@@ -687,7 +753,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query if result is not requested (with "enabled": true in dynamic options)', async () => {
@@ -703,7 +769,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should call query if result is requested (without "enabled" property use)', async () => {
@@ -718,7 +784,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query event if result is requested (reason: "enabled": false out of box)', async () => {
@@ -734,7 +800,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query even if result is requested (reason: "enabled": fn -> false)', async () => {
@@ -752,7 +818,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should call query if result is requested (with "enabled": fn -> true)', async () => {
@@ -768,7 +834,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should call query if result is requested (with "enabled": true)', async () => {
@@ -784,7 +850,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
       it('should NOT call query if result is requested (reason: "enabled" false from default query client options)', async () => {
         const queryClient = new QueryClient({
@@ -808,7 +874,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(0);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should not call query even it is enabled until result is requested', async () => {
@@ -835,7 +901,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should enable query when result is requested', async () => {
@@ -852,7 +918,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should enable query from dynamic options ONLY AFTER result is requested', () => {
@@ -878,7 +944,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
 
       it('should enable query from dynamic options ONLY AFTER result is requested (multiple observable updates)', () => {
@@ -917,7 +983,7 @@ describe('Query', () => {
 
         expect(query.spies.queryFn).toBeCalledTimes(1);
 
-        query.dispose();
+        query.destroy();
       });
     });
   });
@@ -966,7 +1032,7 @@ describe('Query', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.result.data).toEqual({ bar: 1, baz: 2 });
 
-      query.dispose();
+      query.destroy();
     });
     it('should update query data using mutation', async ({ task }) => {
       const queryData = {
@@ -1129,7 +1195,7 @@ describe('Query', () => {
         },
       );
 
-      query.dispose();
+      query.destroy();
     });
     it('should update computed.structs after update query data using mutation', async ({
       task,
@@ -1173,7 +1239,7 @@ describe('Query', () => {
         }
 
         destroy() {
-          this.query.dispose();
+          this.query.destroy();
         }
       }
 
@@ -1244,7 +1310,7 @@ describe('Query', () => {
         }
 
         destroy() {
-          this.query.dispose();
+          this.query.destroy();
         }
       }
 
@@ -1286,6 +1352,246 @@ describe('Query', () => {
     });
   });
 
+  describe('"invalidate" method', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should call queryClient.invalidateQueries with exact: true', async () => {
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query = new QueryMock(
+        {
+          queryKey: ['test', 'key'],
+          queryFn: () => 'data',
+        },
+        queryClient,
+      );
+
+      await when(() => !query._rawResult.isLoading);
+
+      await query.invalidate();
+
+      expect(query.spies.invalidate).toHaveBeenCalled();
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['test', 'key'],
+      });
+
+      query.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should pass parameters to queryClient.invalidateQueries', async () => {
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query = new QueryMock(
+        {
+          queryKey: ['test', 'key'],
+          queryFn: () => 'data',
+        },
+        queryClient,
+      );
+
+      await when(() => !query._rawResult.isLoading);
+
+      await query.invalidate();
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['test', 'key'],
+      });
+
+      query.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should invalidate queries with matching query key', async () => {
+      const queryClient = new QueryClient();
+      // Mock the invalidateQueries method to track calls
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query1 = new QueryMock(
+        {
+          queryKey: ['users'],
+          queryFn: () => ['user1', 'user2'],
+        },
+        queryClient,
+      );
+
+      const query2 = new QueryMock(
+        {
+          queryKey: ['users', '1'],
+          queryFn: () => ({ id: 1, name: 'User 1' }),
+        },
+        queryClient,
+      );
+
+      await when(() => !query1._rawResult.isLoading);
+      await when(() => !query2._rawResult.isLoading);
+
+      await query1.invalidate();
+
+      // Both queries should be invalidated
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['users'],
+      });
+
+      query1.destroy();
+      query2.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should invalidate queries with exact key match', async () => {
+      const queryClient = new QueryClient();
+      // Mock the invalidateQueries method to track calls
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query1 = new QueryMock(
+        {
+          queryKey: ['users', '1'],
+          queryFn: () => ({ id: 1, name: 'User 1' }),
+        },
+        queryClient,
+      );
+
+      const query2 = new QueryMock(
+        {
+          queryKey: ['users', '2'],
+          queryFn: () => ({ id: 2, name: 'User 2' }),
+        },
+        queryClient,
+      );
+
+      await when(() => !query1._rawResult.isLoading);
+      await when(() => !query2._rawResult.isLoading);
+
+      await query1.invalidate();
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['users', '1'],
+      });
+
+      query1.destroy();
+      query2.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should invalidate queries with prefix matching', async () => {
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query1 = new Query({
+        queryClient,
+        queryKey: ['users', '1', 'profile'],
+        queryFn: () => ({ id: 1, name: 'User 1' }),
+      });
+
+      const query2 = new Query({
+        queryClient,
+        queryKey: ['users', '2', 'profile'],
+        queryFn: () => ({ id: 2, name: 'User 2' }),
+      });
+
+      await when(() => !query1.isLoading);
+      await when(() => !query2.isLoading);
+
+      await query1.invalidate();
+
+      expect(invalidateQueriesSpy).toHaveBeenNthCalledWith(1, {
+        exact: true,
+        queryKey: ['users', '1', 'profile'],
+      });
+
+      query1.destroy();
+      query2.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should handle invalidation with no parameters', async () => {
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query = new QueryMock(
+        {
+          queryKey: ['test'],
+          queryFn: () => 'data',
+        },
+        queryClient,
+      );
+
+      await when(() => !query._rawResult.isLoading);
+
+      await query.invalidate();
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['test'],
+      });
+
+      query.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should handle invalidation with refetch options', async () => {
+      const queryClient = new QueryClient();
+      // Mock the invalidateQueries method to track calls
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query = new QueryMock(
+        {
+          queryKey: ['test'],
+          queryFn: () => 'data',
+        },
+        queryClient,
+      );
+
+      await when(() => !query._rawResult.isLoading);
+
+      await query.invalidate();
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['test'],
+      });
+
+      query.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+
+    it('should properly handle async operation', async () => {
+      const queryClient = new QueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const query = new QueryMock(
+        {
+          queryKey: ['test'],
+          queryFn: () => 'data',
+        },
+        queryClient,
+      );
+
+      await when(() => !query._rawResult.isLoading);
+
+      const result = query.invalidate();
+
+      expect(result).toBeInstanceOf(Promise);
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        exact: true,
+        queryKey: ['test'],
+      });
+
+      await result;
+
+      query.destroy();
+      invalidateQueriesSpy.mockRestore();
+    });
+  });
+
   describe('"start" method', () => {
     test('should call once queryFn', async () => {
       const querySpyFn = vi.fn();
@@ -1302,7 +1608,7 @@ describe('Query', () => {
       expect(query.result.isFetched).toBeTruthy();
       expect(querySpyFn).toBeCalledTimes(1);
 
-      query.dispose();
+      query.destroy();
     });
 
     test('should call queryFn every time when start() method is called', async () => {
@@ -1322,7 +1628,7 @@ describe('Query', () => {
       expect(query.result.isFetched).toBeTruthy();
       expect(querySpyFn).toBeCalledTimes(3);
 
-      query.dispose();
+      query.destroy();
     });
   });
 
@@ -1339,7 +1645,7 @@ describe('Query', () => {
 
       await waitAsync(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
-      query.dispose();
+      query.destroy();
 
       await waitAsync(100);
 
@@ -1379,7 +1685,7 @@ describe('Query', () => {
       await waitAsync(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
 
-      query.dispose();
+      query.destroy();
 
       await waitAsync(100);
 
@@ -1418,7 +1724,7 @@ describe('Query', () => {
 
       await waitAsync(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
-      query.dispose();
+      query.destroy();
 
       await waitAsync(100);
 
