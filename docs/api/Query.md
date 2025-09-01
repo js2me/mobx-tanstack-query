@@ -260,6 +260,7 @@ console.log(query.fetchStatus); // "paused" when query is paused
 ```
 
 Explanation of difference between `fetchStatus` and `status`:
+
 - `status` indicates the overall result state of the query: "pending", "error", or "success"
 - `fetchStatus` indicates the current fetching state of the query: "fetching", "paused", or "idle"
 - A query can be in "fetching" state while still having a "pending" status, or it can be in "idle" state while having an "error" or "success" status
@@ -275,7 +276,7 @@ The underlying query observer instance.
 #### `isResultRequsted: boolean` <Badge type="info" text="observable.ref" />
 
 Any time when you trying to get access to `result` property this field sets as `true`  
-This field is needed for `enableOnDemand` option  
+This field is needed for `enableOnDemand` option
 
 #### `result: QueryObserverResult<TData, TError>`
 
@@ -296,13 +297,13 @@ const query = new Query(queryClient, () => ({
 // Update data with a function
 query.setData((oldData) => ({
   ...oldData,
-  name: "Fluffy"
+  name: "Fluffy",
 }));
 
 // Update data with a new value
 query.setData({
   id: 1,
-  name: "Fluffy"
+  name: "Fluffy",
 });
 ```
 
@@ -321,7 +322,7 @@ const query = new Query(queryClient, () => ({
 // Update query options
 query.update({
   enabled: false,
-  staleTime: 10000
+  staleTime: 10000,
 });
 ```
 
@@ -342,7 +343,7 @@ const result = await query.refetch();
 console.log(result.data);
 ```
 
-#### `reset(params?: QueryResetParams): Promise<void>`
+#### `reset(params?: QueryResetParams, options?: ResetOptions): Promise<void>`
 
 Reset current query (Uses [queryClient.resetQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries))
 
@@ -374,6 +375,25 @@ const query = new Query(queryClient, () => ({
 await query.invalidate();
 ```
 
+#### `cancel(options?: CancelOptions): Promise<void>`
+
+Cancel current query (Uses [queryClient.cancelQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientcancelqueries))
+
+Example:
+
+```ts{3,7}
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async ({ signal }) => api.fetchPets({ signal }),
+}));
+
+// Cancel the query
+await query.cancel();
+```
+
+::: tip do not forget to pass abort signal to your api call function
+:::
+
 #### `onDone(doneListener: QueryDoneListener<TData>): void`
 
 Subscribe when query has been successfully fetched data
@@ -388,7 +408,7 @@ const query = new Query(queryClient, () => ({
 
 // Subscribe to successful fetch
 query.onDone((data) => {
-  console.log('Query completed successfully:', data);
+  console.log("Query completed successfully:", data);
 });
 ```
 
@@ -406,7 +426,7 @@ const query = new Query(queryClient, () => ({
 
 // Subscribe to fetch errors
 query.onError((error) => {
-  console.log('Query failed:', error);
+  console.log("Query failed:", error);
 });
 ```
 
@@ -453,7 +473,6 @@ const query = new Query(queryClient, () => ({
 // Clean up the query
 query.destroy();
 ```
-
 
 ## Recommendations
 
