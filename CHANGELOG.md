@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.4.0
+
+### Minor Changes
+
+- [`85b8ea6`](https://github.com/js2me/mobx-tanstack-query/commit/85b8ea6a2fe3c768e318121056fdc870d9e96f85) Thanks [@js2me](https://github.com/js2me)! - `cancel()` method for `Query` (-> `queryClient.cancelQueries`)
+
 ## 6.3.1
 
 ### Patch Changes
