@@ -10,6 +10,8 @@ import {
   QueryObserverBaseResult,
   FetchStatus,
   QueryStatus,
+  CancelOptions,
+  ResetOptions,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
@@ -575,12 +577,25 @@ export class Query<
     }
   }
 
-  async reset(params?: QueryResetParams) {
-    return await this.queryClient.resetQueries({
-      queryKey: this.options.queryKey,
-      exact: true,
-      ...params,
-    } as any);
+  async reset(params?: QueryResetParams, options?: ResetOptions) {
+    return await this.queryClient.resetQueries(
+      {
+        queryKey: this.options.queryKey,
+        exact: true,
+        ...params,
+      },
+      options,
+    );
+  }
+
+  async cancel(options?: CancelOptions) {
+    return await this.queryClient.cancelQueries(
+      {
+        queryKey: this.options.queryKey,
+        exact: true,
+      },
+      options,
+    );
   }
 
   async invalidate(params?: QueryInvalidateParams) {
