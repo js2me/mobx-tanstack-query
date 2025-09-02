@@ -33,6 +33,7 @@ import { sleep, waitAsync } from 'yummies/async';
 
 import { createQuery } from './preset';
 import { Query } from './query';
+import { QueryClient as MobxQueryClient } from './query-client';
 import {
   QueryConfig,
   QueryDynamicOptions,
@@ -2727,5 +2728,99 @@ describe('Query', () => {
       undefined | Map<string, { address: string; name: string }>
     >();
     expect(queryWithSelect.result.data).toBeDefined();
+  });
+
+  it('initialData is not enabling query bug', async () => {
+    vi.useFakeTimers();
+
+    const queryClient = new MobxQueryClient({
+      defaultOptions: {
+        queries: {
+          enableOnDemand: true,
+        },
+      },
+    });
+    const box = observable.box(false);
+    const queryFn = vi.fn(() => {
+      return Promise.resolve({
+        meta: {
+          limit: 0,
+          offset: 0,
+          total: 0,
+        },
+        fruits: ['fruit1', 'fruit2', 'fruit3'],
+      });
+    });
+
+    const query = new Query({
+      queryClient,
+      queryFn: async () => {
+        const result = await queryFn();
+        return result;
+      },
+      initialData: {
+        meta: {
+          limit: 0,
+          offset: 0,
+          total: 0,
+        },
+        fruits: [],
+      } as Awaited<ReturnType<typeof queryFn>>,
+      options: () => ({
+        queryKey: ['fruits', box.get() ? 'enabled' : 'disabled'] as const,
+        enabled: box.get(),
+      }),
+      select: (data) =>
+        data.fruits.map((fruit) => ({
+          fruit,
+          searchText: fruit,
+        })),
+    });
+
+    sleep(100);
+    await vi.runAllTimersAsync();
+
+    expect(query.data).toStrictEqual([]);
+
+    const managedQueryData = {
+      get isEmpty() {
+        return !query.data?.length;
+      },
+      get data() {
+        return query.data ?? [];
+      },
+      get isLoading() {
+        return query.isFetching;
+      },
+    };
+
+    makeObservable(managedQueryData, {
+      isEmpty: computed.struct,
+      data: computed.struct,
+      isLoading: computed.struct,
+    });
+
+    // it runs query
+    managedQueryData.isLoading;
+
+    if (managedQueryData.isEmpty) {
+      managedQueryData.data;
+      managedQueryData.isLoading;
+    }
+
+    sleep(100);
+    await vi.runAllTimersAsync();
+
+    expect(managedQueryData.data).toStrictEqual([]);
+
+    box.set(true);
+    sleep(100);
+    await vi.runAllTimersAsync();
+
+    expect(managedQueryData.data).toEqual([
+      { fruit: 'fruit1', searchText: 'fruit1' },
+      { fruit: 'fruit2', searchText: 'fruit2' },
+      { fruit: 'fruit3', searchText: 'fruit3' },
+    ]);
   });
 });
