@@ -19,10 +19,10 @@ export interface QueryInvalidateParams
 export type MobxQueryInvalidateParams = QueryInvalidateParams;
 
 export interface QueryResetParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {}
 
 export interface QueryRemoveParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {}
 
 /**
  * @deprecated ⚠️ use `QueryResetParams`. This type will be removed in next major release
@@ -139,6 +139,12 @@ export interface QueryFeatures {
    */
   lazy?: boolean;
   transformError?: (error: any) => any;
+
+  /**
+   * Cumulative all query key hashes when user update options inside query
+   * When destroy happened all accumulated query keys will be removed (if removeOnDestroy is true), and reseted (if resetOnDestroy is true)
+   */
+  cumulativeQueryHash?: boolean;
 }
 
 /**

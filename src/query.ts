@@ -113,6 +113,9 @@ export class Query<
   protected errorListeners: QueryErrorListener<TError>[];
   protected doneListeners: QueryDoneListener<TData>[];
 
+  protected cumulativeQueryHash: boolean;
+  protected cumulativeQueryKeyHashesSet: Set<string>;
+
   protected config: QueryConfig<
     TQueryFnData,
     TError,
@@ -266,6 +269,7 @@ export class Query<
       config = args[0];
       getDynamicOptions = args[0].options;
     }
+    this.cumulativeQueryKeyHashesSet = new Set();
 
     const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
 
@@ -284,6 +288,8 @@ export class Query<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
     this.isLazy = this.config.lazy;
+    this.cumulativeQueryHash = !!config.cumulativeQueryHash;
+
     let transformError: QueryFeatures['transformError'] = config.transformError;
 
     if ('queryFeatures' in queryClient) {
@@ -293,6 +299,10 @@ export class Query<
       if (config.enableOnDemand === undefined) {
         this.isEnabledOnResultDemand =
           queryClient.queryFeatures.enableOnDemand ?? false;
+      }
+      if (config.cumulativeQueryHash === undefined) {
+        this.cumulativeQueryHash =
+          queryClient.queryFeatures.cumulativeQueryHash ?? false;
       }
       if (!transformError) {
         transformError = queryClient.queryFeatures.transformError;
@@ -530,6 +540,10 @@ export class Query<
   ) {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
+    if (this.cumulativeQueryHash) {
+      this.cumulativeQueryKeyHashesSet.add(options.queryHash);
+    }
+
     // If the on-demand query mode is enabled (when using the result property)
     // then, if the user does not request the result, the queries should not be executed
     // to do this, we hold the original value of the enabled option
@@ -579,6 +593,14 @@ export class Query<
   }
 
   async reset(params?: QueryResetParams, options?: ResetOptions) {
+    if (this.cumulativeQueryHash) {
+      return await this.queryClient.resetQueries({
+        predicate: (query) =>
+          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!),
+        ...params,
+      });
+    }
+
     return await this.queryClient.resetQueries(
       {
         queryKey: this.options.queryKey,
@@ -590,6 +612,14 @@ export class Query<
   }
 
   remove(params?: QueryRemoveParams) {
+    if (this.cumulativeQueryHash) {
+      return this.queryClient.removeQueries({
+        predicate: (query) =>
+          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!),
+        ...params,
+      });
+    }
+
     return this.queryClient.removeQueries({
       queryKey: this.options.queryKey,
       exact: true,
@@ -656,6 +686,8 @@ export class Query<
     }
 
     delete this._observerSubscription;
+
+    this.cumulativeQueryKeyHashesSet.clear();
 
     this.hooks?.onQueryDestroy?.(this);
   }

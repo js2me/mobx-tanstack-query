@@ -261,6 +261,8 @@ export class InfiniteQuery<
   private hooks?: QueryClientHooks;
   protected errorListeners: InfiniteQueryErrorListener<TError>[];
   protected doneListeners: InfiniteQueryDoneListener<TData>[];
+  protected cumulativeQueryHash: boolean;
+  protected cumulativeQueryKeyHashesSet: Set<string>;
 
   constructor(
     config: InfiniteQueryConfig<
@@ -310,6 +312,7 @@ export class InfiniteQuery<
       config = args[0];
       getDynamicOptions = args[0].options;
     }
+    this.cumulativeQueryKeyHashesSet = new Set();
 
     const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
 
@@ -328,6 +331,8 @@ export class InfiniteQuery<
     this.hooks =
       'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
     this.isLazy = this.config.lazy;
+    this.cumulativeQueryHash = !!config.cumulativeQueryHash;
+
     let transformError: QueryFeatures['transformError'] = config.transformError;
 
     if ('queryFeatures' in queryClient) {
@@ -337,6 +342,10 @@ export class InfiniteQuery<
       if (config.enableOnDemand === undefined) {
         this.isEnabledOnResultDemand =
           queryClient.queryFeatures.enableOnDemand ?? false;
+      }
+      if (config.cumulativeQueryHash === undefined) {
+        this.cumulativeQueryHash =
+          queryClient.queryFeatures.cumulativeQueryHash ?? false;
       }
       if (!transformError) {
         transformError = queryClient.queryFeatures.transformError;
@@ -645,6 +654,9 @@ export class InfiniteQuery<
     }
 
     delete this._observerSubscription;
+
+    this.cumulativeQueryKeyHashesSet.clear();
+
     this.hooks?.onInfiniteQueryDestroy?.(this);
   }
 
