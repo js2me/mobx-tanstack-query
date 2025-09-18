@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.5.0
+
+### Minor Changes
+
+- [`317f725`](https://github.com/js2me/mobx-tanstack-query/commit/317f725b6b827213566539a2e1892ba5b6eb5d72) Thanks [@js2me](https://github.com/js2me)! - added `removeOnDestroy` to remove query after destroy or abortSignal aborted
+
+- [`317f725`](https://github.com/js2me/mobx-tanstack-query/commit/317f725b6b827213566539a2e1892ba5b6eb5d72) Thanks [@js2me](https://github.com/js2me)! - added `remove()` method for `Query/InfiniteQuery` to remove query
+
 ## 6.4.0
 
 ### Minor Changes
