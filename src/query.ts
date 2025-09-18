@@ -598,8 +598,9 @@ export class Query<
         predicate: (query) => {
           return (
             this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
-            query.observers.length === 1 &&
-            query.observers[0] === this.queryObserver
+            (query.observers.length === 0 ||
+              (query.observers.length === 1 &&
+                query.observers[0] === this.queryObserver))
           );
         },
         ...params,
@@ -619,10 +620,14 @@ export class Query<
   remove(params?: QueryRemoveParams) {
     if (this.cumulativeQueryHash) {
       return this.queryClient.removeQueries({
-        predicate: (query) =>
-          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
-          query.observers.length === 1 &&
-          query.observers[0] === this.queryObserver,
+        predicate: (query) => {
+          return (
+            this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
+            (query.observers.length === 0 ||
+              (query.observers.length === 1 &&
+                query.observers[0] === this.queryObserver))
+          );
+        },
         ...params,
       });
     }
