@@ -595,8 +595,13 @@ export class Query<
   async reset(params?: QueryResetParams, options?: ResetOptions) {
     if (this.cumulativeQueryHash) {
       return await this.queryClient.resetQueries({
-        predicate: (query) =>
-          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!),
+        predicate: (query) => {
+          return (
+            this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
+            query.observers.length === 1 &&
+            query.observers[0] === this.queryObserver
+          );
+        },
         ...params,
       });
     }
@@ -615,7 +620,9 @@ export class Query<
     if (this.cumulativeQueryHash) {
       return this.queryClient.removeQueries({
         predicate: (query) =>
-          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!),
+          this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
+          query.observers.length === 1 &&
+          query.observers[0] === this.queryObserver,
         ...params,
       });
     }
