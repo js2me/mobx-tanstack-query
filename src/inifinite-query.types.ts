@@ -13,6 +13,7 @@ import { AnyQueryClient } from './query-client.types';
 import {
   QueryFeatures,
   QueryInvalidateParams,
+  QueryRemoveParams,
   QueryResetParams,
 } from './query.types';
 
@@ -34,6 +35,7 @@ export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 export type MobxInfiniteQueryInvalidateParams = InfiniteQueryInvalidateParams;
 
 export interface InfiniteQueryResetParams extends QueryResetParams {}
+export interface InfiniteQueryRemoveParams extends QueryRemoveParams {}
 
 /**
  * @deprecated ⚠️ use `InfiniteQueryResetParams`. This type will be removed in next major release

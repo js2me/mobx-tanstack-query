@@ -31,11 +31,13 @@ import {
   InfiniteQueryFlattenConfig,
   InfiniteQueryInvalidateParams,
   InfiniteQueryOptions,
+  InfiniteQueryRemoveParams,
   InfiniteQueryResetParams,
   InfiniteQueryStartParams,
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { Query } from './query';
+import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
 
@@ -581,6 +583,10 @@ export class InfiniteQuery<
     return await Query.prototype.reset.call(this, params);
   }
 
+  remove(params?: InfiniteQueryRemoveParams) {
+    return Query.prototype.remove.call(this, params);
+  }
+
   async invalidate(options?: InfiniteQueryInvalidateParams) {
     return await Query.prototype.invalidate.call(this, options);
   }
@@ -616,15 +622,26 @@ export class InfiniteQuery<
 
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
+    let isNeedToRemove = this.config.removeOnDestroy;
 
-    if ('queryFeatures' in this.queryClient && !isNeedToReset) {
-      isNeedToReset =
-        this.queryClient.queryFeatures.resetOnDestroy ||
-        this.queryClient.queryFeatures.resetOnDispose;
+    if (this.queryClient instanceof QueryClient) {
+      if (isNeedToReset === undefined) {
+        isNeedToReset =
+          this.queryClient.queryFeatures.resetOnDestroy ||
+          this.queryClient.queryFeatures.resetOnDispose;
+      }
+
+      if (isNeedToRemove === undefined) {
+        isNeedToRemove = this.queryClient.queryFeatures.removeOnDestroy;
+      }
     }
 
     if (isNeedToReset) {
       this.reset();
+    }
+
+    if (isNeedToRemove) {
+      this.remove();
     }
 
     delete this._observerSubscription;

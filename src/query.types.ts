@@ -21,6 +21,9 @@ export type MobxQueryInvalidateParams = QueryInvalidateParams;
 export interface QueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
+export interface QueryRemoveParams
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
+
 /**
  * @deprecated ⚠️ use `QueryResetParams`. This type will be removed in next major release
  */
@@ -110,6 +113,13 @@ export interface QueryFeatures {
    * Reset query when destroy or abort signal is called
    */
   resetOnDestroy?: boolean;
+
+  /**
+   * Removes query when destroy or abort signal is called
+   *
+   * It uses [queryClient.removeQueries](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientremovequeries)
+   */
+  removeOnDestroy?: boolean;
 
   /**
    * Enable query only if result is requested

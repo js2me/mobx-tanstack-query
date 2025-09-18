@@ -35,6 +35,7 @@ import {
   QueryFeatures,
   QueryInvalidateParams,
   QueryOptions,
+  QueryRemoveParams,
   QueryResetParams,
   QueryStartParams,
   QueryUpdateOptionsAllVariants,
@@ -588,6 +589,14 @@ export class Query<
     );
   }
 
+  remove(params?: QueryRemoveParams) {
+    return this.queryClient.removeQueries({
+      queryKey: this.options.queryKey,
+      exact: true,
+      ...params,
+    });
+  }
+
   async cancel(options?: CancelOptions) {
     return await this.queryClient.cancelQueries(
       {
@@ -624,15 +633,26 @@ export class Query<
 
     let isNeedToReset =
       this.config.resetOnDestroy || this.config.resetOnDispose;
+    let isNeedToRemove = this.config.removeOnDestroy;
 
-    if (this.queryClient instanceof QueryClient && !isNeedToReset) {
-      isNeedToReset =
-        this.queryClient.queryFeatures.resetOnDestroy ||
-        this.queryClient.queryFeatures.resetOnDispose;
+    if (this.queryClient instanceof QueryClient) {
+      if (isNeedToReset === undefined) {
+        isNeedToReset =
+          this.queryClient.queryFeatures.resetOnDestroy ||
+          this.queryClient.queryFeatures.resetOnDispose;
+      }
+
+      if (isNeedToRemove === undefined) {
+        isNeedToRemove = this.queryClient.queryFeatures.removeOnDestroy;
+      }
     }
 
     if (isNeedToReset) {
       this.reset();
+    }
+
+    if (isNeedToRemove) {
+      this.remove();
     }
 
     delete this._observerSubscription;
