@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.6.0
+
+### Minor Changes
+
+- [`91da4e2`](https://github.com/js2me/mobx-tanstack-query/commit/91da4e2d3fdb4cfd67641d8d47d8149ac76d47e4) Thanks [@js2me](https://github.com/js2me)! - added `cumulativeQueryHash` option for queries
+
 ## 6.5.0
 
 ### Minor Changes
