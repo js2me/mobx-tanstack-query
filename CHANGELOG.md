@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.6.1
+
+### Patch Changes
+
+- [`f3816be`](https://github.com/js2me/mobx-tanstack-query/commit/f3816be4840645f4d27a3d5385f2a4bf13e41684) Thanks [@js2me](https://github.com/js2me)! - fixed cumulativeQueryHash work
+
 ## 6.6.0
 
 ### Minor Changes
