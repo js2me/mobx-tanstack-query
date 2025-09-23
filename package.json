@@ -7,8 +7,8 @@
     "check": "eslint . --fix",
     "prebuild": "npm run clean && npm run check",
     "build:watch": "pnpm build && nodemon --watch src --ext ts,tsx --exec \"pnpm build\"",
-    "build": "zshy",
-    "pub": "pnpm build && sborshik publish",
+    "build": "sborshik build --fillDist",
+    "pub": "pnpm build && sborshik publish --useDistDir",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
     "pub:major": "PUBLISH_VERSION=major pnpm pub",
@@ -66,7 +66,7 @@
     "commitfmt": "^1.0.0",
     "eslint": "^8.57.0",
     "js2me-eslint-config": "^1.0.6",
-    "sborshik": "^1.0.6",
+    "sborshik": "^1.0.10",
     "jsdom": "^25.0.1",
     "lefthook": "^1.11.13",
     "nodemon": "^3.1.0",
@@ -75,19 +75,5 @@
     "vitest": "^2.1.4",
     "zshy": "^0.4.2"
   },
-  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903",
-  "files": [
-    "dist"
-  ],
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
-  }
+  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
 }
