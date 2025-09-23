@@ -189,3 +189,82 @@ html.dark {
 .image-container > .image-src {
   animation: logoAnimate 10s linear infinite;
 }
+
+.custom-block > .custom-block-title:first-child:last-child {
+    margin-top: -8px;
+}
+p:has(>em:first-child:last-child) + div[class*=language-] {
+    margin-top: -10px;
+}
+
+.vp-doc strong a {
+    font-weight: bold;
+}
+
+.vp-doc strong code {
+    font-weight: bold;
+}
+
+.VPHome {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+}
+
+.VPContent.is-home {
+    display: flex;
+}
+
+.VPHero.has-image.VPHomeHero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.VPHero.has-image .main {position: relative;}
+
+.VPHero.has-image .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-bottom: 7vh;
+}
+
+.main > .heading > .text {
+    font-size: 24px;
+    line-height: 28px;
+    padding-top: 20px;
+}
+
+html .VPFooter {
+    border-top: 0 !important;
+}
+
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPHero.has-image .container {
+  margin-bottom: 0;
+  margin-top: auto;
+}
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPHero.has-image.VPHomeHero {
+  flex: 1;
+}
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPFeatures.VPHomeFeatures {
+  margin-bottom: auto;
+  flex: 1;
+}
+
+html.gh-preview .main > .heading > .name {
+  line-height: 72px;
+  font-size: 68px;
+}
+html.gh-preview .main > .heading > .text {
+  font-size: 43px;
+  line-height: 48px;
+}
+html.gh-preview .main > .actions {
+  opacity: 0;
+}
+html.gh-preview .VPFeatures.VPHomeFeatures {
+  opacity: 0;
+}

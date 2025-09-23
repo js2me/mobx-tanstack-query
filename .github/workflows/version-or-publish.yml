@@ -49,8 +49,9 @@ jobs:
         id: pub-or-release-pr
         with:
           version: pnpm changeset version
-          publish: pnpm pub-ci
+          publish: pnpm pub
         env:
+          CI: true
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

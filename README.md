@@ -31,6 +31,15 @@ const query = new Query({
     return await response.json();
   }
 })
+
+reaction(
+  () => query.isLoading,
+  isLoading => {
+    if (isLoading) {
+      console.log('Loading...');
+    }
+  }
+)
 ```
 
 
