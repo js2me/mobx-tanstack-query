@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.6.3
+
+### Patch Changes
+
+- [`d5b2a12`](https://github.com/js2me/mobx-tanstack-query/commit/d5b2a12d4585787ac797c70ad8cb75feae180534) Thanks [@js2me](https://github.com/js2me)! - fix zshy bundle
+
 ## 6.6.2
 
 ### Patch Changes
