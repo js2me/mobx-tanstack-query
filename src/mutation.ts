@@ -7,7 +7,6 @@ import {
   MutationObserverBaseResult,
   MutationStatus,
 } from '@tanstack/query-core';
-import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable, observable } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
@@ -21,6 +20,7 @@ import {
 } from './mutation.types';
 import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
+import { Destroyable } from './utils/destroyable';
 
 const originalMutationProperties = [
   'data',
@@ -44,6 +44,7 @@ export class Mutation<
     TError = DefaultError,
     TContext = unknown,
   >
+  extends Destroyable
   implements
     Disposable,
     Pick<
@@ -51,7 +52,6 @@ export class Mutation<
       (typeof originalMutationProperties)[number]
     >
 {
-  protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
 
   mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
@@ -129,6 +129,8 @@ export class Mutation<
   constructor(
     protected config: MutationConfig<TData, TVariables, TError, TContext>,
   ) {
+    super(config.abortSignal);
+
     const { queryClient, invalidateQueries, mutationFn, ...restOptions } =
       config;
 
@@ -138,7 +140,6 @@ export class Mutation<
       Pick<QueryClient, 'mutationFeatures' | 'hooks'>
     >;
 
-    this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
 
@@ -219,8 +220,6 @@ export class Mutation<
       this._observerSubscription = this.mutationObserver.subscribe(
         this.updateResult,
       );
-
-      this.abortController.signal.addEventListener('abort', this.handleAbort);
     }
 
     if (invalidateQueries) {
@@ -348,7 +347,7 @@ export class Mutation<
     this.mutationObserver.reset();
   }
 
-  protected handleAbort = () => {
+  protected handleDestroy() {
     this._observerSubscription?.();
 
     this.doneListeners = [];
@@ -361,26 +360,6 @@ export class Mutation<
 
     delete this._observerSubscription;
     this.hooks?.onMutationDestroy?.(this);
-  };
-
-  destroy() {
-    this.abortController.abort();
-  }
-
-  /**
-   * @deprecated use `destroy`. This method will be removed in next major release
-   */
-  dispose() {
-    this.destroy();
-  }
-
-  [Symbol.dispose](): void {
-    this.destroy();
-  }
-
-  // Firefox fix (Symbol.dispose is undefined in FF)
-  [Symbol.for('Symbol.dispose')](): void {
-    this.destroy();
   }
 }
 

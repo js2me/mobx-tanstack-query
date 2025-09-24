@@ -29,7 +29,7 @@ import {
   test,
   vi,
 } from 'vitest';
-import { sleep, waitAsync } from 'yummies/async';
+import { sleep } from 'yummies/async';
 
 import { createQuery } from './preset';
 import { Query } from './query';
@@ -144,7 +144,7 @@ const createMockFetch = () => {
   return vi.fn(
     (cfg: {
       signal?: AbortSignal;
-      waitAsync?: number;
+      sleep?: number;
       willReturn: HttpResponse<any, any>;
     }) => {
       return new Promise<HttpResponse<any, any>>((resolve, reject) => {
@@ -160,7 +160,7 @@ const createMockFetch = () => {
           } else {
             resolve(cfg.willReturn);
           }
-        }, cfg?.waitAsync ?? 5);
+        }, cfg?.sleep ?? 5);
 
         // Добавляем обработчик прерывания
         if (cfg.signal) {
@@ -1065,7 +1065,7 @@ describe('Query', () => {
       );
 
       await when(() => !query.result.isLoading);
-      await waitAsync(10);
+      await sleep(10);
 
       query.setData((curr) => {
         if (!curr) return curr;
@@ -1140,7 +1140,7 @@ describe('Query', () => {
       );
 
       await when(() => !query.result.isLoading);
-      await waitAsync(10);
+      await sleep(10);
 
       query.setData((curr) => {
         if (!curr) return curr;
@@ -1247,7 +1247,7 @@ describe('Query', () => {
       const testClass = new TestClass();
 
       await when(() => !testClass.query.result.isLoading);
-      await waitAsync(10);
+      await sleep(10);
 
       expect(testClass.foo).toStrictEqual({
         age: 20,
@@ -1325,7 +1325,7 @@ describe('Query', () => {
       );
 
       await when(() => !testClass.query.result.isLoading);
-      await waitAsync(10);
+      await sleep(10);
 
       testClass.query.setData((curr) => {
         if (!curr) return curr;
@@ -1637,18 +1637,18 @@ describe('Query', () => {
     it('query with refetchInterval(number) should be stopped after inner abort', async () => {
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
         refetchInterval: 10,
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
       query.destroy();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
@@ -1656,7 +1656,7 @@ describe('Query', () => {
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
@@ -1664,31 +1664,31 @@ describe('Query', () => {
         refetchInterval: 10,
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
 
       abortController.abort();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
         refetchInterval: () => 10,
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
 
       query.destroy();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
@@ -1696,7 +1696,7 @@ describe('Query', () => {
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
@@ -1704,30 +1704,30 @@ describe('Query', () => {
         refetchInterval: () => 10,
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
 
       abortController.abort();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
     it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
         refetchInterval: (query) => (query.isActive() ? 10 : false),
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
       query.destroy();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
@@ -1735,7 +1735,7 @@ describe('Query', () => {
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         enabled: true,
@@ -1743,12 +1743,12 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isActive() ? 10 : false),
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(5);
 
       abortController.abort();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(5);
     });
@@ -1761,7 +1761,7 @@ describe('Query', () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         options: () => ({
@@ -1772,12 +1772,12 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isDisabled() ? false : 10),
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(3);
 
       abortController.abort();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(3);
     });
@@ -1790,7 +1790,7 @@ describe('Query', () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
-          await waitAsync(10);
+          await sleep(10);
           return 10;
         },
         options: () => ({
@@ -1801,12 +1801,12 @@ describe('Query', () => {
         refetchInterval: () => 10,
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(3);
 
       abortController.abort();
 
-      await waitAsync(100);
+      await sleep(100);
 
       expect(query.spies.queryFn).toBeCalledTimes(3);
     });
@@ -1816,7 +1816,7 @@ describe('Query', () => {
 
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(10);
+          await sleep(10);
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
@@ -1831,17 +1831,17 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isDisabled() ? false : 10),
       });
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(0);
 
       query.result.data;
 
-      await waitAsync(100);
+      await sleep(100);
       expect(query.spies.queryFn).toBeCalledTimes(10);
 
       query.result.data;
       query.result.isLoading;
-      await waitAsync(50);
+      await sleep(50);
       expect(query.spies.queryFn).toBeCalledTimes(15);
       abortController.abort();
 
@@ -1849,7 +1849,7 @@ describe('Query', () => {
       query.result.data;
       query.result.isLoading;
 
-      await waitAsync(100);
+      await sleep(100);
 
       query.result.data;
       query.result.isLoading;
@@ -1862,7 +1862,7 @@ describe('Query', () => {
       const abortController2 = new LinkedAbortController();
       const query1 = new QueryMock({
         queryFn: async () => {
-          await waitAsync(5);
+          await sleep(5);
           return 'bar';
         },
         abortSignal: abortController1.signal,
@@ -1870,7 +1870,7 @@ describe('Query', () => {
       });
       const query2 = new QueryMock({
         queryFn: async () => {
-          await waitAsync(5);
+          await sleep(5);
           return 'foo';
         },
         abortSignal: abortController2.signal,
@@ -1934,7 +1934,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'pending',
       });
-      await waitAsync(10);
+      await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -1991,7 +1991,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'success',
       });
-      await waitAsync(10);
+      await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -2027,7 +2027,7 @@ describe('Query', () => {
       const abortController2 = new LinkedAbortController();
       const query1 = new QueryMock({
         queryFn: async () => {
-          await waitAsync(5);
+          await sleep(5);
           return 'bar';
         },
         abortSignal: abortController1.signal,
@@ -2036,7 +2036,7 @@ describe('Query', () => {
       });
       const query2 = new QueryMock({
         queryFn: async () => {
-          await waitAsync(5);
+          await sleep(5);
           return 'foo';
         },
         abortSignal: abortController2.signal,
@@ -2101,7 +2101,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'pending',
       });
-      await waitAsync(10);
+      await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -2158,7 +2158,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'success',
       });
-      await waitAsync(10);
+      await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -2214,7 +2214,7 @@ describe('Query', () => {
       const abortController1 = new LinkedAbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await waitAsync(11);
+          await sleep(11);
           return {
             foo: 1,
             bar: 2,
@@ -2258,7 +2258,7 @@ describe('Query', () => {
 
       abortController1.abort();
 
-      await waitAsync(10);
+      await sleep(10);
 
       expect(query.result).toMatchObject({
         status: 'pending',
@@ -2288,13 +2288,13 @@ describe('Query', () => {
 
       const query2 = new QueryMock({
         queryFn: async () => {
-          await waitAsync(5);
+          await sleep(5);
           return 'foo';
         },
         queryKey: ['test', 'key'] as const,
       });
 
-      await waitAsync(10);
+      await sleep(10);
 
       expect(query.result).toMatchObject({
         status: 'pending',

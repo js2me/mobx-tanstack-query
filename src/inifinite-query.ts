@@ -14,7 +14,6 @@ import {
   RefetchOptions,
   SetDataOptions,
 } from '@tanstack/query-core';
-import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
   reaction,
@@ -40,6 +39,7 @@ import { Query } from './query';
 import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
+import { Destroyable } from './utils/destroyable';
 
 const originalQueryProperties = [
   'data',
@@ -80,6 +80,7 @@ export class InfiniteQuery<
     TData = InfiniteData<TQueryFnData, TPageParam>,
     TQueryKey extends QueryKey = QueryKey,
   >
+  extends Destroyable
   implements
     Disposable,
     Pick<
@@ -87,7 +88,6 @@ export class InfiniteQuery<
       (typeof originalQueryProperties)[number]
     >
 {
-  protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
 
   protected _result: InfiniteQueryObserverResult<TData, TError>;
@@ -313,6 +313,9 @@ export class InfiniteQuery<
       config = args[0];
       getDynamicOptions = args[0].options;
     }
+
+    super(config.abortSignal);
+
     this.cumulativeQueryKeyHashesSet = new Set();
 
     const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
@@ -322,7 +325,6 @@ export class InfiniteQuery<
       queryClient,
     };
 
-    this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
     this.isResultRequsted = false;
@@ -360,7 +362,6 @@ export class InfiniteQuery<
 
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
-    action(this, 'handleAbort');
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
@@ -491,7 +492,7 @@ export class InfiniteQuery<
         this.updateResult,
       );
       this.abortController.signal.addEventListener('abort', () =>
-        this.handleAbort(),
+        this.handleDestroy(),
       );
     }
 
@@ -625,50 +626,10 @@ export class InfiniteQuery<
     return await Query.prototype.start.call(this, params);
   }
 
-  protected handleAbort() {
-    this._observerSubscription?.();
-
-    this.doneListeners = [];
-    this.errorListeners = [];
-
-    this.queryObserver.destroy();
-    this.isResultRequsted = false;
-
-    if (this.features.resetOnDestroy) {
-      this.reset();
-    }
-
-    if (this.features.removeOnDestroy) {
-      this.remove({
-        safe: this.features.removeOnDestroy === 'safe',
-      });
-    }
-
-    delete this._observerSubscription;
-
-    this.cumulativeQueryKeyHashesSet.clear();
-
+  protected handleDestroy() {
+    // @ts-expect-error
+    Query.prototype.cleanup.call(this);
     this.hooks?.onInfiniteQueryDestroy?.(this);
-  }
-
-  destroy() {
-    this.abortController.abort();
-  }
-
-  /**
-   * @deprecated use `destroy`. This method will be removed in next major release
-   */
-  dispose() {
-    this.destroy();
-  }
-
-  [Symbol.dispose](): void {
-    this.destroy();
-  }
-
-  // Firefox fix (Symbol.dispose is undefined in FF)
-  [Symbol.for('Symbol.dispose')](): void {
-    this.destroy();
   }
 }
 

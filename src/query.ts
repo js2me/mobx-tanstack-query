@@ -13,7 +13,6 @@ import {
   CancelOptions,
   ResetOptions,
 } from '@tanstack/query-core';
-import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
   makeObservable,
@@ -40,6 +39,7 @@ import {
   QueryStartParams,
   QueryUpdateOptionsAllVariants,
 } from './query.types';
+import { Destroyable } from './utils/destroyable';
 
 const originalQueryProperties = [
   'data',
@@ -72,6 +72,7 @@ export class Query<
     TQueryData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey,
   >
+  extends Destroyable
   implements
     Disposable,
     Pick<
@@ -79,7 +80,6 @@ export class Query<
       (typeof originalQueryProperties)[number]
     >
 {
-  protected abortController: LinkedAbortController;
   protected queryClient: AnyQueryClient;
 
   protected _result: QueryObserverResult<TData, TError>;
@@ -269,6 +269,9 @@ export class Query<
       config = args[0];
       getDynamicOptions = args[0].options;
     }
+
+    super(config.abortSignal);
+
     this.cumulativeQueryKeyHashesSet = new Set();
 
     const { queryKey: queryKeyOrDynamicQueryKey, ...restOptions } = config;
@@ -278,7 +281,6 @@ export class Query<
       queryClient,
     };
 
-    this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this._result = undefined as any;
     this.isResultRequsted = false;
@@ -316,7 +318,6 @@ export class Query<
 
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
-    action(this, 'handleAbort');
     action.bound(this, 'setData');
     action.bound(this, 'update');
     action.bound(this, 'updateResult');
@@ -440,9 +441,6 @@ export class Query<
       }
       this._observerSubscription = this.queryObserver.subscribe(
         this.updateResult,
-      );
-      this.abortController.signal.addEventListener('abort', () =>
-        this.handleAbort(),
       );
     }
 
@@ -693,7 +691,7 @@ export class Query<
     this.errorListeners.push(errorListener);
   }
 
-  protected handleAbort() {
+  protected cleanup() {
     this._observerSubscription?.();
 
     this.doneListeners = [];
@@ -714,8 +712,6 @@ export class Query<
     delete this._observerSubscription;
 
     this.cumulativeQueryKeyHashesSet.clear();
-
-    this.hooks?.onQueryDestroy?.(this);
   }
 
   async start(
@@ -744,24 +740,9 @@ export class Query<
     return this.result;
   }
 
-  destroy() {
-    this.abortController?.abort();
-  }
-
-  /**
-   * @deprecated use `destroy`. This method will be removed in next major release
-   */
-  dispose() {
-    this.destroy();
-  }
-
-  [Symbol.dispose](): void {
-    this.destroy();
-  }
-
-  // Firefox fix (Symbol.dispose is undefined in FF)
-  [Symbol.for('Symbol.dispose')](): void {
-    this.destroy();
+  protected handleDestroy() {
+    this.cleanup();
+    this.hooks?.onQueryDestroy?.(this);
   }
 }
 

@@ -35,7 +35,8 @@
   "zshy": {
     "exports": {
       "./package.json": "./package.json",
-      ".": "./src/index.ts"
+      ".": "./src/index.ts",
+      "./preset": "./src/preset/index.ts"
     }
   },
   "bugs": {
