@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.6.4
+
+### Patch Changes
+
+- [`17ff372`](https://github.com/js2me/mobx-tanstack-query/commit/17ff37237cce50869ea7f2587b4b80484c3a6520) Thanks [@js2me](https://github.com/js2me)! - fixed typings in `setData` of `InfiniteQuery`
+
 ## 6.6.3
 
 ### Patch Changes
