@@ -58,8 +58,7 @@ export class Mutation<
 
   result: MutationObserverResult<TData, TError, TVariables, TContext>;
 
-  protected isLazy?: boolean;
-  protected isResetOnDestroy?: MutationFeatures['resetOnDestroy'];
+  protected features: MutationFeatures;
 
   protected settledListeners: MutationSettledListener<
     TData,
@@ -129,44 +128,29 @@ export class Mutation<
   constructor(
     protected config: MutationConfig<TData, TVariables, TError, TContext>,
   ) {
-    const {
-      queryClient,
-      invalidateQueries,
-      invalidateByKey: providedInvalidateByKey,
-      mutationFn,
-      ...restOptions
-    } = config;
+    const { queryClient, invalidateQueries, mutationFn, ...restOptions } =
+      config;
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
-    this.isLazy = this.config.lazy;
+    this.features = {
+      invalidateByKey: config.invalidateByKey,
+      lazy: config.lazy,
+      resetOnDestroy: config.resetOnDestroy ?? config.resetOnDestroy,
+      transformError: config.transformError,
+    };
     this.settledListeners = [];
     this.errorListeners = [];
     this.doneListeners = [];
-    this.isResetOnDestroy =
-      this.config.resetOnDestroy ?? this.config.resetOnDispose;
-
-    let transformError: MutationFeatures['transformError'] =
-      config.transformError;
-
-    let invalidateByKey: MutationFeatures['invalidateByKey'] =
-      providedInvalidateByKey;
 
     if ('mutationFeatures' in queryClient) {
-      if (providedInvalidateByKey === undefined) {
-        invalidateByKey = queryClient.mutationFeatures.invalidateByKey;
-      }
-      if (this.config.lazy === undefined) {
-        this.isLazy = queryClient.mutationFeatures.lazy;
-      }
-      if (this.isResetOnDestroy === undefined) {
-        this.isResetOnDestroy =
-          queryClient.mutationFeatures.resetOnDestroy ??
-          queryClient.mutationFeatures.resetOnDispose;
-      }
-      if (!transformError) {
-        transformError = queryClient.queryFeatures.transformError;
-      }
+      this.features.invalidateByKey ??=
+        queryClient.mutationFeatures.invalidateByKey;
+      this.features.lazy ??= queryClient.mutationFeatures.lazy;
+      this.features.resetOnDestroy ??=
+        queryClient.mutationFeatures.resetOnDestroy ??
+        queryClient.mutationFeatures.resetOnDispose;
+      this.features.transformError ??= queryClient.queryFeatures.transformError;
 
       this.hooks = queryClient.hooks;
     }
@@ -177,9 +161,9 @@ export class Mutation<
     this.start = this.start.bind(this);
 
     originalMutationProperties.forEach((property) => {
-      if (property === 'error' && transformError) {
+      if (property === 'error' && this.features.transformError) {
         Object.defineProperty(this, property, {
-          get: () => transformError(this.result[property]),
+          get: () => this.features.transformError!(this.result[property]),
         });
       } else {
         Object.defineProperty(this, property, {
@@ -207,7 +191,7 @@ export class Mutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    if (this.isLazy) {
+    if (this.features.lazy) {
       const cleanup = lazyObserve({
         context: this,
         property: 'result',
@@ -269,10 +253,12 @@ export class Mutation<
       });
     }
 
-    if (invalidateByKey && this.mutationOptions.mutationKey) {
+    if (this.features.invalidateByKey && this.mutationOptions.mutationKey) {
       this.onDone(() => {
         this.queryClient.invalidateQueries({
-          ...(invalidateByKey === true ? {} : invalidateByKey),
+          ...(this.features.invalidateByKey === true
+            ? {}
+            : this.features.invalidateByKey),
           queryKey: this.mutationOptions.mutationKey,
         });
       });
@@ -286,7 +272,7 @@ export class Mutation<
     variables: TVariables,
     options?: MutationOptions<TData, TError, TVariables, TContext>,
   ) {
-    if (this.isLazy) {
+    if (this.features.lazy) {
       let error: any;
 
       try {
@@ -365,7 +351,7 @@ export class Mutation<
     this.errorListeners = [];
     this.settledListeners = [];
 
-    if (this.isResetOnDestroy) {
+    if (this.features.resetOnDestroy) {
       this.reset();
     }
 

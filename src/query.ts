@@ -93,9 +93,9 @@ export class Query<
     TQueryKey
   >;
 
-  private isEnabledOnResultDemand: boolean;
   isResultRequsted: boolean;
-  protected isLazy?: boolean;
+
+  protected features: QueryFeatures;
 
   /**
    * This parameter is responsible for holding the enabled value,
@@ -110,10 +110,10 @@ export class Query<
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
+
   protected errorListeners: QueryErrorListener<TError>[];
   protected doneListeners: QueryDoneListener<TData>[];
 
-  protected cumulativeQueryHash: boolean;
   protected cumulativeQueryKeyHashesSet: Set<string>;
 
   protected config: QueryConfig<
@@ -282,31 +282,30 @@ export class Query<
     this.queryClient = queryClient;
     this._result = undefined as any;
     this.isResultRequsted = false;
-    this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
+
     this.errorListeners = [];
     this.doneListeners = [];
-    this.hooks =
-      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
-    this.isLazy = this.config.lazy;
-    this.cumulativeQueryHash = !!config.cumulativeQueryHash;
 
-    let transformError: QueryFeatures['transformError'] = config.transformError;
+    this.features = {
+      cumulativeQueryHash: config.cumulativeQueryHash,
+      enableOnDemand: config.enableOnDemand,
+      lazy: config.lazy,
+      resetOnDestroy: config.resetOnDestroy,
+      removeOnDestroy: config.removeOnDestroy,
+      transformError: config.transformError,
+      dynamicOptionsUpdateDelay: config.dynamicOptionsUpdateDelay,
+    };
 
     if ('queryFeatures' in queryClient) {
-      if (this.config.lazy === undefined) {
-        this.isLazy = queryClient.queryFeatures.lazy ?? false;
-      }
-      if (config.enableOnDemand === undefined) {
-        this.isEnabledOnResultDemand =
-          queryClient.queryFeatures.enableOnDemand ?? false;
-      }
-      if (config.cumulativeQueryHash === undefined) {
-        this.cumulativeQueryHash =
-          queryClient.queryFeatures.cumulativeQueryHash ?? false;
-      }
-      if (!transformError) {
-        transformError = queryClient.queryFeatures.transformError;
-      }
+      this.features.lazy ??= queryClient.queryFeatures.lazy;
+      this.features.enableOnDemand ??=
+        queryClient.queryFeatures.enableOnDemand ??
+        queryClient.queryFeatures.resetOnDispose;
+      this.features.cumulativeQueryHash ??=
+        queryClient.queryFeatures.cumulativeQueryHash;
+      this.features.transformError ??= queryClient.queryFeatures.transformError;
+
+      this.hooks = queryClient.hooks;
     }
 
     observable.deep(this, '_result');
@@ -319,9 +318,9 @@ export class Query<
     this.start = this.start.bind(this);
 
     originalQueryProperties.forEach((property) => {
-      if (property === 'error' && transformError) {
+      if (property === 'error' && this.features.transformError) {
         Object.defineProperty(this, property, {
-          get: () => transformError(this.result[property]),
+          get: () => this.features.transformError!(this.result[property]),
         });
       } else {
         Object.defineProperty(this, property, {
@@ -384,7 +383,7 @@ export class Query<
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    if (this.isLazy) {
+    if (this.features.lazy) {
       const cleanup = lazyObserve({
         context: this,
         property: '_result',
@@ -398,7 +397,7 @@ export class Query<
             );
             if (getAllDynamicOptions) {
               return reaction(getAllDynamicOptions, this.update, {
-                delay: this.config.dynamicOptionsUpdateDelay,
+                delay: this.features.dynamicOptionsUpdateDelay,
                 signal: config.abortSignal,
                 fireImmediately: true,
               });
@@ -423,14 +422,14 @@ export class Query<
           (queryKey) => this.update({ queryKey }),
           {
             signal: this.abortController.signal,
-            delay: this.config.dynamicOptionsUpdateDelay,
+            delay: this.features.dynamicOptionsUpdateDelay,
           },
         );
       }
       if (getDynamicOptions) {
         reaction(() => getDynamicOptions(this), this.update, {
           signal: this.abortController.signal,
-          delay: this.config.dynamicOptionsUpdateDelay,
+          delay: this.features.dynamicOptionsUpdateDelay,
         });
       }
       this._observerSubscription = this.queryObserver.subscribe(
@@ -528,7 +527,7 @@ export class Query<
 
     this.queryObserver.setOptions(this.options);
 
-    if (this.isLazy) {
+    if (this.features.lazy) {
       this.updateResult(this.queryObserver.getCurrentResult());
     }
   }
@@ -540,7 +539,7 @@ export class Query<
   ) {
     options.queryHash = this.createQueryHash(options.queryKey, options);
 
-    if (this.cumulativeQueryHash) {
+    if (this.features.cumulativeQueryHash) {
       this.cumulativeQueryKeyHashesSet.add(options.queryHash);
     }
 
@@ -548,7 +547,7 @@ export class Query<
     // then, if the user does not request the result, the queries should not be executed
     // to do this, we hold the original value of the enabled option
     // and set enabled to false until the user requests the result (this.isResultRequsted)
-    if (this.isEnabledOnResultDemand) {
+    if (this.features.enableOnDemand) {
       if (this.isEnableHolded && options.enabled !== enableHolder) {
         this.holdedEnabledOption = options.enabled;
       }
@@ -570,7 +569,7 @@ export class Query<
   }
 
   public get result() {
-    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
+    if (this.features.enableOnDemand && !this.isResultRequsted) {
       runInAction(() => {
         this.isResultRequsted = true;
       });
@@ -593,7 +592,7 @@ export class Query<
   }
 
   async reset(params?: QueryResetParams, options?: ResetOptions) {
-    if (this.cumulativeQueryHash) {
+    if (this.features.cumulativeQueryHash) {
       return await this.queryClient.resetQueries({
         predicate: (query) => {
           return (
@@ -618,7 +617,7 @@ export class Query<
   }
 
   remove(params?: QueryRemoveParams) {
-    if (this.cumulativeQueryHash) {
+    if (this.features.cumulativeQueryHash) {
       return this.queryClient.removeQueries({
         predicate: (query) => {
           return (
@@ -673,27 +672,11 @@ export class Query<
 
     this.queryObserver.destroy();
 
-    let isNeedToReset =
-      this.config.resetOnDestroy || this.config.resetOnDispose;
-    let isNeedToRemove = this.config.removeOnDestroy;
-
-    if (this.queryClient instanceof QueryClient) {
-      if (isNeedToReset === undefined) {
-        isNeedToReset =
-          this.queryClient.queryFeatures.resetOnDestroy ||
-          this.queryClient.queryFeatures.resetOnDispose;
-      }
-
-      if (isNeedToRemove === undefined) {
-        isNeedToRemove = this.queryClient.queryFeatures.removeOnDestroy;
-      }
-    }
-
-    if (isNeedToReset) {
+    if (this.features.resetOnDestroy) {
       this.reset();
     }
 
-    if (isNeedToRemove) {
+    if (this.features.removeOnDestroy) {
       this.remove();
     }
 

@@ -37,7 +37,6 @@ import {
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { Query } from './query';
-import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
 
@@ -242,9 +241,9 @@ export class InfiniteQuery<
     TPageParam
   >;
 
-  private isEnabledOnResultDemand: boolean;
   isResultRequsted: boolean;
-  protected isLazy?: boolean;
+
+  protected features: QueryFeatures;
 
   /**
    * This parameter is responsible for holding the enabled value,
@@ -259,9 +258,10 @@ export class InfiniteQuery<
   >['enabled'];
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
+
   protected errorListeners: InfiniteQueryErrorListener<TError>[];
   protected doneListeners: InfiniteQueryDoneListener<TData>[];
-  protected cumulativeQueryHash: boolean;
+
   protected cumulativeQueryKeyHashesSet: Set<string>;
 
   constructor(
@@ -325,31 +325,30 @@ export class InfiniteQuery<
     this.queryClient = queryClient;
     this._result = undefined as any;
     this.isResultRequsted = false;
-    this.isEnabledOnResultDemand = config.enableOnDemand ?? false;
+
     this.errorListeners = [];
     this.doneListeners = [];
-    this.hooks =
-      'hooks' in this.queryClient ? this.queryClient.hooks : undefined;
-    this.isLazy = this.config.lazy;
-    this.cumulativeQueryHash = !!config.cumulativeQueryHash;
 
-    let transformError: QueryFeatures['transformError'] = config.transformError;
+    this.features = {
+      cumulativeQueryHash: config.cumulativeQueryHash,
+      enableOnDemand: config.enableOnDemand,
+      lazy: config.lazy,
+      resetOnDestroy: config.resetOnDestroy,
+      removeOnDestroy: config.removeOnDestroy,
+      transformError: config.transformError,
+      dynamicOptionsUpdateDelay: config.dynamicOptionsUpdateDelay,
+    };
 
     if ('queryFeatures' in queryClient) {
-      if (this.config.lazy === undefined) {
-        this.isLazy = queryClient.queryFeatures.lazy ?? false;
-      }
-      if (config.enableOnDemand === undefined) {
-        this.isEnabledOnResultDemand =
-          queryClient.queryFeatures.enableOnDemand ?? false;
-      }
-      if (config.cumulativeQueryHash === undefined) {
-        this.cumulativeQueryHash =
-          queryClient.queryFeatures.cumulativeQueryHash ?? false;
-      }
-      if (!transformError) {
-        transformError = queryClient.queryFeatures.transformError;
-      }
+      this.features.lazy ??= queryClient.queryFeatures.lazy;
+      this.features.enableOnDemand ??=
+        queryClient.queryFeatures.enableOnDemand ??
+        queryClient.queryFeatures.resetOnDispose;
+      this.features.cumulativeQueryHash ??=
+        queryClient.queryFeatures.cumulativeQueryHash;
+      this.features.transformError ??= queryClient.queryFeatures.transformError;
+
+      this.hooks = queryClient.hooks;
     }
 
     observable.deep(this, '_result');
@@ -363,9 +362,9 @@ export class InfiniteQuery<
 
     originalQueryProperties.forEach((property) => {
       if (this[property]) return;
-      if (property === 'error' && transformError) {
+      if (property === 'error' && this.features.transformError) {
         Object.defineProperty(this, property, {
-          get: () => transformError(this.result[property]),
+          get: () => this.features.transformError!(this.result[property]),
         });
       } else {
         Object.defineProperty(this, property, {
@@ -432,7 +431,7 @@ export class InfiniteQuery<
     // @ts-expect-error
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    if (this.isLazy) {
+    if (this.features.lazy) {
       const cleanup = lazyObserve({
         context: this,
         property: '_result',
@@ -566,7 +565,7 @@ export class InfiniteQuery<
   }
 
   public get result() {
-    if (this.isEnabledOnResultDemand && !this.isResultRequsted) {
+    if (this.features.enableOnDemand && !this.isResultRequsted) {
       runInAction(() => {
         this.isResultRequsted = true;
       });
@@ -628,27 +627,11 @@ export class InfiniteQuery<
     this.queryObserver.destroy();
     this.isResultRequsted = false;
 
-    let isNeedToReset =
-      this.config.resetOnDestroy || this.config.resetOnDispose;
-    let isNeedToRemove = this.config.removeOnDestroy;
-
-    if (this.queryClient instanceof QueryClient) {
-      if (isNeedToReset === undefined) {
-        isNeedToReset =
-          this.queryClient.queryFeatures.resetOnDestroy ||
-          this.queryClient.queryFeatures.resetOnDispose;
-      }
-
-      if (isNeedToRemove === undefined) {
-        isNeedToRemove = this.queryClient.queryFeatures.removeOnDestroy;
-      }
-    }
-
-    if (isNeedToReset) {
+    if (this.features.resetOnDestroy) {
       this.reset();
     }
 
-    if (isNeedToRemove) {
+    if (this.features.removeOnDestroy) {
       this.remove();
     }
 
