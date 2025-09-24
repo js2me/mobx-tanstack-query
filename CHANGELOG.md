@@ -1,5 +1,23 @@
 # mobx-tanstack-query
 
+## 6.7.0
+
+### Minor Changes
+
+- [`24a8a41`](https://github.com/js2me/mobx-tanstack-query/commit/24a8a41b65ebb03d29a88a6e3fd5dedf40a58cb7) Thanks [@js2me](https://github.com/js2me)! - added `autoRemovePreviousQuery` query feature
+
+- [`24a8a41`](https://github.com/js2me/mobx-tanstack-query/commit/24a8a41b65ebb03d29a88a6e3fd5dedf40a58cb7) Thanks [@js2me](https://github.com/js2me)! - added value `"safe"` for `removeOnDestroy` option for query
+
+- [`b626ab4`](https://github.com/js2me/mobx-tanstack-query/commit/b626ab46d38fa17c1685d26c97dcc869012d17ff) Thanks [@js2me](https://github.com/js2me)! - rework query/mutation features code (refactor and clean code inside queries and mutations)
+
+- [`24a8a41`](https://github.com/js2me/mobx-tanstack-query/commit/24a8a41b65ebb03d29a88a6e3fd5dedf40a58cb7) Thanks [@js2me](https://github.com/js2me)! - `safe` option for `remove()` method for queries
+
+### Patch Changes
+
+- [`87005aa`](https://github.com/js2me/mobx-tanstack-query/commit/87005aab2dc62ea007bf6fe5456939fb8353ddb6) Thanks [@js2me](https://github.com/js2me)! - refactored unify destroy and aborts inside package entities
+
+- [`87005aa`](https://github.com/js2me/mobx-tanstack-query/commit/87005aab2dc62ea007bf6fe5456939fb8353ddb6) Thanks [@js2me](https://github.com/js2me)! - fixed preset exports
+
 ## 6.6.4
 
 ### Patch Changes
