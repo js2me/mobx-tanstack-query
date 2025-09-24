@@ -515,14 +515,13 @@ export class InfiniteQuery<
   }
 
   setData(
-    updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
+    updater: Updater<
+      NoInfer<InfiniteData<TQueryFnData, TPageParam>> | undefined,
+      NoInfer<InfiniteData<TQueryFnData, TPageParam>> | undefined
+    >,
     options?: SetDataOptions,
   ) {
-    this.queryClient.setQueryData<TData>(
-      this.options.queryKey,
-      updater,
-      options,
-    );
+    return Query.prototype.setData.call(this, updater, options);
   }
 
   /**
