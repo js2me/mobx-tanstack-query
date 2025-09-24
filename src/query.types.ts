@@ -19,10 +19,10 @@ export interface QueryInvalidateParams
 export type MobxQueryInvalidateParams = QueryInvalidateParams;
 
 export interface QueryResetParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {}
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {}
 
 export interface QueryRemoveParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact'>> {
   /**
    * Removes only queries that have no observers or one observer that is `queryObserver`.
    */

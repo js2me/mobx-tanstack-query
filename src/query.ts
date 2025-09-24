@@ -549,9 +549,7 @@ export class Query<
       this.features.autoRemovePreviousQuery &&
       options.queryHash !== nextQueryHash
     ) {
-      this.queryClient.removeQueries({
-        predicate: (query) => query.queryHash === options.queryHash,
-      });
+      this.remove({ safe: true });
     }
 
     options.queryHash = nextQueryHash;
@@ -616,7 +614,8 @@ export class Query<
             this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
             (query.observers.length === 0 ||
               (query.observers.length === 1 &&
-                query.observers[0] === this.queryObserver))
+                query.observers[0] === this.queryObserver)) &&
+            (!params?.predicate || params.predicate(query))
           );
         },
         ...params,
@@ -641,7 +640,8 @@ export class Query<
             this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
             (query.observers.length === 0 ||
               (query.observers.length === 1 &&
-                query.observers[0] === this.queryObserver))
+                query.observers[0] === this.queryObserver)) &&
+            (!params?.predicate || params.predicate(query))
           );
         },
         ...params,
@@ -655,7 +655,8 @@ export class Query<
           query.queryHash === this.options.queryHash &&
           (query.observers.length === 0 ||
             (query.observers.length === 1 &&
-              query.observers[0] === this.queryObserver)),
+              query.observers[0] === this.queryObserver)) &&
+          (!params?.predicate || params.predicate(query)),
       });
     }
 
