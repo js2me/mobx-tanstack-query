@@ -37,6 +37,7 @@ import {
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types';
 import { Query } from './query';
+import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 import { QueryFeatures } from './query.types';
 
@@ -329,27 +330,33 @@ export class InfiniteQuery<
     this.errorListeners = [];
     this.doneListeners = [];
 
+    // simple type override to make typescript happy
+    // and do less for javascript
+    const qc = queryClient as unknown as Partial<
+      Pick<QueryClient, 'queryFeatures' | 'hooks'>
+    >;
+
     this.features = {
-      cumulativeQueryHash: config.cumulativeQueryHash,
-      enableOnDemand: config.enableOnDemand,
-      lazy: config.lazy,
-      resetOnDestroy: config.resetOnDestroy,
-      removeOnDestroy: config.removeOnDestroy,
-      transformError: config.transformError,
-      dynamicOptionsUpdateDelay: config.dynamicOptionsUpdateDelay,
+      cumulativeQueryHash:
+        config.cumulativeQueryHash ?? qc.queryFeatures?.cumulativeQueryHash,
+      enableOnDemand: config.enableOnDemand ?? qc.queryFeatures?.enableOnDemand,
+      lazy: config.lazy ?? qc.queryFeatures?.lazy,
+      resetOnDestroy:
+        config.resetOnDestroy ??
+        config.resetOnDispose ??
+        qc.queryFeatures?.resetOnDestroy ??
+        qc.queryFeatures?.resetOnDispose,
+      removeOnDestroy:
+        config.removeOnDestroy ?? qc.queryFeatures?.removeOnDestroy,
+      transformError: config.transformError ?? qc.queryFeatures?.transformError,
+      dynamicOptionsUpdateDelay:
+        config.dynamicOptionsUpdateDelay ??
+        qc.queryFeatures?.dynamicOptionsUpdateDelay,
+      autoRemovePreviousQuery:
+        config.autoRemovePreviousQuery ??
+        qc.queryFeatures?.autoRemovePreviousQuery,
     };
-
-    if ('queryFeatures' in queryClient) {
-      this.features.lazy ??= queryClient.queryFeatures.lazy;
-      this.features.enableOnDemand ??=
-        queryClient.queryFeatures.enableOnDemand ??
-        queryClient.queryFeatures.resetOnDispose;
-      this.features.cumulativeQueryHash ??=
-        queryClient.queryFeatures.cumulativeQueryHash;
-      this.features.transformError ??= queryClient.queryFeatures.transformError;
-
-      this.hooks = queryClient.hooks;
-    }
+    this.hooks = qc.hooks;
 
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
@@ -632,7 +639,9 @@ export class InfiniteQuery<
     }
 
     if (this.features.removeOnDestroy) {
-      this.remove();
+      this.remove({
+        safe: this.features.removeOnDestroy === 'safe',
+      });
     }
 
     delete this._observerSubscription;

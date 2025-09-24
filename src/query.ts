@@ -286,27 +286,33 @@ export class Query<
     this.errorListeners = [];
     this.doneListeners = [];
 
+    // simple type override to make typescript happy
+    // and do less for javascript
+    const qc = queryClient as unknown as Partial<
+      Pick<QueryClient, 'queryFeatures' | 'hooks'>
+    >;
+
     this.features = {
-      cumulativeQueryHash: config.cumulativeQueryHash,
-      enableOnDemand: config.enableOnDemand,
-      lazy: config.lazy,
-      resetOnDestroy: config.resetOnDestroy,
-      removeOnDestroy: config.removeOnDestroy,
-      transformError: config.transformError,
-      dynamicOptionsUpdateDelay: config.dynamicOptionsUpdateDelay,
+      cumulativeQueryHash:
+        config.cumulativeQueryHash ?? qc.queryFeatures?.cumulativeQueryHash,
+      enableOnDemand: config.enableOnDemand ?? qc.queryFeatures?.enableOnDemand,
+      lazy: config.lazy ?? qc.queryFeatures?.lazy,
+      resetOnDestroy:
+        config.resetOnDestroy ??
+        config.resetOnDispose ??
+        qc.queryFeatures?.resetOnDestroy ??
+        qc.queryFeatures?.resetOnDispose,
+      removeOnDestroy:
+        config.removeOnDestroy ?? qc.queryFeatures?.removeOnDestroy,
+      transformError: config.transformError ?? qc.queryFeatures?.transformError,
+      dynamicOptionsUpdateDelay:
+        config.dynamicOptionsUpdateDelay ??
+        qc.queryFeatures?.dynamicOptionsUpdateDelay,
+      autoRemovePreviousQuery:
+        config.autoRemovePreviousQuery ??
+        qc.queryFeatures?.autoRemovePreviousQuery,
     };
-
-    if ('queryFeatures' in queryClient) {
-      this.features.lazy ??= queryClient.queryFeatures.lazy;
-      this.features.enableOnDemand ??=
-        queryClient.queryFeatures.enableOnDemand ??
-        queryClient.queryFeatures.resetOnDispose;
-      this.features.cumulativeQueryHash ??=
-        queryClient.queryFeatures.cumulativeQueryHash;
-      this.features.transformError ??= queryClient.queryFeatures.transformError;
-
-      this.hooks = queryClient.hooks;
-    }
+    this.hooks = qc.hooks;
 
     observable.deep(this, '_result');
     observable.ref(this, 'isResultRequsted');
@@ -537,7 +543,18 @@ export class Query<
   private processOptions(
     options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ) {
-    options.queryHash = this.createQueryHash(options.queryKey, options);
+    const nextQueryHash = this.createQueryHash(options.queryKey, options);
+
+    if (
+      this.features.autoRemovePreviousQuery &&
+      options.queryHash !== nextQueryHash
+    ) {
+      this.queryClient.removeQueries({
+        predicate: (query) => query.queryHash === options.queryHash,
+      });
+    }
+
+    options.queryHash = nextQueryHash;
 
     if (this.features.cumulativeQueryHash) {
       this.cumulativeQueryKeyHashesSet.add(options.queryHash);
@@ -631,6 +648,17 @@ export class Query<
       });
     }
 
+    if (params?.safe) {
+      return this.queryClient.removeQueries({
+        ...params,
+        predicate: (query) =>
+          query.queryHash === this.options.queryHash &&
+          (query.observers.length === 0 ||
+            (query.observers.length === 1 &&
+              query.observers[0] === this.queryObserver)),
+      });
+    }
+
     return this.queryClient.removeQueries({
       queryKey: this.options.queryKey,
       exact: true,
@@ -677,7 +705,9 @@ export class Query<
     }
 
     if (this.features.removeOnDestroy) {
-      this.remove();
+      this.remove({
+        safe: this.features.removeOnDestroy === 'safe',
+      });
     }
 
     delete this._observerSubscription;

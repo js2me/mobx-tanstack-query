@@ -19,6 +19,7 @@ import {
   MutationInvalidateQueriesOptions,
   MutationSettledListener,
 } from './mutation.types';
+import { QueryClient } from './query-client';
 import { AnyQueryClient, QueryClientHooks } from './query-client.types';
 
 const originalMutationProperties = [
@@ -130,30 +131,33 @@ export class Mutation<
   ) {
     const { queryClient, invalidateQueries, mutationFn, ...restOptions } =
       config;
+
+    // simple type override to make typescript happy
+    // and do less for javascript
+    const qc = queryClient as unknown as Partial<
+      Pick<QueryClient, 'mutationFeatures' | 'hooks'>
+    >;
+
     this.abortController = new LinkedAbortController(config.abortSignal);
     this.queryClient = queryClient;
     this.result = undefined as any;
+
     this.features = {
-      invalidateByKey: config.invalidateByKey,
-      lazy: config.lazy,
-      resetOnDestroy: config.resetOnDestroy ?? config.resetOnDestroy,
-      transformError: config.transformError,
+      invalidateByKey:
+        config.invalidateByKey ?? qc.mutationFeatures?.invalidateByKey,
+      lazy: config.lazy ?? qc.mutationFeatures?.lazy,
+      resetOnDestroy:
+        config.resetOnDestroy ??
+        config.resetOnDispose ??
+        qc.mutationFeatures?.resetOnDestroy ??
+        qc.mutationFeatures?.resetOnDispose,
+      transformError:
+        config.transformError ?? qc.mutationFeatures?.transformError,
     };
+
     this.settledListeners = [];
     this.errorListeners = [];
     this.doneListeners = [];
-
-    if ('mutationFeatures' in queryClient) {
-      this.features.invalidateByKey ??=
-        queryClient.mutationFeatures.invalidateByKey;
-      this.features.lazy ??= queryClient.mutationFeatures.lazy;
-      this.features.resetOnDestroy ??=
-        queryClient.mutationFeatures.resetOnDestroy ??
-        queryClient.mutationFeatures.resetOnDispose;
-      this.features.transformError ??= queryClient.queryFeatures.transformError;
-
-      this.hooks = queryClient.hooks;
-    }
 
     observable.deep(this, 'result');
     action.bound(this, 'updateResult');

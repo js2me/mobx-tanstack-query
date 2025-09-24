@@ -22,7 +22,12 @@ export interface QueryResetParams
   extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {}
 
 export interface QueryRemoveParams
-  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {}
+  extends Partial<Omit<QueryFilters, 'queryKey' | 'exact' | 'predicate'>> {
+  /**
+   * Removes only queries that have no observers or one observer that is `queryObserver`.
+   */
+  safe?: boolean;
+}
 
 /**
  * @deprecated ⚠️ use `QueryResetParams`. This type will be removed in next major release
@@ -117,9 +122,11 @@ export interface QueryFeatures {
   /**
    * Removes query when destroy or abort signal is called
    *
+   * `safe` - means removes only queries that have no observers or one observer that is `queryObserver`. @see QueryRemoveParams
+   *
    * It uses [queryClient.removeQueries](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientremovequeries)
    */
-  removeOnDestroy?: boolean;
+  removeOnDestroy?: boolean | 'safe';
 
   /**
    * Enable query only if result is requested
@@ -145,6 +152,11 @@ export interface QueryFeatures {
    * When destroy happened all accumulated query keys will be removed (if removeOnDestroy is true), and reseted (if resetOnDestroy is true)
    */
   cumulativeQueryHash?: boolean;
+
+  /**
+   * Removes previous query if current query hash is different
+   */
+  autoRemovePreviousQuery?: boolean;
 }
 
 /**
