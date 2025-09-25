@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.8.2
+
+### Patch Changes
+
+- [`ba30553`](https://github.com/js2me/mobx-tanstack-query/commit/ba305532889d196fdc5c4a12f438c8504225b4f8) Thanks [@js2me](https://github.com/js2me)! - fixed typings of `mutationFn` (second argument)
+
 ## 6.8.1
 
 ### Patch Changes
