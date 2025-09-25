@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.8.1
+
+### Patch Changes
+
+- [`d00661c`](https://github.com/js2me/mobx-tanstack-query/commit/d00661ca4d57f1167c54e44ca626c0a447aefc19) Thanks [@js2me](https://github.com/js2me)! - fix missing hooks use in mutation
+
+- [`d00661c`](https://github.com/js2me/mobx-tanstack-query/commit/d00661ca4d57f1167c54e44ca626c0a447aefc19) Thanks [@js2me](https://github.com/js2me)! - fix missing pass second arg for `mutationFn` (`MutationContext`)
+
 ## 6.8.0
 
 ### Minor Changes
