@@ -10,14 +10,14 @@ Class wrapper for [@tanstack-query/core queries](https://tanstack.com/query/late
 
 There are two ways to use queries:
 
-### 1. Automatic enabling\disabling of queries
+### 1. Automatic enabling\disabling queries
 
-This approach is suitable when we want the query to automatically make a request and process the data  
-depending on the availability of the necessary data.
+This approach is suitable when you want the query to automate make a request and process the data  
+depending on the availability of the necessary data based on the "dynamic" `enabled` property.
 
 Example:
 
-```ts
+```ts{5}
 const petName = observable.box<string>();
 
 const petQuery = new Query(queryClient, () => ({
@@ -45,7 +45,7 @@ This approach is suitable when we need to manually load data using a query.
 
 Example:
 
-```ts
+```ts{4}
 const petQuery = new Query({
   queryClient,
   queryKey: ["pets", undefined as string | undefined] as const,
@@ -95,7 +95,7 @@ This is the default behavior of queries according to the [**query documtation**]
 
 ## Properties and methods
 
-#### `data: TData | undefined`
+### `data: TData | undefined`
 
 The last successfully resolved data for the query.
 
@@ -110,11 +110,11 @@ const query = new Query(queryClient, () => ({
 console.log(query.data);
 ```
 
-#### `dataUpdatedAt: number`
+### `dataUpdatedAt: number`
 
 The timestamp for when the query most recently returned the `status` as `"success"`.
 
-#### `error: TError | null`
+### `error: TError | null`
 
 The error object for the query, if an error was thrown.
 
@@ -134,84 +134,84 @@ console.log(query.error);
 ::: info You can transform output of this property using `transformError` option
 :::
 
-#### `errorUpdatedAt: number`
+### `errorUpdatedAt: number`
 
 The timestamp for when the query most recently returned the `status` as `"error"`.
 
-#### `failureCount: number`
+### `failureCount: number`
 
 The failure count for the query.
 
 - Incremented every time the query fails.
 - Reset to `0` when the query succeeds.
 
-#### `failureReason: TError | null`
+### `failureReason: TError | null`
 
 The failure reason for the query retry.
 
 - Reset to `null` when the query succeeds.
 
-#### `errorUpdateCount: number`
+### `errorUpdateCount: number`
 
 The sum of all errors.
 
-#### `isError: boolean`
+### `isError: boolean`
 
 A derived boolean from the `status` variable, provided for convenience.
 
 - `true` if the query attempt resulted in an error.
 
-#### `isFetched: boolean`
+### `isFetched: boolean`
 
 Will be `true` if the query has been fetched.
 
-#### `isFetching: boolean`
+### `isFetching: boolean`
 
 A derived boolean from the `fetchStatus` variable, provided for convenience.
 
 - `true` whenever the `queryFn` is executing, which includes initial `pending` as well as background refetch.
 
-#### `isLoading: boolean`
+### `isLoading: boolean`
 
 Is `true` whenever the first fetch for a query is in-flight.
 
 - Is the same as `isFetching && isPending`.
 
-#### `isLoadingError: boolean`
+### `isLoadingError: boolean`
 
 Will be `true` if the query failed while fetching for the first time.
 
-#### `isPaused: boolean`
+### `isPaused: boolean`
 
 A derived boolean from the `fetchStatus` variable, provided for convenience.
 
 - The query wanted to fetch, but has been `paused`.
 
-#### `isPlaceholderData: boolean`
+### `isPlaceholderData: boolean`
 
 Will be `true` if the data shown is the placeholder data.
 
-#### `isRefetchError: boolean`
+### `isRefetchError: boolean`
 
 Will be `true` if the query failed while refetching.
 
-#### `isRefetching: boolean`
+### `isRefetching: boolean`
 
 Is `true` whenever a background refetch is in-flight, which _does not_ include initial `pending`.
 
 - Is the same as `isFetching && !isPending`.
 
-#### `isStale: boolean`
+### `isStale: boolean`
 
 Will be `true` if the data in the cache is invalidated or if the data is older than the given `staleTime`.
 
-#### `isSuccess: boolean`
+### `isSuccess: boolean`
 
 A derived boolean from the `status` variable, provided for convenience.
 
 - `true` if the query has received a response with no errors and is ready to display its data.
 
-#### `status: QueryStatus`
+### `status: QueryStatus`
 
 The status of the query.
 
@@ -235,7 +235,7 @@ console.log(query.status); // "success" if successful
 console.log(query.status); // "error" if there was an error
 ```
 
-#### `fetchStatus: FetchStatus`
+### `fetchStatus: FetchStatus`
 
 The fetch status of the query.
 
@@ -265,24 +265,26 @@ Explanation of difference between `fetchStatus` and `status`:
 - `fetchStatus` indicates the current fetching state of the query: "fetching", "paused", or "idle"
 - A query can be in "fetching" state while still having a "pending" status, or it can be in "idle" state while having an "error" or "success" status
 
-#### `options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>`
+### `options: QueryOptions`
 
 The options used to configure the query.
 
-#### `queryObserver: QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>`
+### `queryObserver: QueryObserver`
 
-The underlying query observer instance.
+The underlying query observer instance from tanstack query core package.
 
-#### `isResultRequsted: boolean` <Badge type="info" text="observable.ref" />
+[See original class reference](https://github.com/TanStack/query/blob/main/packages/query-core/src/queryObserver.ts)
+
+### `isResultRequsted: boolean` <Badge type="info" text="observable.ref" />
 
 Any time when you trying to get access to `result` property this field sets as `true`  
 This field is needed for `enableOnDemand` option
 
-#### `result: QueryObserverResult<TData, TError>`
+### `result: QueryObserverResult` <Badge type="info" text="observable.deep" />
 
-**Observable** query result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
+Query original result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
 
-#### `setData(updater: Updater<NoInfer<TQueryFnData> | undefined, NoInfer<TQueryFnData> | undefined>, options?: SetDataOptions): TQueryFnData | undefined`
+### `setData(updater, options)`
 
 Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
 
@@ -307,7 +309,7 @@ query.setData({
 });
 ```
 
-#### `update(optionsUpdate: QueryUpdateOptionsAllVariants<TQueryFnData, TError, TData, TQueryData, TQueryKey>): void`
+### `update(options)`
 
 Update options for query (Uses [QueryObserver](https://tanstack.com/query/latest/docs/reference/QueriesObserver).setOptions)
 
@@ -326,7 +328,7 @@ query.update({
 });
 ```
 
-#### `refetch(options?: RefetchOptions): Promise<QueryObserverResult<TData, TError>>`
+#### `refetch(options)`
 
 Refetch the query data.
 
@@ -343,7 +345,7 @@ const result = await query.refetch();
 console.log(result.data);
 ```
 
-#### `reset(params?: QueryResetParams, options?: ResetOptions): Promise<void>`
+#### `reset(params, options)`
 
 Reset current query (Uses [queryClient.resetQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries))
 
@@ -359,7 +361,23 @@ const query = new Query(queryClient, () => ({
 await query.reset();
 ```
 
-#### `invalidate(params?: QueryInvalidateParams): Promise<void>`
+#### `remove(params)`
+
+Removes current query (Uses [queryClient.removeQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientremovequeries))
+
+Example:
+
+```ts
+const query = new Query(queryClient, () => ({
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+}));
+
+// Remove the query
+await query.remove();
+```
+
+#### `invalidate(params)`
 
 Invalidate current query (Uses [queryClient.invalidateQueries](https://tanstack.com/query/latest/docs/reference/QueryClient/#queryclientinvalidatequeries))
 
@@ -375,7 +393,10 @@ const query = new Query(queryClient, () => ({
 await query.invalidate();
 ```
 
-#### `cancel(options?: CancelOptions): Promise<void>`
+::: tip Don't forget to use `await` when you call `invalidate`
+:::
+
+#### `cancel(options)`
 
 Cancel current query (Uses [queryClient.cancelQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientcancelqueries))
 
@@ -391,10 +412,10 @@ const query = new Query(queryClient, () => ({
 await query.cancel();
 ```
 
-::: tip do not forget to pass abort signal to your api call function
+::: tip Don't forget to pass abort signal to your api call function
 :::
 
-#### `onDone(doneListener: QueryDoneListener<TData>): void`
+#### `onDone(listener)`
 
 Subscribe when query has been successfully fetched data
 
@@ -412,7 +433,7 @@ query.onDone((data) => {
 });
 ```
 
-#### `onError(errorListener: QueryErrorListener<TError>): void`
+#### `onError(listener)`
 
 Subscribe when query has been failed fetched data
 
@@ -430,7 +451,7 @@ query.onError((error) => {
 });
 ```
 
-#### `start(params?: QueryStartParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>): Promise<QueryObserverResult<TData, TError>>`
+#### `start(params)`
 
 Enable query if it is disabled then fetch the query.  
 This method is helpful if you want manually control fetching your query
@@ -456,7 +477,7 @@ const result = await query.start({
 console.log(result.data);
 ```
 
-#### `destroy(): void`
+#### `destroy()`
 
 This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Query` class
 
@@ -472,30 +493,6 @@ const query = new Query(queryClient, () => ({
 
 // Clean up the query
 query.destroy();
-```
-
-## Recommendations
-
-### Don't forget about `abortSignal`s or `lazy` option
-
-When creating a query, subscriptions to the original queries and reactions are created.  
-If you don't clean up subscriptions and reactions - memory leaks can occur.
-
-### Use `queryKey` to pass data to `queryFn`
-
-`queryKey` is not only a cache key but also a way to send necessary data for our API requests!
-
-Example
-
-```ts
-const petQuery = new Query(queryClient, () => ({
-  queryKey: ["pets", "Fluffy"] as const,
-  queryFn: async ({ queryKey }) => {
-    const petName = queryKey[1]!;
-    const response = await petsApi.getPetByName(petName);
-    return await response.json();
-  },
-}));
 ```
 
 ## Built-in Features
@@ -523,13 +520,12 @@ abortController.abort()
 
 This is alternative for `destroy` method
 
-### `destroy()` method
+::: tip this option is optional if you are using `lazy` option
+:::
 
-This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Query` class
+### `enableOnDemand` option <Badge type="tip">QueryFeature</Badge>
 
-This is alternative for `abortSignal` option
-
-### `enableOnDemand` option
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
 
 Query will be disabled until you request result for this query  
 Example:
@@ -613,7 +609,9 @@ const query = new Query({
 });
 ```
 
-### `lazy` option
+### `lazy` option <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
 
 This option enables "lazy" mode of the query. That means that all subscriptions and reaction will be created only when you request result for this query.
 
@@ -632,50 +630,121 @@ const query = createQuery(queryClient, () => ({
 // no reactions and subscriptions will be created
 ```
 
-### method `start(params)`
+### `transformError` <Badge type="tip">QueryFeature</Badge>
 
-Enable query if it is disabled then fetch the query.  
-This method is helpful if you want manually control fetching your query
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+This option allows you to transform errors that are thrown by the `queryFn`.
 
 Example:
 
 ```ts
+const query = new Query({
+  transformError: (error) => {
+    return 'You are not authorized'
+  }
+  queryFn: async () => {
+    throw new Error("Server Error 401");
+  }
+});
 
+query.error; // 'You are not authorized'
 ```
 
-### method `update()`
+### `resetOnDestroy` <Badge type="tip">QueryFeature</Badge>
 
-Update options for query (Uses [QueryObserver](https://tanstack.com/query/latest/docs/reference/QueriesObserver).setOptions)
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
 
-### hook `onDone()`
+Reset query when destroy method called or abort signal is called.  
+After destroy query will be reset inside Tanstack query core data.
 
-Subscribe when query has been successfully fetched data
+Example:
 
-### hook `onError()`
+```ts
+const query = new Query({
+  resetOnDestroy: true,
+  queryFn: async () => {
+    return [Array<1_000_000>]
+  }
+});
 
-Subscribe when query has been failed fetched data
+...
 
-### method `invalidate()`
+query.destroy();
+```
 
-Invalidate current query (Uses [queryClient.invalidateQueries](https://tanstack.com/query/latest/docs/reference/QueryClient/#queryclientinvalidatequeries))
+### `removeOnDestroy` <Badge type="tip">QueryFeature</Badge>
 
-### method `reset()`
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
 
-Reset current query (Uses [queryClient.resetQueries](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries))
+Removes query when destroy or abort signal is called
 
-### method `setData()`
+`safe` - means removes only queries that have no observers or one observer that is `queryObserver`.
 
-Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
+It uses [queryClient.removeQueries](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientremovequeries)
 
-### property `isResultRequsted`
+Example:
 
-Any time when you trying to get access to `result` property this field sets as `true`  
-This field is needed for `enableOnDemand` option  
-This property if **observable**
+```ts
+const query = new Query({
+  removeOnDestroy: 'safe',
+  queryFn: async () => {
+    return [Array<1_000_000>]
+  }
+});
 
-### property `result`
+...
 
-**Observable** query result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
+query.destroy();
+```
+
+### `autoRemovePreviousQuery` <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+Removes previous query created inside `Query` if current query hash is different
+
+Example:
+
+```ts
+const query = new Query({
+  autoRemovePreviousQuery: true,
+  queryKey: ['foo'],
+  queryFn: async () => {
+    return [Array<1_000_000>]
+  }
+});
+
+...
+query.data // [Array<1_000_000>]
+query.update({ queryKey: ['bar' ]});
+// previous query observer instance (['foo']) and its data
+// will be removed
+```
+
+## Recommendations
+
+### Don't forget about `abortSignal`s or `lazy` option
+
+When creating a query, subscriptions to the original queries and reactions are created.  
+If you don't clean up subscriptions and reactions - memory leaks can occur.
+
+### Use `queryKey` to pass data to `queryFn`
+
+`queryKey` is not only a cache key but also a way to send necessary data for our API requests!
+
+Example
+
+```ts
+const petQuery = new Query(queryClient, () => ({
+  queryKey: ["pets", "Fluffy"] as const,
+  queryFn: async ({ queryKey }) => {
+    const petName = queryKey[1]!;
+    const response = await petsApi.getPetByName(petName);
+    return await response.json();
+  },
+}));
+```
 
 ## About `enabled`
 

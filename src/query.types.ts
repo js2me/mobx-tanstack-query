@@ -115,7 +115,9 @@ export interface QueryFeatures {
   resetOnDispose?: boolean;
 
   /**
-   * Reset query when destroy or abort signal is called
+   * Reset query when destroy method called or abort signal is called
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#resetondestroy-queryfeature)
    */
   resetOnDestroy?: boolean;
 
@@ -125,11 +127,15 @@ export interface QueryFeatures {
    * `safe` - means removes only queries that have no observers or one observer that is `queryObserver`. @see QueryRemoveParams
    *
    * It uses [queryClient.removeQueries](https://tanstack.com/query/v5/docs/reference/QueryClient#queryclientremovequeries)
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#removeondestroy-queryfeature)
    */
   removeOnDestroy?: boolean | 'safe';
 
   /**
    * Enable query only if result is requested
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#enableondemand-queryfeature)
    */
   enableOnDemand?: boolean;
 
@@ -143,8 +149,16 @@ export interface QueryFeatures {
    *
    * Make all query reactions and subscriptions lazy.
    * They exists only when query result is observed.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#lazy-option-queryfeature)
    */
   lazy?: boolean;
+
+  /**
+   *
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#transformerror-queryfeature)
+   */
   transformError?: (error: any) => any;
 
   /**
@@ -155,6 +169,8 @@ export interface QueryFeatures {
 
   /**
    * Removes previous query if current query hash is different
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#autoremovepreviousquery-queryfeature)
    */
   autoRemovePreviousQuery?: boolean;
 }

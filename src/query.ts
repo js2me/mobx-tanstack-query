@@ -126,88 +126,126 @@ export class Query<
 
   /**
    * The last successfully resolved data for the query.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#data-tdata-undefined)
    */
   data!: TData | undefined;
   /**
    * The timestamp for when the query most recently returned the `status` as `"success"`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#dataupdatedat-number)
    */
   dataUpdatedAt!: number;
   /**
    * The error object for the query, if an error was thrown.
    * - Defaults to `null`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#error-terror-null)
    */
   error!: TError | null;
   /**
    * The timestamp for when the query most recently returned the `status` as `"error"`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#errorupdatedat-number)
    */
   errorUpdatedAt!: number;
   /**
    * The failure count for the query.
    * - Incremented every time the query fails.
    * - Reset to `0` when the query succeeds.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#failurecount-number)
    */
   failureCount!: number;
   /**
    * The failure reason for the query retry.
    * - Reset to `null` when the query succeeds.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#failurereason-terror-null)
    */
   failureReason!: TError | null;
   /**
    * The sum of all errors.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#errorupdatecount-number)
    */
   errorUpdateCount!: number;
   /**
    * A derived boolean from the `status` variable, provided for convenience.
    * - `true` if the query attempt resulted in an error.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#iserror-boolean)
    */
   isError!: boolean;
   /**
    * Will be `true` if the query has been fetched.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isfetched-boolean)
    */
   isFetched!: boolean;
   /**
    * A derived boolean from the `fetchStatus` variable, provided for convenience.
    * - `true` whenever the `queryFn` is executing, which includes initial `pending` as well as background refetch.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isfetching-boolean)
    */
   isFetching!: boolean;
   /**
    * Is `true` whenever the first fetch for a query is in-flight.
    * - Is the same as `isFetching && isPending`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isloading-boolean)
    */
   isLoading!: boolean;
   /**
    * Will be `pending` if there's no cached data and no query attempt was finished yet.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#ispending-boolean)
    */
   isPending!: boolean;
   /**
    * Will be `true` if the query failed while fetching for the first time.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isloadingerror-boolean)
    */
   isLoadingError!: boolean;
   /**
    * A derived boolean from the `fetchStatus` variable, provided for convenience.
    * - The query wanted to fetch, but has been `paused`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#ispaused-boolean)
    */
   isPaused!: boolean;
   /**
    * Will be `true` if the data shown is the placeholder data.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isplaceholderdata-boolean)
    */
   isPlaceholderData!: boolean;
   /**
    * Will be `true` if the query failed while refetching.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isrefetcherror-boolean)
    */
   isRefetchError!: boolean;
   /**
    * Is `true` whenever a background refetch is in-flight, which _does not_ include initial `pending`.
    * - Is the same as `isFetching && !isPending`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isrefetching-boolean)
    */
   isRefetching!: boolean;
   /**
    * Will be `true` if the data in the cache is invalidated or if the data is older than the given `staleTime`.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#isstale-boolean)
    */
   isStale!: boolean;
   /**
    * A derived boolean from the `status` variable, provided for convenience.
    * - `true` if the query has received a response with no errors and is ready to display its data.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#issuccess-boolean)
    */
   isSuccess!: boolean;
   /**
@@ -216,6 +254,8 @@ export class Query<
    *   - `pending` if there's no cached data and no query attempt was finished yet.
    *   - `error` if the query attempt resulted in an error.
    *   - `success` if the query has received a response with no errors and is ready to display its data.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#status-querystatus)
    */
   status!: QueryStatus;
   /**
@@ -224,6 +264,8 @@ export class Query<
    * - `paused`: The query wanted to fetch, but has been `paused`.
    * - `idle`: The query is not fetching.
    * - See [Network Mode](https://tanstack.com/query/latest/docs/framework/react/guides/network-mode) for more information.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#fetchstatus-fetchstatus)
    */
   fetchStatus!: FetchStatus;
 
@@ -487,6 +529,10 @@ export class Query<
     return undefined;
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#setdata-updater-options)
+   */
   setData(
     updater: Updater<
       NoInfer<TQueryFnData> | undefined,
@@ -501,6 +547,10 @@ export class Query<
     );
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#update-options)
+   */
   update(
     optionsUpdate: QueryUpdateOptionsAllVariants<
       TQueryFnData,
@@ -575,6 +625,10 @@ export class Query<
     }
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#result-queryobserverresult)
+   */
   public get result() {
     if (this.features.enableOnDemand && !this.isResultRequsted) {
       runInAction(() => {
@@ -602,6 +656,10 @@ export class Query<
     }
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#reset-params-options)
+   */
   async reset(params?: QueryResetParams, options?: ResetOptions) {
     if (this.features.cumulativeQueryHash) {
       return await this.queryClient.resetQueries({
@@ -628,6 +686,10 @@ export class Query<
     );
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#remove-params)
+   */
   remove(params?: QueryRemoveParams) {
     if (this.features.cumulativeQueryHash) {
       return this.queryClient.removeQueries({
@@ -663,6 +725,10 @@ export class Query<
     });
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#cancel-options)
+   */
   async cancel(options?: CancelOptions) {
     return await this.queryClient.cancelQueries(
       {
@@ -673,6 +739,10 @@ export class Query<
     );
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#invalidate-params)
+   */
   async invalidate(params?: QueryInvalidateParams) {
     return await this.queryClient.invalidateQueries({
       exact: true,
@@ -681,10 +751,18 @@ export class Query<
     } as any);
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#ondone-listener)
+   */
   onDone(doneListener: QueryDoneListener<TData>): void {
     this.doneListeners.push(doneListener);
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#onerror-listener)
+   */
   onError(errorListener: QueryErrorListener<TError>): void {
     this.errorListeners.push(errorListener);
   }
@@ -712,6 +790,10 @@ export class Query<
     this.cumulativeQueryKeyHashesSet.clear();
   }
 
+  /**
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#start-params)
+   */
   async start(
     params: QueryStartParams<
       TQueryFnData,

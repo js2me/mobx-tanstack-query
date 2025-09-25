@@ -1,0 +1,132 @@
+.i-logos\:mobx-icon {
+  background: url(/mobx.svg) no-repeat;
+  background-size: 100% 100%;
+  background-color: transparent;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/**
+ * Component: Algolia
+ * -------------------------------------------------------------------------- */
+
+.DocSearch {
+  --docsearch-primary-color: var(--vp-c-brand-1) !important;
+} 
+
+@media (min-width: 640px) {
+  :root {
+    --vp-home-hero-image-filter: blur(56px);
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --vp-home-hero-image-filter: blur(68px);
+  }
+}
+
+
+:root {
+  --vp-c-bg-feature-soft: #f6f6f76b;
+}
+
+html.dark {
+  --vp-c-bg-feature-soft: #20212730;
+}
+
+.custom-block > .custom-block-title:first-child:last-child {
+    margin-top: -8px;
+}
+p:has(>em:first-child:last-child) + div[class*=language-] {
+    margin-top: -10px;
+}
+
+.vp-doc strong a {
+    font-weight: bold;
+}
+
+.vp-doc strong code {
+    font-weight: bold;
+}
+
+.VPHome {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+}
+
+.VPContent.is-home {
+    display: flex;
+}
+
+.VPHero.has-image.VPHomeHero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.VPHero.has-image .main {position: relative;}
+
+.VPHero.has-image .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-bottom: 7vh;
+}
+
+.main > .heading > .text {
+    font-size: 24px;
+    line-height: 28px;
+    padding-top: 20px;
+}
+
+html .VPFooter {
+    border-top: 0 !important;
+}
+
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPHero.has-image .container {
+  margin-bottom: 0;
+  margin-top: auto;
+}
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPHero.has-image.VPHomeHero {
+  flex: 1;
+}
+html:has(.VPFeatures.VPHomeFeatures .items > .item) .VPFeatures.VPHomeFeatures {
+  margin-bottom: auto;
+  flex: 1;
+}
+
+html.gh-preview .main > .heading > .name {
+  line-height: 72px;
+  font-size: 68px;
+}
+html.gh-preview .main > .heading > .text {
+  font-size: 43px;
+  line-height: 48px;
+}
+html.gh-preview .main > .actions {
+  opacity: 0;
+}
+html.gh-preview .VPFeatures.VPHomeFeatures {
+  opacity: 0;
+}
+
+#VPContent .VPFeature {
+  display: block;
+  background-color: var(--vp-c-bg-feature-soft);
+  border: 0;
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+}
+
+#app .VPFooter .message, #app .VPFooter .copyright {
+  line-height: 18px;
+  font-size: 13px;
+}
+
+#app .VPFeature .icon {
+  border-radius: 12px;
+}

@@ -44,7 +44,7 @@ console.info(result.data, result.isPending, result.isError);
 
 #### `data: TData | undefined`
 
-The last successfully resolved data for the mutation.   
+The last successfully resolved data for the mutation.
 
 Example:
 
@@ -57,45 +57,55 @@ const mutation = new Mutation({
 mutation.data; // updated pet or undefined
 ```
 
-#### `error: TError | null`  
+#### `error: TError | null`
 
-The error object for the mutation, if an error was encountered. 
+The error object for the mutation, if an error was encountered.
 
-#### `variables`   
+#### `variables`
 
-The last variables that were passed to the mutation function.   
+The last variables that were passed to the mutation function.
 
 #### `isError`
+
 A boolean variable derived from `status`. Will be `true` if the last mutation attempt resulted in an error.
 
 #### `isIdle`
+
 A boolean variable derived from `status`. Will be `true` if the mutation is in its initial state prior to executing.
 
 #### `isPending`
+
 A boolean variable derived from `status`. Will be `true` if the mutation is currently executing.
 
 #### `isSuccess`
+
 A boolean variable derived from `status`. Will be `true` if the last mutation attempt was successful.
 
 #### `status`
-The status of the mutation.  
-- Will be:  
+
+The status of the mutation.
+
+- Will be:
   - `idle` initial status prior to the mutation function executing.
   - `pending` if the mutation is currently executing.
   - `error` if the last mutation attempt resulted in an error.
   - `success` if the last mutation attempt was successful.
 
 #### `failureCount`
+
 The failure count for the mutation. Incremented every time the mutation fails.
 
 #### `failureReason`
+
 The failure reason for the mutation retry.
 
 #### `isPaused`
-will be `true` if the mutation has been paused. See [Network Mode](https://tanstack.com/query/v5/docs/framework/react/guides/network-mode) for more information.  
+
+will be `true` if the mutation has been paused. See [Network Mode](https://tanstack.com/query/v5/docs/framework/react/guides/network-mode) for more information.
 
 #### `submittedAt`
-The timestamp for when the mutation was submitted.  
+
+The timestamp for when the mutation was submitted.
 
 ## Built-in Features
 
@@ -120,6 +130,9 @@ abortController.abort();
 ```
 
 This is alternative for `destroy` method
+
+::: tip this option is optional if you are using `lazy` option
+:::
 
 ### `lazy` option
 
