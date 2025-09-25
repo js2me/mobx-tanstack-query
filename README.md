@@ -18,7 +18,7 @@
 
 _**MobX** wrapper for [**Tanstack Query Core**](https://tanstack.com/query/latest) package_  
 
-## Documentation is [here](https://js2me.github.io/mobx-tanstack-query)  
+### [Read the docs →](https://js2me.github.io/mobx-tanstack-query/)
 
 ```ts
 import { Query } from "mobx-tanstack-query";
