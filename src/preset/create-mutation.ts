@@ -9,9 +9,9 @@ export type CreateMutationParams<
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
-  TContext = unknown,
+  TOnMutateResult = unknown,
 > = Omit<
-  MutationConfig<TData, TVariables, TError, TContext>,
+  MutationConfig<TData, TVariables, TError, TOnMutateResult>,
   'queryClient' | 'mutationFn'
 > & {
   queryClient?: QueryClient;
@@ -21,10 +21,10 @@ export const createMutation = <
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
-  TContext = unknown,
+  TOnMutateResult = unknown,
 >(
-  fn: MutationConfig<TData, TVariables, TError, TContext>['mutationFn'],
-  params?: CreateMutationParams<TData, TVariables, TError, TContext>,
+  fn: MutationConfig<TData, TVariables, TError, TOnMutateResult>['mutationFn'],
+  params?: CreateMutationParams<TData, TVariables, TError, TOnMutateResult>,
 ) => {
   return new Mutation({
     ...params,

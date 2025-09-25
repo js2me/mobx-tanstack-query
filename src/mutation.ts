@@ -3,9 +3,9 @@ import {
   MutationObserver,
   MutationObserverOptions,
   MutationObserverResult,
-  MutationOptions,
   MutationObserverBaseResult,
   MutationStatus,
+  MutateOptions,
 } from '@tanstack/query-core';
 import { action, makeObservable, observable } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
@@ -42,22 +42,32 @@ export class Mutation<
     TData = unknown,
     TVariables = void,
     TError = DefaultError,
-    TContext = unknown,
+    TOnMutateResult = unknown,
   >
   extends Destroyable
   implements
     Disposable,
     Pick<
-      MutationObserverBaseResult<TData, TError, TVariables, TContext>,
+      MutationObserverBaseResult<TData, TError, TVariables, TOnMutateResult>,
       (typeof originalMutationProperties)[number]
     >
 {
   protected queryClient: AnyQueryClient;
 
-  mutationOptions: MutationObserverOptions<TData, TError, TVariables, TContext>;
-  mutationObserver: MutationObserver<TData, TError, TVariables, TContext>;
+  mutationOptions: MutationObserverOptions<
+    TData,
+    TError,
+    TVariables,
+    TOnMutateResult
+  >;
+  mutationObserver: MutationObserver<
+    TData,
+    TError,
+    TVariables,
+    TOnMutateResult
+  >;
 
-  result: MutationObserverResult<TData, TError, TVariables, TContext>;
+  result: MutationObserverResult<TData, TError, TVariables, TOnMutateResult>;
 
   protected features: MutationFeatures;
 
@@ -65,14 +75,18 @@ export class Mutation<
     TData,
     TError,
     TVariables,
-    TContext
+    TOnMutateResult
   >[];
   protected errorListeners: MutationErrorListener<
     TError,
     TVariables,
-    TContext
+    TOnMutateResult
   >[];
-  protected doneListeners: MutationDoneListener<TData, TVariables, TContext>[];
+  protected doneListeners: MutationDoneListener<
+    TData,
+    TVariables,
+    TOnMutateResult
+  >[];
 
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
@@ -120,14 +134,19 @@ export class Mutation<
    */
   status!: MutationStatus;
 
-  context!: TContext | undefined;
+  context!: TOnMutateResult | undefined;
   failureCount!: number;
   failureReason!: TError | null;
   isPaused!: boolean;
   submittedAt!: number;
 
   constructor(
-    protected config: MutationConfig<TData, TVariables, TError, TContext>,
+    protected config: MutationConfig<
+      TData,
+      TVariables,
+      TError,
+      TOnMutateResult
+    >,
   ) {
     super(config.abortSignal);
 
@@ -166,15 +185,9 @@ export class Mutation<
     this.start = this.start.bind(this);
 
     originalMutationProperties.forEach((property) => {
-      if (property === 'error' && this.features.transformError) {
-        Object.defineProperty(this, property, {
-          get: () => this.features.transformError!(this.result[property]),
-        });
-      } else {
-        Object.defineProperty(this, property, {
-          get: () => this.result[property],
-        });
-      }
+      Object.defineProperty(this, property, {
+        get: () => this.result[property],
+      });
     });
 
     makeObservable(this);
@@ -185,7 +198,7 @@ export class Mutation<
       TData,
       TError,
       TVariables,
-      TContext
+      TOnMutateResult
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
     >(queryClient, {
@@ -273,7 +286,7 @@ export class Mutation<
 
   async mutate(
     variables: TVariables,
-    options?: MutationOptions<TData, TError, TVariables, TContext>,
+    options?: MutateOptions<TData, TError, TVariables, TOnMutateResult>,
   ) {
     if (this.features.lazy) {
       let error: any;
@@ -299,7 +312,7 @@ export class Mutation<
 
   async start(
     variables: TVariables,
-    options?: MutationOptions<TData, TError, TVariables, TContext>,
+    options?: MutateOptions<TData, TError, TVariables, TOnMutateResult>,
   ) {
     return await this.mutate(variables, options);
   }
@@ -308,9 +321,13 @@ export class Mutation<
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(
-    result: MutationObserverResult<TData, TError, TVariables, TContext>,
+    result: MutationObserverResult<TData, TError, TVariables, TOnMutateResult>,
   ) {
     this.result = result || {};
+
+    if (this.features.transformError && this.result.error) {
+      this.result.error = this.features.transformError(this.result.error);
+    }
 
     if (result.isSuccess && !result.error) {
       this.doneListeners.forEach((fn) =>
@@ -330,16 +347,25 @@ export class Mutation<
   }
 
   onSettled(
-    listener: MutationSettledListener<TData, TError, TVariables, TContext>,
+    listener: MutationSettledListener<
+      TData,
+      TError,
+      TVariables,
+      TOnMutateResult
+    >,
   ): void {
     this.settledListeners.push(listener);
   }
 
-  onDone(listener: MutationDoneListener<TData, TVariables, TContext>): void {
+  onDone(
+    listener: MutationDoneListener<TData, TVariables, TOnMutateResult>,
+  ): void {
     this.doneListeners.push(listener);
   }
 
-  onError(listener: MutationErrorListener<TError, TVariables, TContext>): void {
+  onError(
+    listener: MutationErrorListener<TError, TVariables, TOnMutateResult>,
+  ): void {
     this.errorListeners.push(listener);
   }
 
@@ -370,5 +396,5 @@ export class MobxMutation<
   TData = unknown,
   TVariables = void,
   TError = DefaultError,
-  TContext = unknown,
-> extends Mutation<TData, TVariables, TError, TContext> {}
+  TOnMutateResult = unknown,
+> extends Mutation<TData, TVariables, TError, TOnMutateResult> {}

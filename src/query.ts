@@ -325,15 +325,9 @@ export class Query<
     this.start = this.start.bind(this);
 
     originalQueryProperties.forEach((property) => {
-      if (property === 'error' && this.features.transformError) {
-        Object.defineProperty(this, property, {
-          get: () => this.features.transformError!(this.result[property]),
-        });
-      } else {
-        Object.defineProperty(this, property, {
-          get: () => this.result[property],
-        });
-      }
+      Object.defineProperty(this, property, {
+        get: () => this.result[property],
+      });
     });
 
     makeObservable(this);
@@ -596,6 +590,10 @@ export class Query<
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
     this._result = result;
+
+    if (this.features.transformError && this._result.error) {
+      this._result.error = this.features.transformError(this._result.error);
+    }
 
     if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
       this.doneListeners.forEach((fn) => fn(result.data!, void 0));

@@ -369,12 +369,7 @@ export class InfiniteQuery<
     this.start = this.start.bind(this);
 
     originalQueryProperties.forEach((property) => {
-      if (this[property]) return;
-      if (property === 'error' && this.features.transformError) {
-        Object.defineProperty(this, property, {
-          get: () => this.features.transformError!(this.result[property]),
-        });
-      } else {
+      if (!this[property]) {
         Object.defineProperty(this, property, {
           get: () => this.result[property],
         });
