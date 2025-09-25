@@ -1,0 +1,23 @@
+@import url('sborshik/vitepress/styles');
+@import url('sborshik/vitepress/animate-logo');
+
+:root {
+  --vp-c-brand-1: #ff3572;
+  --vp-c-brand-2: #ff3e51;
+  --vp-c-brand-3: #fb1f35;
+  --vp-c-brand-soft: #ff517a2b;
+
+  --custom-brand-1: #ff1148;
+  --custom-brand-2: #ff7a32;
+  --custom-brand-3: #ffbbcf;
+}
+
+html.dark {
+  --vp-c-brand-1: #ff5381;
+  --vp-c-brand-2: #f54c5c;
+  --vp-c-brand-3: #fb1f35;
+  --vp-c-brand-soft: #ff517a2b;
+
+  --custom-brand-2: #ff510b;
+  --custom-brand-3: #ff243d;
+}

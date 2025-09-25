@@ -2,9 +2,7 @@
 import { h } from 'vue';
 import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
-import './pallete.css';
-import './customs.css';
-import './logo-animate.css';
+import './style.css';
 import 'uno.css';
 
 export default {
