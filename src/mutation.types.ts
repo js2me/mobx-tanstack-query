@@ -2,6 +2,7 @@ import {
   DefaultError,
   InvalidateQueryFilters,
   MutationObserverOptions,
+  MutationFunctionContext as MutationFunctionContextCore,
 } from '@tanstack/query-core';
 
 import { Mutation } from './mutation';
@@ -113,6 +114,9 @@ export interface MutationConfig<
         payload: TVariables,
       ) => MutationInvalidateQueriesOptions | null | undefined);
   onInit?: (mutation: Mutation<TData, TVariables, TError, TContext>) => void;
+}
+export interface MutationFunctionContext extends MutationFunctionContextCore {
+  signal: AbortSignal;
 }
 
 /**

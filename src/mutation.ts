@@ -15,6 +15,7 @@ import {
   MutationDoneListener,
   MutationErrorListener,
   MutationFeatures,
+  MutationFunctionContext,
   MutationInvalidateQueriesOptions,
   MutationSettledListener,
 } from './mutation.types';
@@ -175,6 +176,8 @@ export class Mutation<
         config.transformError ?? qc.mutationFeatures?.transformError,
     };
 
+    this.hooks = qc.hooks;
+
     this.settledListeners = [];
     this.errorListeners = [];
     this.doneListeners = [];
@@ -203,8 +206,11 @@ export class Mutation<
       // @ts-expect-error
     >(queryClient, {
       ...this.mutationOptions,
-      mutationFn: (variables) =>
-        mutationFn?.(variables, { signal: this.abortController.signal }),
+      mutationFn: (variables, context) =>
+        mutationFn?.(variables, {
+          ...context,
+          signal: this.abortController.signal,
+        } satisfies MutationFunctionContext),
     });
 
     this.updateResult(this.mutationObserver.getCurrentResult());
