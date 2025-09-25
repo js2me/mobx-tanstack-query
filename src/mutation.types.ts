@@ -59,7 +59,7 @@ export type MobxMutationInvalidateQueriesOptions =
 
 export type MutationFn<TData = unknown, TVariables = unknown> = (
   variables: TVariables,
-  options: { signal: AbortSignal },
+  context: MutationFunctionContext,
 ) => Promise<TData>;
 
 /**
