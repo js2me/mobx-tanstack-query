@@ -18,8 +18,8 @@ importers:
         specifier: ^6.12.4
         version: 6.13.6
       yummies:
-        specifier: ^5.4.8
-        version: 5.4.8(mobx@6.13.6)(react@19.0.0)
+        specifier: ^5.7.1
+        version: 5.7.1(mobx@6.13.6)(react@19.0.0)
     devDependencies:
       '@changesets/changelog-github':
         specifier: ^0.5.1
@@ -4291,8 +4291,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  yummies@5.4.8:
-    resolution: {integrity: sha512-3rpVP1ECoB+vFJ5erXBBQV5Qy350/JC35HwywImxIv8gTwqz5/PfOc0r2Q5JlNlFXDfAso4eaugjUx1qJsPg4g==}
+  yummies@5.7.1:
+    resolution: {integrity: sha512-1bGP+kOyTUAi3pvfDCqzAL1ndXef1urW2XAftZFmhXsV8ytGXkOlEMKTOKpaLuNNOSKq/0Ct0qlZndqQTBH62g==}
     peerDependencies:
       mobx: ^6.12.4
       react: ^18 || ^19
@@ -9134,7 +9134,7 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yummies@5.4.8(mobx@6.13.6)(react@19.0.0):
+  yummies@5.7.1(mobx@6.13.6)(react@19.0.0):
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1

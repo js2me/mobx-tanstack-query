@@ -267,7 +267,18 @@ Explanation of difference between `fetchStatus` and `status`:
 
 ### `options: QueryOptions`
 
-The options used to configure the query.
+The options used to configure the query.   
+Gives access to query options from tanstack query core package defined by user and default client options.  
+
+::: tip This property is read only. You can't update it directly
+:::  
+
+Example:   
+```ts
+const query = new Query({ enabled: false });
+
+console.log(query.options.enabled); // false
+```
 
 ### `queryObserver: QueryObserver`
 
