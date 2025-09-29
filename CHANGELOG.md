@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.8.4
+
+### Patch Changes
+
+- [`6d4e11b`](https://github.com/js2me/mobx-tanstack-query/commit/6d4e11bfd8eb764b22ce974a2dfaed5c779940da) Thanks [@js2me](https://github.com/js2me)! - try to fix zombie observers with `lazy` option
+
 ## 6.8.3
 
 ### Patch Changes
