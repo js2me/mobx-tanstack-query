@@ -15,8 +15,8 @@ importers:
         specifier: ^0.61.9
         version: 0.61.9
       sborshik:
-        specifier: ^1.0.16
-        version: 1.0.16(@algolia/client-search@5.23.4)(@types/node@24.5.2)(postcss@8.5.3)(search-insights@2.17.3)
+        specifier: ^1.0.17
+        version: 1.0.17(@algolia/client-search@5.23.4)(@types/node@24.5.2)(postcss@8.5.3)(search-insights@2.17.3)
       unocss:
         specifier: ^0.61.9
         version: 0.61.9(postcss@8.5.3)(rollup@4.40.0)(vite@5.4.18(@types/node@24.5.2))
@@ -2279,8 +2279,8 @@ packages:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
     engines: {node: '>=v12.22.7'}
 
-  sborshik@1.0.16:
-    resolution: {integrity: sha512-jBYKQwskhCh43WCECY9ptUQuJo7LyBdilJnjxHlkJNU1GcP/ipQpmT53Ar1ZGzFbCx9kGm5nYpVlE2Pk6nkhVg==}
+  sborshik@1.0.17:
+    resolution: {integrity: sha512-Qq7J8RrPGCFxVIfZyEFMNDMZWkBPRIkHtaKEThb0+uCS2yb5pbrw+YU9Ih5k88gq1WMHmRo2k/X4CM7B5hMV2A==}
     hasBin: true
 
   search-insights@2.17.3:
@@ -5024,7 +5024,7 @@ snapshots:
     dependencies:
       xmlchars: 2.2.0
 
-  sborshik@1.0.16(@algolia/client-search@5.23.4)(@types/node@24.5.2)(postcss@8.5.3)(search-insights@2.17.3):
+  sborshik@1.0.17(@algolia/client-search@5.23.4)(@types/node@24.5.2)(postcss@8.5.3)(search-insights@2.17.3):
     dependencies:
       '@types/jsdom': 27.0.0
       cac: 6.7.14
