@@ -1,9 +1,12 @@
 import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
-import { Query } from '../query';
-import { AnyQueryClient } from '../query-client.types';
-import { QueryOptionsParams } from '../query-options';
-import { QueryConfig, QueryFn } from '../query.types';
+import {
+  Query,
+  AnyQueryClient,
+  QueryOptionsParams,
+  QueryConfig,
+  QueryFn,
+} from '../index.js';
 
 import { queryClient } from './query-client';
 

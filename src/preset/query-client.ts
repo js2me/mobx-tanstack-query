@@ -1,4 +1,4 @@
-import { QueryClient } from '../query-client';
+import { QueryClient } from '../index.js';
 
 import { defaultQueryClientConfig } from './configs';
 

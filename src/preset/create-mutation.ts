@@ -1,7 +1,6 @@
 import { DefaultError, QueryClient } from '@tanstack/query-core';
 
-import { Mutation } from '../mutation';
-import { MutationConfig } from '../mutation.types';
+import { Mutation, MutationConfig } from '../index.js';
 
 import { queryClient } from './query-client';
 

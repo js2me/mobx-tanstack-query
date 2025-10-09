@@ -5,8 +5,7 @@ import {
   QueryKey,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery } from '../inifinite-query';
-import { InfiniteQueryConfig } from '../inifinite-query.types';
+import { InfiniteQuery, InfiniteQueryConfig } from '../index.js';
 
 import { queryClient } from './query-client';
 

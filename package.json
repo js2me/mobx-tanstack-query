@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "linked-abort-controller": "^1.1.0",
-    "yummies": "^5.7.1"
+    "yummies": "^5.11.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
@@ -67,7 +67,7 @@
     "commitfmt": "^1.0.0",
     "eslint": "^8.57.0",
     "js2me-eslint-config": "^1.0.6",
-    "sborshik": "^1.0.10",
+    "sborshik": "^1.0.25",
     "jsdom": "^25.0.1",
     "lefthook": "^1.11.13",
     "nodemon": "^3.1.0",
