@@ -1,5 +1,17 @@
 # mobx-tanstack-query
 
+## 6.9.0
+
+### Minor Changes
+
+- [`0b872cc`](https://github.com/js2me/mobx-tanstack-query/commit/0b872ccc532f8b3cb6f5c570241daa75f8ab1084) Thanks [@js2me](https://github.com/js2me)! - internal: migrate to Biome
+
+- [`0b872cc`](https://github.com/js2me/mobx-tanstack-query/commit/0b872ccc532f8b3cb6f5c570241daa75f8ab1084) Thanks [@js2me](https://github.com/js2me)! - improve bundle (use vite + terser)
+
+### Patch Changes
+
+- [`0b872cc`](https://github.com/js2me/mobx-tanstack-query/commit/0b872ccc532f8b3cb6f5c570241daa75f8ab1084) Thanks [@js2me](https://github.com/js2me)! - try to fix problems with webpack 5\* use
+
 ## 6.8.5
 
 ### Patch Changes
