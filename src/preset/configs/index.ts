@@ -1,1 +1,1 @@
-export * from './default-query-client-config';
+export * from './default-query-client-config.js';

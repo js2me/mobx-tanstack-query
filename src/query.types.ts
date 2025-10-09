@@ -1,14 +1,14 @@
-import {
-  DefaultedQueryObserverOptions,
+import type {
   DefaultError,
+  DefaultedQueryObserverOptions,
   InvalidateQueryFilters,
   QueryFilters,
   QueryKey,
   QueryObserverOptions,
 } from '@tanstack/query-core';
 
-import type { Query } from './query';
-import { AnyQueryClient } from './query-client.types';
+import type { Query } from './query.js';
+import type { AnyQueryClient } from './query-client.types.js';
 
 export interface QueryInvalidateParams
   extends Partial<Omit<InvalidateQueryFilters, 'queryKey' | 'exact'>> {}
@@ -344,16 +344,33 @@ export type MobxQueryStartParams<
 export type InferQuery<
   T extends QueryConfig | Query,
   TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',
-> =
-  T extends QueryConfig<
-    infer TQueryFnData,
-    infer TError,
-    infer TData,
-    infer TQueryData,
-    infer TQueryKey
-  >
+> = T extends QueryConfig<
+  infer TQueryFnData,
+  infer TError,
+  infer TData,
+  infer TQueryData,
+  infer TQueryKey
+>
+  ? TInferValue extends 'config'
+    ? T
+    : TInferValue extends 'data'
+      ? TData
+      : TInferValue extends 'key'
+        ? TQueryKey
+        : TInferValue extends 'error'
+          ? TError
+          : TInferValue extends 'query'
+            ? Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+            : never
+  : T extends Query<
+        infer TQueryFnData,
+        infer TError,
+        infer TData,
+        infer TQueryData,
+        infer TQueryKey
+      >
     ? TInferValue extends 'config'
-      ? T
+      ? QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
       : TInferValue extends 'data'
         ? TData
         : TInferValue extends 'key'
@@ -361,24 +378,6 @@ export type InferQuery<
           : TInferValue extends 'error'
             ? TError
             : TInferValue extends 'query'
-              ? Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+              ? T
               : never
-    : T extends Query<
-          infer TQueryFnData,
-          infer TError,
-          infer TData,
-          infer TQueryData,
-          infer TQueryKey
-        >
-      ? TInferValue extends 'config'
-        ? QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
-        : TInferValue extends 'data'
-          ? TData
-          : TInferValue extends 'key'
-            ? TQueryKey
-            : TInferValue extends 'error'
-              ? TError
-              : TInferValue extends 'query'
-                ? T
-                : never
-      : never;
+    : never;

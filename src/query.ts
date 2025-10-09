@@ -1,17 +1,17 @@
 import {
-  DefaultError,
+  type CancelOptions,
+  type DefaultError,
+  type FetchStatus,
   hashKey,
-  QueryKey,
+  type QueryKey,
   QueryObserver,
-  QueryObserverResult,
-  RefetchOptions,
-  SetDataOptions,
-  Updater,
-  QueryObserverBaseResult,
-  FetchStatus,
-  QueryStatus,
-  CancelOptions,
-  ResetOptions,
+  type QueryObserverBaseResult,
+  type QueryObserverResult,
+  type QueryStatus,
+  type RefetchOptions,
+  type ResetOptions,
+  type SetDataOptions,
+  type Updater,
 } from '@tanstack/query-core';
 import {
   action,
@@ -23,11 +23,8 @@ import {
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
-import { enableHolder } from './constants';
-import { QueryClient } from './query-client';
-import { AnyQueryClient, QueryClientHooks } from './query-client.types';
-import { QueryOptionsParams } from './query-options';
-import {
+import { enableHolder } from './constants.js';
+import type {
   QueryConfig,
   QueryDoneListener,
   QueryErrorListener,
@@ -38,8 +35,11 @@ import {
   QueryResetParams,
   QueryStartParams,
   QueryUpdateOptionsAllVariants,
-} from './query.types';
-import { Destroyable } from './utils/destroyable';
+} from './query.types.js';
+import type { QueryClient } from './query-client.js';
+import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
+import type { QueryOptionsParams } from './query-options.js';
+import { Destroyable } from './utils/destroyable.js';
 
 const originalQueryProperties = [
   'data',
@@ -650,9 +650,13 @@ export class Query<
     }
 
     if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
-      this.doneListeners.forEach((fn) => fn(result.data!, void 0));
+      this.doneListeners.forEach((fn) => {
+        fn(result.data!, void 0);
+      });
     } else if (result.error) {
-      this.errorListeners.forEach((fn) => fn(result.error!, void 0));
+      this.errorListeners.forEach((fn) => {
+        fn(result.error!, void 0);
+      });
     }
   }
 
@@ -776,6 +780,7 @@ export class Query<
     this.queryObserver.destroy();
 
     if (this.features.resetOnDestroy) {
+      // biome-ignore lint/nursery/noFloatingPromises: <explanation>
       this.reset();
     }
 

@@ -1,15 +1,15 @@
-import {
-  DefaultError,
+import type {
   DefaultOptions as DefaultCoreOptions,
+  DefaultError,
   QueryClient as QueryClientCore,
   QueryClientConfig as QueryClientCoreConfig,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery } from './inifinite-query';
-import { Mutation } from './mutation';
-import { MutationFeatures } from './mutation.types';
-import type { QueryClient } from './query-client';
-import { AnyQuery, QueryFeatures } from './query.types';
+import type { InfiniteQuery } from './inifinite-query.js';
+import type { Mutation } from './mutation.js';
+import type { MutationFeatures } from './mutation.types.js';
+import type { AnyQuery, QueryFeatures } from './query.types.js';
+import type { QueryClient } from './query-client.js';
 
 export type IQueryClientCore = {
   [K in keyof QueryClientCore]: QueryClientCore[K];

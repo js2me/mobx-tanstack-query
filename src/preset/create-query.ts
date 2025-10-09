@@ -1,14 +1,14 @@
-import { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
+import type { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
 import {
+  type AnyQueryClient,
   Query,
-  AnyQueryClient,
-  QueryOptionsParams,
-  QueryConfig,
-  QueryFn,
-} from '../index.js';
+  type QueryConfig,
+  type QueryFn,
+  type QueryOptionsParams,
+} from 'mobx-tanstack-query';
 
-import { queryClient } from './query-client';
+import { queryClient } from './query-client.js';
 
 export type CreateQueryParams<
   TQueryFnData = unknown,

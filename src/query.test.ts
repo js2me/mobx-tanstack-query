@@ -1,13 +1,14 @@
 /* eslint-disable no-async-promise-executor */
+/** biome-ignore-all lint/nursery/noFloatingPromises: <explanation> */
 import {
-  DefaultError,
-  QueryClient,
-  QueryKey,
-  QueryObserverResult,
-  RefetchOptions,
-  SetDataOptions,
-  Updater,
+  type DefaultError,
   hashKey,
+  QueryClient,
+  type QueryKey,
+  type QueryObserverResult,
+  type RefetchOptions,
+  type SetDataOptions,
+  type Updater,
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
@@ -31,15 +32,15 @@ import {
 } from 'vitest';
 import { sleep } from 'yummies/async';
 
-import { createQuery } from './preset';
-import { Query } from './query';
-import { QueryClient as MobxQueryClient } from './query-client';
-import {
+import { createQuery } from './preset/index.js';
+import { Query } from './query.js';
+import type {
   QueryConfig,
   QueryDynamicOptions,
   QueryInvalidateParams,
   QueryUpdateOptions,
-} from './query.types';
+} from './query.types.js';
+import { QueryClient as MobxQueryClient } from './query-client.js';
 
 class QueryMock<
   TQueryFnData = unknown,
@@ -69,9 +70,8 @@ class QueryMock<
     super({
       ...options,
       queryClient: queryClient ?? new QueryClient({}),
-      // @ts-ignore
       queryFn: vi.fn((...args: any[]) => {
-        // @ts-ignore
+        // @ts-expect-error
         const result = options.queryFn?.(...args);
         return result;
       }),
@@ -106,7 +106,6 @@ class QueryMock<
   ): void {
     const result = super.update(options);
     this.spies.update.mockReturnValue(result)(options);
-    return result;
   }
 
   setData(
@@ -124,7 +123,6 @@ class QueryMock<
   dispose(): void {
     const result = super.destroy();
     this.spies.dispose.mockReturnValue(result)();
-    return result;
   }
 }
 

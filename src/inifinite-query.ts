@@ -1,29 +1,29 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
-  DefaultError,
-  FetchNextPageOptions,
-  FetchPreviousPageOptions,
+  type DefaultError,
+  type FetchNextPageOptions,
+  type FetchPreviousPageOptions,
+  type FetchStatus,
+  type InfiniteData,
   InfiniteQueryObserver,
-  QueryKey,
-  InfiniteQueryObserverResult,
-  InfiniteData,
-  Updater,
-  FetchStatus,
-  QueryStatus,
-  InfiniteQueryObserverBaseResult,
-  RefetchOptions,
-  SetDataOptions,
+  type InfiniteQueryObserverBaseResult,
+  type InfiniteQueryObserverResult,
+  type QueryKey,
+  type QueryStatus,
+  type RefetchOptions,
+  type SetDataOptions,
+  type Updater,
 } from '@tanstack/query-core';
 import {
   action,
-  reaction,
   makeObservable,
   observable,
+  reaction,
   runInAction,
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
-import {
+import type {
   InfiniteQueryConfig,
   InfiniteQueryDoneListener,
   InfiniteQueryErrorListener,
@@ -34,12 +34,12 @@ import {
   InfiniteQueryResetParams,
   InfiniteQueryStartParams,
   InfiniteQueryUpdateOptionsAllVariants,
-} from './inifinite-query.types';
-import { Query } from './query';
-import { QueryClient } from './query-client';
-import { AnyQueryClient, QueryClientHooks } from './query-client.types';
-import { QueryFeatures } from './query.types';
-import { Destroyable } from './utils/destroyable';
+} from './inifinite-query.types.js';
+import { Query } from './query.js';
+import type { QueryFeatures } from './query.types.js';
+import type { QueryClient } from './query-client.js';
+import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
+import { Destroyable } from './utils/destroyable.js';
 
 const originalQueryProperties = [
   'data',
@@ -512,7 +512,7 @@ export class InfiniteQuery<
       TQueryKey
     >,
   ) {
-    // @ts-ignore
+    // @ts-expect-error
     return Query.prototype.createQueryHash.call(this, queryKey, options);
   }
 
@@ -563,7 +563,7 @@ export class InfiniteQuery<
       TQueryKey
     >,
   ) {
-    // @ts-ignore works the same
+    // @ts-expect-error works the same
     return Query.prototype.processOptions.call(this, options);
   }
 
@@ -581,7 +581,7 @@ export class InfiniteQuery<
    * Modify this result so it matches the tanstack query result.
    */
   private updateResult(result: InfiniteQueryObserverResult<TData, TError>) {
-    // @ts-ignore
+    // @ts-expect-error
     return Query.prototype.updateResult.call(this, result);
   }
 

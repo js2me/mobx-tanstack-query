@@ -1,13 +1,13 @@
-import {
+import type {
   DefaultError,
   InfiniteData,
   QueryClient,
   QueryKey,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery, InfiniteQueryConfig } from '../index.js';
+import { InfiniteQuery, type InfiniteQueryConfig } from 'mobx-tanstack-query';
 
-import { queryClient } from './query-client';
+import { queryClient } from './query-client.js';
 
 export type CreateInfiniteQueryParams<
   TQueryFnData = unknown,

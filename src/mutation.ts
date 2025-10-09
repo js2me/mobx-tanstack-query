@@ -1,16 +1,16 @@
 import {
-  DefaultError,
+  type DefaultError,
+  type MutateOptions,
   MutationObserver,
-  MutationObserverOptions,
-  MutationObserverResult,
-  MutationObserverBaseResult,
-  MutationStatus,
-  MutateOptions,
+  type MutationObserverBaseResult,
+  type MutationObserverOptions,
+  type MutationObserverResult,
+  type MutationStatus,
 } from '@tanstack/query-core';
 import { action, makeObservable, observable } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
 
-import {
+import type {
   MutationConfig,
   MutationDoneListener,
   MutationErrorListener,
@@ -18,10 +18,10 @@ import {
   MutationFunctionContext,
   MutationInvalidateQueriesOptions,
   MutationSettledListener,
-} from './mutation.types';
-import { QueryClient } from './query-client';
-import { AnyQueryClient, QueryClientHooks } from './query-client.types';
-import { Destroyable } from './utils/destroyable';
+} from './mutation.types.js';
+import type { QueryClient } from './query-client.js';
+import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
+import { Destroyable } from './utils/destroyable.js';
 
 const originalMutationProperties = [
   'data',
@@ -336,19 +336,19 @@ export class Mutation<
     }
 
     if (result.isSuccess && !result.error) {
-      this.doneListeners.forEach((fn) =>
-        fn(result.data!, result.variables!, result.context),
-      );
+      this.doneListeners.forEach((fn) => {
+        fn(result.data!, result.variables!, result.context);
+      });
     } else if (result.error) {
-      this.errorListeners.forEach((fn) =>
-        fn(result.error!, result.variables!, result.context),
-      );
+      this.errorListeners.forEach((fn) => {
+        fn(result.error!, result.variables!, result.context);
+      });
     }
 
     if (!result.isPending && (result.isError || result.isSuccess)) {
-      this.settledListeners.forEach((fn) =>
-        fn(result.data!, result.error, result.variables!, result.context),
-      );
+      this.settledListeners.forEach((fn) => {
+        fn(result.data!, result.error, result.variables!, result.context);
+      });
     }
   }
 

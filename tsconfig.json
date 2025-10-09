@@ -13,16 +13,21 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
+		"module": "NodeNext",
+		"moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "typeRoots": [
       "./node_modules/@types/", "./types", "./node_modules"
     ],
-    "noEmit": false
+    "noEmit": false,
+		"paths": {
+			"mobx-tanstack-query": ["./src/index.ts"],
+			"mobx-tanstack-query/preset": ["./src/preset/index.ts"]
+		}
   },
   "include": [
     "src"
-  ]
+  ],
+	"exclude": ["src/**/*.test.ts"]
 }

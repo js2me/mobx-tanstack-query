@@ -1,6 +1,6 @@
-import { DefaultError, QueryKey } from '@tanstack/query-core';
+import type { DefaultError, QueryKey } from '@tanstack/query-core';
 
-import { QueryConfig } from './query.types';
+import type { QueryConfig } from './query.types.js';
 
 export interface QueryOptionsParams<
   TQueryFnData = unknown,

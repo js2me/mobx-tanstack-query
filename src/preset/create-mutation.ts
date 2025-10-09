@@ -1,8 +1,8 @@
-import { DefaultError, QueryClient } from '@tanstack/query-core';
+import type { DefaultError, QueryClient } from '@tanstack/query-core';
 
-import { Mutation, MutationConfig } from '../index.js';
+import { Mutation, type MutationConfig } from 'mobx-tanstack-query';
 
-import { queryClient } from './query-client';
+import { queryClient } from './query-client.js';
 
 export type CreateMutationParams<
   TData = unknown,

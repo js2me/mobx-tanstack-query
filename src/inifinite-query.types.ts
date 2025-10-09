@@ -1,21 +1,21 @@
-import {
+import type {
   DefaultError,
-  InfiniteQueryObserverOptions as LibInfiniteQueryObserverOptions,
-  QueryKey,
   InfiniteData,
   DefaultedInfiniteQueryObserverOptions as LibDefaultedInfiniteQueryObserverOptions,
+  InfiniteQueryObserverOptions as LibInfiniteQueryObserverOptions,
+  QueryKey,
   RefetchOptions,
   ThrowOnError,
 } from '@tanstack/query-core';
 
-import { InfiniteQuery } from './inifinite-query';
-import { AnyQueryClient } from './query-client.types';
-import {
+import type { InfiniteQuery } from './inifinite-query.js';
+import type {
   QueryFeatures,
   QueryInvalidateParams,
   QueryRemoveParams,
   QueryResetParams,
-} from './query.types';
+} from './query.types.js';
+import type { AnyQueryClient } from './query-client.types.js';
 
 export type InfiniteQueryErrorListener<TError = DefaultError> = (
   error: TError,
@@ -356,16 +356,43 @@ export type InferInfiniteQuery<
     | 'error'
     | 'query'
     | 'config',
-> =
-  T extends InfiniteQueryConfig<
-    infer TQueryFnData,
-    infer TError,
-    infer TPageParam,
-    infer TData,
-    infer TQueryKey
-  >
+> = T extends InfiniteQueryConfig<
+  infer TQueryFnData,
+  infer TError,
+  infer TPageParam,
+  infer TData,
+  infer TQueryKey
+>
+  ? TInferValue extends 'config'
+    ? T
+    : TInferValue extends 'data'
+      ? TData
+      : TInferValue extends 'query-data'
+        ? TQueryFnData
+        : TInferValue extends 'key'
+          ? TQueryKey
+          : TInferValue extends 'page-param'
+            ? TPageParam
+            : TInferValue extends 'error'
+              ? TError
+              : TInferValue extends 'query'
+                ? InfiniteQuery<
+                    TQueryFnData,
+                    TError,
+                    TPageParam,
+                    TData,
+                    TQueryKey
+                  >
+                : never
+  : T extends InfiniteQuery<
+        infer TQueryFnData,
+        infer TError,
+        infer TPageParam,
+        infer TData,
+        infer TQueryKey
+      >
     ? TInferValue extends 'config'
-      ? T
+      ? InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>
       : TInferValue extends 'data'
         ? TData
         : TInferValue extends 'query-data'
@@ -377,40 +404,6 @@ export type InferInfiniteQuery<
               : TInferValue extends 'error'
                 ? TError
                 : TInferValue extends 'query'
-                  ? InfiniteQuery<
-                      TQueryFnData,
-                      TError,
-                      TPageParam,
-                      TData,
-                      TQueryKey
-                    >
+                  ? T
                   : never
-    : T extends InfiniteQuery<
-          infer TQueryFnData,
-          infer TError,
-          infer TPageParam,
-          infer TData,
-          infer TQueryKey
-        >
-      ? TInferValue extends 'config'
-        ? InfiniteQueryConfig<
-            TQueryFnData,
-            TError,
-            TPageParam,
-            TData,
-            TQueryKey
-          >
-        : TInferValue extends 'data'
-          ? TData
-          : TInferValue extends 'query-data'
-            ? TQueryFnData
-            : TInferValue extends 'key'
-              ? TQueryKey
-              : TInferValue extends 'page-param'
-                ? TPageParam
-                : TInferValue extends 'error'
-                  ? TError
-                  : TInferValue extends 'query'
-                    ? T
-                    : never
-      : never;
+    : never;

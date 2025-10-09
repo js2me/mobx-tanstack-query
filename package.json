@@ -4,10 +4,12 @@
   "scripts": {
     "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
-    "check": "eslint . --fix",
+    "lint:check": "pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+    "ts:check": "tsc --noEmit",
+    "check": "npm run lint:check && npm run ts:check",
     "prebuild": "npm run clean && npm run check",
     "build:watch": "pnpm build && nodemon --watch src --ext ts,tsx --exec \"pnpm build\"",
-    "build": "sborshik build --fillDist",
+    "build": "vite build && tsx scripts/prepare-dist",
     "pub": "pnpm build && sborshik publish --useDistDir",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
@@ -32,13 +34,6 @@
   "author": "js2me",
   "license": "MIT",
   "description": "MobX wrappers for Tanstack Query (Core)",
-  "zshy": {
-    "exports": {
-      "./package.json": "./package.json",
-      ".": "./src/index.ts",
-      "./preset": "./src/preset/index.ts"
-    }
-  },
   "bugs": {
     "url": "https://github.com/js2me/mobx-tanstack-query/issues"
   },
@@ -47,6 +42,7 @@
     "type": "git",
     "url": "git://github.com/js2me/mobx-tanstack-query"
   },
+  "type": "module",
   "peerDependencies": {
     "@tanstack/query-core": "^5.90.2",
     "mobx": "^6.12.4"
@@ -56,6 +52,7 @@
     "yummies": "^5.11.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.2",
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.5",
     "@testing-library/react": "^16.0.1",
@@ -65,14 +62,17 @@
     "@vitejs/plugin-react-swc": "^3.7.2",
     "@vitest/coverage-istanbul": "^2.1.6",
     "commitfmt": "^1.0.0",
-    "eslint": "^8.57.0",
-    "js2me-eslint-config": "^1.0.6",
-    "sborshik": "^1.0.25",
+    "js2me-biome-config": "^1.0.5",
     "jsdom": "^25.0.1",
     "lefthook": "^1.11.13",
     "nodemon": "^3.1.0",
     "rimraf": "^6.0.1",
-    "typescript": "^5.5.0",
+    "sborshik": "^1.0.25",
+    "terser": "^5.44.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.9",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^2.1.4",
     "zshy": "^0.4.2"
   },

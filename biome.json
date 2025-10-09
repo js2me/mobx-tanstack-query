@@ -1,0 +1,3 @@
+{
+  "extends": ["js2me-biome-config/base.json", "js2me-biome-config/lib.json"]
+}

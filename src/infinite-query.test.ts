@@ -1,22 +1,22 @@
 import {
-  DefaultError,
-  FetchNextPageOptions,
-  FetchPreviousPageOptions,
-  InfiniteData,
-  Query,
+  type DefaultError,
+  type FetchNextPageOptions,
+  type FetchPreviousPageOptions,
+  type InfiniteData,
+  type Query,
   QueryClient,
-  QueryKey,
-  RefetchOptions,
+  type QueryKey,
+  type RefetchOptions,
 } from '@tanstack/query-core';
 import { when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { InfiniteQuery } from './inifinite-query';
-import {
+import { InfiniteQuery } from './inifinite-query.js';
+import type {
   InfiniteQueryConfig,
   InfiniteQueryUpdateOptionsAllVariants,
-} from './inifinite-query.types';
-import { QueryInvalidateParams } from './query.types';
+} from './inifinite-query.types.js';
+import type { QueryInvalidateParams } from './query.types.js';
 
 class InfiniteQueryMock<
   TQueryFnData = unknown,
@@ -47,9 +47,8 @@ class InfiniteQueryMock<
     super({
       ...options,
       queryClient: new QueryClient({}),
-      // @ts-ignore
       queryFn: vi.fn((...args: any[]) => {
-        // @ts-ignore
+        // @ts-expect-error
         const result = options.queryFn?.(...args);
         return result;
       }),
@@ -110,7 +109,6 @@ class InfiniteQueryMock<
   dispose(): void {
     const result = super.dispose();
     this.spies.dispose.mockReturnValue(result)();
-    return result;
   }
 }
 

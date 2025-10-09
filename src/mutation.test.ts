@@ -1,9 +1,9 @@
-import { DefaultError, QueryClient } from '@tanstack/query-core';
+import { type DefaultError, QueryClient } from '@tanstack/query-core';
 import { reaction } from 'mobx';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Mutation } from './mutation';
-import { MutationConfig } from './mutation.types';
+import type { MutationConfig } from './mutation.types';
 
 class MutationMock<
   TData = unknown,
@@ -26,14 +26,14 @@ class MutationMock<
     >,
   ) {
     const mutationFn = vi.fn((...args: any[]) => {
-      // @ts-ignore
+      // @ts-expect-error
       const result = options.mutationFn?.(...args);
       return result;
     });
     super({
       ...options,
       queryClient: new QueryClient({}),
-      // @ts-ignore
+      // @ts-expect-error
       mutationFn,
     });
 
@@ -46,13 +46,11 @@ class MutationMock<
   reset(): void {
     const result = super.reset();
     this.spies.reset.mockReturnValue(result)();
-    return result;
   }
 
   dispose(): void {
     const result = super.dispose();
     this.spies.dispose.mockReturnValue(result)();
-    return result;
   }
 }
 
