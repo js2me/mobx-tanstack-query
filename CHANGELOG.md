@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.8.5
+
+### Patch Changes
+
+- [`1bee9cc`](https://github.com/js2me/mobx-tanstack-query/commit/1bee9cc49d6f220501154a90078212c6247178c9) Thanks [@js2me](https://github.com/js2me)! - try to fix problem with preset imports
+
 ## 6.8.4
 
 ### Patch Changes
