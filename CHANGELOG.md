@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.10.1
+
+### Patch Changes
+
+- [`cd2e6e1`](https://github.com/js2me/mobx-tanstack-query/commit/cd2e6e15d4a574def1f1635b9381d26d37142733) Thanks [@js2me](https://github.com/js2me)! - twice call of get dynamic options fn (queries)
+
 ## 6.10.0
 
 ### Minor Changes
