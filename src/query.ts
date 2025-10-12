@@ -443,6 +443,7 @@ export class Query<
                 delay: this.features.dynamicOptionsUpdateDelay,
                 signal: config.abortSignal,
                 fireImmediately: true,
+                equals: this.features.dynamicOptionsComparer,
               });
             }
           }
@@ -459,20 +460,12 @@ export class Query<
 
       config.abortSignal?.addEventListener('abort', cleanup);
     } else {
-      if (isQueryKeyDynamic) {
-        reaction(
-          queryKeyOrDynamicQueryKey,
-          (queryKey) => this.update({ queryKey }),
-          {
-            signal: this.abortController.signal,
-            delay: this.features.dynamicOptionsUpdateDelay,
-          },
-        );
-      }
-      if (getDynamicOptions) {
-        reaction(() => getDynamicOptions(this), this.update, {
-          signal: this.abortController.signal,
+      if (getAllDynamicOptions) {
+        reaction(getAllDynamicOptions, this.update, {
           delay: this.features.dynamicOptionsUpdateDelay,
+          signal: config.abortSignal,
+          fireImmediately: true,
+          equals: this.features.dynamicOptionsComparer,
         });
       }
       this._observerSubscription = this.queryObserver.subscribe(

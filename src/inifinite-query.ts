@@ -467,27 +467,16 @@ export class InfiniteQuery<
 
       config.abortSignal?.addEventListener('abort', cleanup);
     } else {
-      if (isQueryKeyDynamic) {
-        reaction(
-          queryKeyOrDynamicQueryKey,
-          (queryKey) => this.update({ queryKey }),
-          {
-            signal: this.abortController.signal,
-            delay: this.config.dynamicOptionsUpdateDelay,
-          },
-        );
-      }
-      if (getDynamicOptions) {
-        reaction(() => getDynamicOptions(this), this.update, {
-          signal: this.abortController.signal,
+      if (getAllDynamicOptions) {
+        reaction(getAllDynamicOptions, this.update, {
           delay: this.config.dynamicOptionsUpdateDelay,
+          signal: config.abortSignal,
+          fireImmediately: true,
+          equals: this.features.dynamicOptionsComparer,
         });
       }
       this._observerSubscription = this.queryObserver.subscribe(
         this.updateResult,
-      );
-      this.abortController.signal.addEventListener('abort', () =>
-        this.handleDestroy(),
       );
     }
 

@@ -6,7 +6,7 @@ import type {
   QueryKey,
   QueryObserverOptions,
 } from '@tanstack/query-core';
-
+import type { IReactionOptions } from 'mobx';
 import type { Query } from './query.js';
 import type { AnyQueryClient } from './query-client.types.js';
 
@@ -173,6 +173,8 @@ export interface QueryFeatures {
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#autoremovepreviousquery-queryfeature)
    */
   autoRemovePreviousQuery?: boolean;
+
+  dynamicOptionsComparer?: IReactionOptions<any, any>['equals'];
 }
 
 /**
