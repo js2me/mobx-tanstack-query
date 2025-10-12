@@ -471,7 +471,6 @@ export class InfiniteQuery<
         reaction(getAllDynamicOptions, this.update, {
           delay: this.config.dynamicOptionsUpdateDelay,
           signal: config.abortSignal,
-          fireImmediately: true,
           equals: this.features.dynamicOptionsComparer,
         });
       }

@@ -464,7 +464,6 @@ export class Query<
         reaction(getAllDynamicOptions, this.update, {
           delay: this.features.dynamicOptionsUpdateDelay,
           signal: config.abortSignal,
-          fireImmediately: true,
           equals: this.features.dynamicOptionsComparer,
         });
       }
