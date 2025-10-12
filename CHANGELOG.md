@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.10.0
+
+### Minor Changes
+
+- [`3ec51de`](https://github.com/js2me/mobx-tanstack-query/commit/3ec51de0a62e9a41b4574783be6b4476c3967ab0) Thanks [@js2me](https://github.com/js2me)! - added `dynamicOptionsComparer` query feature
+
 ## 6.9.0
 
 ### Minor Changes
