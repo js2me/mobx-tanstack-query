@@ -733,6 +733,22 @@ query.update({ queryKey: ['bar' ]});
 // will be removed
 ```
 
+### `dynamicOptionsComparer` <Badge type="tip">QueryFeature</Badge>   
+
+Allows to set custom comparer for reactions that update query options dynamically (options property)   
+
+Default: unset
+
+Example:
+```ts
+const query = new Query({
+  dynamicOptionsComparer: () => true, // means options always equal
+  options: () => ({
+    enabled: false,
+  })
+})
+```
+
 ## Recommendations
 
 ### Don't forget about `abortSignal`s or `lazy` option

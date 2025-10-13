@@ -174,6 +174,11 @@ export interface QueryFeatures {
    */
   autoRemovePreviousQuery?: boolean;
 
+  /**
+   * Custom comparer for dynamic options reactions
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#dynamicoptionscomparer)
+   */
   dynamicOptionsComparer?: IReactionOptions<any, any>['equals'];
 }
 
