@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.10.2
+
+### Patch Changes
+
+- [`6029956`](https://github.com/js2me/mobx-tanstack-query/commit/6029956cc34d08dfdc6e441986a153f11c125c10) Thanks [@js2me](https://github.com/js2me)! - fix redundant updateResult observable call after initialize mutation/query
+
 ## 6.10.1
 
 ### Patch Changes
