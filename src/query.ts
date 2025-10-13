@@ -22,7 +22,6 @@ import {
   when,
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
-
 import { enableHolder } from './constants.js';
 import type {
   QueryConfig,
@@ -358,22 +357,6 @@ export class Query<
     };
     this.hooks = qc.hooks;
 
-    observable.deep(this, '_result');
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
-    this.refetch = this.refetch.bind(this);
-    this.start = this.start.bind(this);
-
-    originalQueryProperties.forEach((property) => {
-      Object.defineProperty(this, property, {
-        get: () => this.result[property],
-      });
-    });
-
-    makeObservable(this);
-
     const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
 
     if (!isQueryKeyDynamic) {
@@ -425,6 +408,22 @@ export class Query<
     >(queryClient as QueryClient, this.options);
 
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
+
+    observable.deep(this, '_result');
+    observable.ref(this, 'isResultRequsted');
+    action.bound(this, 'setData');
+    action.bound(this, 'update');
+    action.bound(this, 'updateResult');
+    this.refetch = this.refetch.bind(this);
+    this.start = this.start.bind(this);
+
+    originalQueryProperties.forEach((property) => {
+      Object.defineProperty(this, property, {
+        get: () => this.result[property],
+      });
+    });
+
+    makeObservable(this);
 
     if (this.features.lazy) {
       const cleanup = lazyObserve({

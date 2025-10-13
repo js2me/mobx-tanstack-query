@@ -182,19 +182,6 @@ export class Mutation<
     this.errorListeners = [];
     this.doneListeners = [];
 
-    observable.deep(this, 'result');
-    action.bound(this, 'updateResult');
-    this.mutate = this.mutate.bind(this);
-    this.start = this.start.bind(this);
-
-    originalMutationProperties.forEach((property) => {
-      Object.defineProperty(this, property, {
-        get: () => this.result[property],
-      });
-    });
-
-    makeObservable(this);
-
     this.mutationOptions = this.queryClient.defaultMutationOptions(restOptions);
 
     this.mutationObserver = new MutationObserver<
@@ -214,6 +201,19 @@ export class Mutation<
     });
 
     this.updateResult(this.mutationObserver.getCurrentResult());
+
+    observable.deep(this, 'result');
+    action.bound(this, 'updateResult');
+    this.mutate = this.mutate.bind(this);
+    this.start = this.start.bind(this);
+
+    originalMutationProperties.forEach((property) => {
+      Object.defineProperty(this, property, {
+        get: () => this.result[property],
+      });
+    });
+
+    makeObservable(this);
 
     if (this.features.lazy) {
       const cleanup = lazyObserve({

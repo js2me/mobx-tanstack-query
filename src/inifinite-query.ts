@@ -360,24 +360,6 @@ export class InfiniteQuery<
     };
     this.hooks = qc.hooks;
 
-    observable.deep(this, '_result');
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
-    this.refetch = this.refetch.bind(this);
-    this.start = this.start.bind(this);
-
-    originalQueryProperties.forEach((property) => {
-      if (!this[property]) {
-        Object.defineProperty(this, property, {
-          get: () => this.result[property],
-        });
-      }
-    });
-
-    makeObservable(this);
-
     const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
 
     if (!isQueryKeyDynamic) {
@@ -433,6 +415,24 @@ export class InfiniteQuery<
 
     // @ts-expect-error
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
+
+    observable.deep(this, '_result');
+    observable.ref(this, 'isResultRequsted');
+    action.bound(this, 'setData');
+    action.bound(this, 'update');
+    action.bound(this, 'updateResult');
+    this.refetch = this.refetch.bind(this);
+    this.start = this.start.bind(this);
+
+    originalQueryProperties.forEach((property) => {
+      if (!this[property]) {
+        Object.defineProperty(this, property, {
+          get: () => this.result[property],
+        });
+      }
+    });
+
+    makeObservable(this);
 
     if (this.features.lazy) {
       const cleanup = lazyObserve({
