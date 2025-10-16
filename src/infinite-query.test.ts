@@ -549,6 +549,13 @@ describe('InfiniteQuery', () => {
         initialPageParam: { offset: 0, limit: 10 },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         getNextPageParam: (page, allPages, lastPageParam) => {
+          expectTypeOf(page).toEqualTypeOf<Foo[]>();
+          expectTypeOf(allPages).toEqualTypeOf<Foo[][]>();
+          expectTypeOf(lastPageParam).toEqualTypeOf<{
+            offset: number;
+            limit: number;
+          }>();
+
           if (globalThis) {
             return null;
           }
@@ -571,6 +578,45 @@ describe('InfiniteQuery', () => {
             pages: Foo[][];
           }
       >();
+    });
+
+    it('getNextPageParam typings with dynamic options', () => {
+      type Foo = { foo: 1 };
+
+      const getFoo = (): Foo[] => [];
+
+      const infiniteQuery = new InfiniteQuery(new QueryClient({}), () => ({
+        queryKey: ['allCharacters', ['1', '2']],
+        initialPageParam: 1,
+        queryFn: async () => {
+          return getFoo();
+        },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        getNextPageParam: (page, allPages, lastPageParam) => {
+          expectTypeOf(page).toEqualTypeOf<Foo[]>();
+          expectTypeOf(allPages).toEqualTypeOf<Foo[][]>();
+          expectTypeOf(lastPageParam).toEqualTypeOf<number>();
+
+          if (globalThis) {
+            return null;
+          }
+          return 2;
+        },
+      }));
+
+      expectTypeOf(infiniteQuery.result.data).toEqualTypeOf<
+        | undefined
+        | {
+            pageParams: number[];
+            pages: Foo[][];
+          }
+      >();
+
+      const anotherTest =
+        (infiniteQuery.data?.pages.flat().length ?? 0) -
+        (infiniteQuery.data?.pages.at(-1)?.length ?? 0);
+
+      expectTypeOf(anotherTest).toEqualTypeOf<number>();
     });
 
     it('update() method parameters (throwOnError)', () => {
