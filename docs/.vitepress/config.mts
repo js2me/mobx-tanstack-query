@@ -1,31 +1,22 @@
-import { defineConfig } from 'vitepress';
+import { defineDocsVitepressConfig } from "sborshik/vitepress";
+import { ConfigsManager } from "sborshik/utils/configs-manager";
 
-import path from 'path';
-import fs from 'fs';
+const configs = ConfigsManager.create("../")
 
-import { defineGhPagesDocConfig } from "sborshik/vitepress/define-gh-pages-doc-config";
-
-const pckgJson = JSON.parse(
-  fs.readFileSync(
-    path.resolve(__dirname, '../../package.json'),
-    { encoding: 'utf-8' },
-  ),
-);
-
-export default defineGhPagesDocConfig(pckgJson, {
-  createdYear: '2024',
+export default defineDocsVitepressConfig(configs, {
+  createdYear:'2024',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Introduction', link: '/introduction/getting-started' },
       {
-        text: `${pckgJson.version}`,
+        text: `${configs.package.version}`,
         items: [
           {
             items: [
               {
-                text: `${pckgJson.version}`,
-                link: `https://github.com/${pckgJson.author}/${pckgJson.name}/releases/tag/${pckgJson.version}`,
+                text: `${configs.package.version}`,
+                link: `https://github.com/${configs.package.author}/${configs.package.name}/releases/tag/${configs.package.version}`,
               },
             ],
           },
