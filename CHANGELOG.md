@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.11.0
+
+### Minor Changes
+
+- [`dd2f764`](https://github.com/js2me/mobx-tanstack-query/commit/dd2f76414c3f72bcce0c3f506687db4a852792b0) Thanks [@js2me](https://github.com/js2me)! - [internal] migration to yummies 6.x
+
 ## 6.10.2
 
 ### Patch Changes
