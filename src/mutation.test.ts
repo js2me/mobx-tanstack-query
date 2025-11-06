@@ -1,6 +1,9 @@
-import { type DefaultError, QueryClient } from '@tanstack/query-core';
+import {
+  type DefaultError,
+  QueryClient as QueryClientCore,
+} from '@tanstack/query-core';
 import { reaction } from 'mobx';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { Mutation } from './mutation';
 import type { MutationConfig } from './mutation.types';
@@ -32,7 +35,7 @@ class MutationMock<
     });
     super({
       ...options,
-      queryClient: new QueryClient({}),
+      queryClient: new QueryClientCore({}),
       // @ts-expect-error
       mutationFn,
     });
@@ -196,5 +199,18 @@ describe('Mutation', () => {
     }
 
     vi.useRealTimers();
+  });
+
+  it('typings query client core test', () => {
+    const queryClientCore = new QueryClientCore();
+
+    const testMutation = new Mutation({
+      queryClient: queryClientCore,
+      mutationFn: async () => {},
+    });
+
+    expectTypeOf(testMutation).toEqualTypeOf<
+      Mutation<void, void, Error, unknown>
+    >();
   });
 });

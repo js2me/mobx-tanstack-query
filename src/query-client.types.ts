@@ -25,7 +25,7 @@ export type IQueryClient = IQueryClientCore;
  */
 export type QueryClientInterface = IQueryClientCore;
 
-export type AnyQueryClient = QueryClient | IQueryClientCore;
+export type AnyQueryClient = QueryClient | IQueryClientCore | QueryClientCore;
 
 export interface DefaultOptions<TError = DefaultError>
   extends Omit<DefaultCoreOptions<TError>, 'queries' | 'mutations'> {
