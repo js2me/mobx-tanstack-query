@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.11.1
+
+### Patch Changes
+
+- [`d2a3875`](https://github.com/js2me/mobx-tanstack-query/commit/d2a3875eda7941baeb8fc8b3727fb4b8abc2eb73) Thanks [@js2me](https://github.com/js2me)! - try to fix AnyQueryClient wrong typings for bun usage
+
+- [`c9af938`](https://github.com/js2me/mobx-tanstack-query/commit/c9af9384f03cb08cfba73682c0453689dd60229e) Thanks [@js2me](https://github.com/js2me)! - [internal] build modification
+
 ## 6.11.0
 
 ### Minor Changes
