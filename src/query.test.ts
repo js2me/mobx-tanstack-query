@@ -3847,4 +3847,31 @@ describe('Query', () => {
       { fruit: 'fruit3', searchText: 'fruit3' },
     ]);
   });
+
+  it('flatten types isSuccess isError', async () => {
+    const userQuery = new Query({
+      enabled: false,
+      queryClient: new QueryClient(),
+      queryFn: () => ({ email: 'alice@example.com' }),
+      queryKey: ['user'],
+    });
+
+    const userQueryResult = await userQuery.start();
+
+    expectTypeOf(userQueryResult.data).toEqualTypeOf<
+      { email: string } | undefined
+    >();
+
+    if (userQueryResult.isSuccess) {
+      expectTypeOf(userQueryResult.data).toEqualTypeOf<{ email: string }>();
+      expectTypeOf(userQueryResult.error).toEqualTypeOf<null>();
+    }
+
+    if (userQueryResult.isError) {
+      expectTypeOf(userQueryResult.data).toEqualTypeOf<
+        { email: string } | undefined
+      >();
+      expectTypeOf(userQueryResult.error).toEqualTypeOf<Error>();
+    }
+  });
 });
