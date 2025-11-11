@@ -47,7 +47,6 @@ export class Mutation<
   >
   extends Destroyable
   implements
-    Disposable,
     Pick<
       MutationObserverBaseResult<TData, TError, TVariables, TOnMutateResult>,
       (typeof originalMutationProperties)[number]

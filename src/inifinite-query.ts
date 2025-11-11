@@ -82,7 +82,6 @@ export class InfiniteQuery<
   >
   extends Destroyable
   implements
-    Disposable,
     Pick<
       InfiniteQueryObserverBaseResult<TData, TError>,
       (typeof originalQueryProperties)[number]

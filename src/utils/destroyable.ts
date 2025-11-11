@@ -1,7 +1,7 @@
 import { LinkedAbortController } from 'linked-abort-controller';
 import { action, makeObservable } from 'mobx';
 
-export abstract class Destroyable {
+export abstract class Destroyable implements Disposable {
   protected abortController: LinkedAbortController;
 
   constructor(abortSignal?: AbortSignal) {

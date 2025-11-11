@@ -73,7 +73,6 @@ export class Query<
   >
   extends Destroyable
   implements
-    Disposable,
     Pick<
       QueryObserverBaseResult<TData, TError>,
       (typeof originalQueryProperties)[number]

@@ -3873,5 +3873,29 @@ describe('Query', () => {
       >();
       expectTypeOf(userQueryResult.error).toEqualTypeOf<Error>();
     }
+
+    if (userQuery.result.isSuccess) {
+      expectTypeOf(userQuery.result.data).toEqualTypeOf<{ email: string }>();
+      expectTypeOf(userQuery.result.error).toEqualTypeOf<null>();
+    }
+
+    if (userQuery.result.isError) {
+      expectTypeOf(userQuery.result.data).toEqualTypeOf<
+        { email: string } | undefined
+      >();
+      expectTypeOf(userQuery.result.error).toEqualTypeOf<Error>();
+    }
+
+    // if (userQuery.isSuccess) {
+    //   expectTypeOf(userQuery.data).toEqualTypeOf<{ email: string }>();
+    //   expectTypeOf(userQuery.error).toEqualTypeOf<null>();
+    // }
+
+    // if (userQuery.isError) {
+    //   expectTypeOf(userQuery.data).toEqualTypeOf<
+    //     { email: string } | undefined
+    //   >();
+    //   expectTypeOf(userQuery.error).toEqualTypeOf<Error>();
+    // }
   });
 });
