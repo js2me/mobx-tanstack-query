@@ -666,4 +666,61 @@ describe('InfiniteQuery', () => {
       >();
     });
   });
+
+  describe('"start" method', () => {
+    it('should call queryFn and fetch data', async () => {
+      const queryFnSpy = vi.fn(async ({ pageParam = 0 }) => {
+        return Array.from({ length: 3 }, (_, i) => `Item ${pageParam * 3 + i}`);
+      });
+
+      const infiniteQuery = new InfiniteQueryMock({
+        queryKey: ['test'],
+        queryFn: queryFnSpy,
+        enabled: false,
+        initialPageParam: 0,
+        getNextPageParam: (_, allPages) => {
+          return allPages.length < 2 ? allPages.length : undefined;
+        },
+      });
+
+      await infiniteQuery.start();
+
+      await when(() => !infiniteQuery._rawResult.isLoading);
+
+      expect(infiniteQuery.result.isFetched).toBeTruthy();
+      expect(queryFnSpy).toBeCalledTimes(1);
+      expect(infiniteQuery.data?.pages).toHaveLength(1);
+
+      infiniteQuery.destroy();
+    });
+
+    it('should throw error when throwOnError is true', async () => {
+      vi.useFakeTimers();
+
+      const infiniteQuery = new InfiniteQueryMock({
+        queryKey: ['test-error'],
+        queryFn: async () => {
+          throw new Error('InfiniteQueryError');
+        },
+        enabled: false,
+        throwOnError: true,
+        initialPageParam: 0,
+        getNextPageParam: () => undefined,
+      });
+
+      let error: Error | undefined;
+
+      const promise = infiniteQuery.start().catch((error_) => {
+        error = error_;
+      });
+
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(error?.message).toBe('InfiniteQueryError');
+
+      infiniteQuery.destroy();
+      vi.useRealTimers();
+    });
+  });
 });

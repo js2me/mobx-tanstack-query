@@ -504,6 +504,11 @@ export class InfiniteQuery<
     return Query.prototype.createQueryHash.call(this, queryKey, options);
   }
 
+  protected getCurrentThrowableError(options?: RefetchOptions) {
+    // @ts-expect-error
+    return Query.prototype.getCurrentThrowableError.call(this, options);
+  }
+
   setData(
     updater: Updater<
       NoInfer<InfiniteData<TQueryFnData, TPageParam>> | undefined,
