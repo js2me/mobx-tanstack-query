@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.11.2
+
+### Patch Changes
+
+- [#61](https://github.com/js2me/mobx-tanstack-query/pull/61) [`886114c`](https://github.com/js2me/mobx-tanstack-query/commit/886114cdf169c0e9fd520f5879b7ad955eefc653) Thanks [@verylovestars](https://github.com/verylovestars)! - fix the start method of InfiniteQuery
+
 ## 6.11.1
 
 ### Patch Changes
