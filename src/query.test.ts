@@ -31,7 +31,7 @@ import {
   vi,
 } from 'vitest';
 import { sleep } from 'yummies/async';
-
+import type { Maybe } from 'yummies/types';
 import { createQuery } from './preset/index.js';
 import { Query } from './query.js';
 import type {
@@ -3897,5 +3897,27 @@ describe('Query', () => {
     //   >();
     //   expectTypeOf(userQuery.error).toEqualTypeOf<Error>();
     // }
+  });
+
+  it('bug #64 (options is not reactive sometimes)', () => {
+    const isEnabled = observable.box(false);
+    let query: Maybe<Query>;
+
+    const queryFn = vi.fn(() => Promise.resolve({ status: 'success' }));
+
+    runInAction(() => {
+      query = createQuery(queryFn, {
+        enableOnDemand: true,
+        options: () => ({
+          enabled: isEnabled.get(),
+        }),
+      });
+
+      isEnabled.set(true);
+    });
+
+    query?.result.data; // this won't trigger fetching, which is unexpected
+
+    expect(queryFn).toBeCalledTimes(1);
   });
 });
