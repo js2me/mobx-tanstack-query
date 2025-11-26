@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.11.3
+
+### Patch Changes
+
+- [`9e60799`](https://github.com/js2me/mobx-tanstack-query/commit/9e6079997ef554f1066e90ee359202ec81f8b124) Thanks [@js2me](https://github.com/js2me)! - fix bug with not reactive options in queries sometimes (#64)
+
 ## 6.11.2
 
 ### Patch Changes
