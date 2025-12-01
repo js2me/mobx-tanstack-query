@@ -3877,6 +3877,11 @@ describe('Query', () => {
     if (userQuery.result.isSuccess) {
       expectTypeOf(userQuery.result.data).toEqualTypeOf<{ email: string }>();
       expectTypeOf(userQuery.result.error).toEqualTypeOf<null>();
+    } else {
+      expectTypeOf(userQuery.result.data).toEqualTypeOf<
+        { email: string } | undefined
+      >();
+      expectTypeOf(userQuery.result.error).toEqualTypeOf<Error | null>();
     }
 
     if (userQuery.result.isError) {
@@ -3884,6 +3889,11 @@ describe('Query', () => {
         { email: string } | undefined
       >();
       expectTypeOf(userQuery.result.error).toEqualTypeOf<Error>();
+    } else {
+      expectTypeOf(userQuery.result.data).toEqualTypeOf<
+        { email: string } | undefined
+      >();
+      expectTypeOf(userQuery.result.error).toEqualTypeOf<null>();
     }
 
     // if (userQuery.isSuccess) {
