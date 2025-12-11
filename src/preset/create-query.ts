@@ -85,8 +85,14 @@ export function createQuery(...args: [any, any?]) {
       },
     });
   } else if (args.length === 2) {
-    return new Query(args[0], args[1]());
+    return new Query(
+      args[0],
+      typeof args[1] === 'function' ? args[1] : () => args[1],
+    );
   }
 
-  return new Query(queryClient, args[0]);
+  return new Query(
+    queryClient,
+    typeof args[0] === 'function' ? args[0] : () => args[0],
+  );
 }
