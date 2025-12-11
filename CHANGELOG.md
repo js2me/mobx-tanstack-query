@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.11.4
+
+### Patch Changes
+
+- [`65e8759`](https://github.com/js2me/mobx-tanstack-query/commit/65e87595914d952360c0b953129fa67cfbe8c2e4) Thanks [@js2me](https://github.com/js2me)! - fixed createQuery wrong overloads
+
 ## 6.11.3
 
 ### Patch Changes
