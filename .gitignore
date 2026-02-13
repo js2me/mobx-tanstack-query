@@ -2,3 +2,4 @@ node_modules
 dist
 coverage
 docs/.vitepress/cache
+vitest-single-report.json

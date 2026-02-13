@@ -18,6 +18,7 @@ import {
   observable,
   reaction,
   runInAction,
+  untracked,
   when,
 } from 'mobx';
 import {
@@ -224,38 +225,41 @@ describe('Query', () => {
     query.destroy();
   });
 
-  it('should call onDone once when query.data is read inside onDone', async () => {
+  it('should not call onDone twice in enableOnDemand cycle (result -> update -> onDone -> result)', async () => {
     class Foo {
       query;
-
       onDoneSpy = vi.fn();
 
-      constructor() {
-        this.query = new QueryMock({
-          queryKey: ['on-done-read-data-inside-callback'] as const,
-          queryFn: () => ({ foo: { foo: 1 } }),
-          onDone: () => {
-            this.onDoneSpy();
-            if (this.data?.foo) {
-              // noop: emulate user-land data access in onDone
-            }
+      constructor(queryClient: QueryClient) {
+        this.query = new QueryMock(
+          {
+            queryKey: ['on-done-cycle', 0] as const,
+            queryFn: ({ queryKey }) => ({
+              foo: { foo: queryKey[1] as number },
+            }),
+            enableOnDemand: true,
+            onDone: () => {
+              this.onDoneSpy();
+              // This read hits `get result`, and in enableOnDemand it calls `this.update({})`.
+              untracked(() => this.query.result.data?.foo);
+            },
           },
-        });
-
-        makeObservable(this, {
-          data: computed.struct,
-        });
-      }
-
-      get data() {
-        return this.query.data?.foo ?? null;
+          queryClient,
+        );
       }
     }
 
-    const foo = new Foo();
+    const queryClient = new QueryClient({});
+    queryClient.setQueryData(['on-done-cycle', 1], { foo: { foo: 1 } });
 
-    await when(() => !foo.query._rawResult.isLoading);
+    const foo = new Foo(queryClient);
 
+    // First update delivers cached success and triggers onDone.
+    // onDone reads `result`, which triggers second update from line 631.
+    foo.query.update({ queryKey: ['on-done-cycle', 1] as const });
+    await sleep(20);
+
+    expect(foo.query.spies.update).toBeCalledTimes(2);
     expect(foo.onDoneSpy).toBeCalledTimes(1);
 
     foo.query.destroy();

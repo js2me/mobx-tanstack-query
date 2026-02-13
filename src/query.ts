@@ -112,8 +112,11 @@ export class Query<
 
   protected errorListeners: QueryErrorListener<TError>[];
   protected doneListeners: QueryDoneListener<TData>[];
-  private lastDoneNotifiedAt: Maybe<number>;
-  private lastErrorNotifiedAt: Maybe<number>;
+  private lastDoneNotifiedCount: Maybe<number>;
+  private lastErrorNotifiedCount: Maybe<number>;
+  private isNotifyingDone: boolean;
+  private isNotifyingError: boolean;
+  private suppressNextDoneNotification: boolean;
 
   protected cumulativeQueryKeyHashesSet: Set<string>;
 
@@ -330,6 +333,11 @@ export class Query<
 
     this.errorListeners = [];
     this.doneListeners = [];
+    this.lastDoneNotifiedCount = undefined;
+    this.lastErrorNotifiedCount = undefined;
+    this.isNotifyingDone = false;
+    this.isNotifyingError = false;
+    this.suppressNextDoneNotification = false;
 
     // simple type override to make typescript happy
     // and do less for javascript
@@ -628,6 +636,9 @@ export class Query<
       runInAction(() => {
         this.isResultRequsted = true;
       });
+      if (this.isNotifyingDone) {
+        this.suppressNextDoneNotification = true;
+      }
       this.update({});
     }
     return this._result || this.queryObserver.getCurrentResult();
@@ -638,24 +649,45 @@ export class Query<
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
     this._result = result;
+    const queryState = this.queryObserver.getCurrentQuery().state;
 
     if (this.features.transformError && this._result.error) {
       this._result.error = this.features.transformError(this._result.error);
     }
 
     if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
-      if (result.dataUpdatedAt !== this.lastDoneNotifiedAt) {
-        this.lastDoneNotifiedAt = result.dataUpdatedAt;
-        this.doneListeners.forEach((fn) => {
-          fn(result.data!, void 0);
-        });
+      if (this.suppressNextDoneNotification) {
+        this.suppressNextDoneNotification = false;
+        return;
+      }
+      if (
+        !this.isNotifyingDone &&
+        queryState.dataUpdateCount !== this.lastDoneNotifiedCount
+      ) {
+        this.lastDoneNotifiedCount = queryState.dataUpdateCount;
+        this.isNotifyingDone = true;
+        try {
+          this.doneListeners.forEach((fn) => {
+            fn(result.data!, void 0);
+          });
+        } finally {
+          this.isNotifyingDone = false;
+        }
       }
     } else if (result.error) {
-      if (result.errorUpdatedAt !== this.lastErrorNotifiedAt) {
-        this.lastErrorNotifiedAt = result.errorUpdatedAt;
-        this.errorListeners.forEach((fn) => {
-          fn(result.error!, void 0);
-        });
+      if (
+        !this.isNotifyingError &&
+        queryState.errorUpdateCount !== this.lastErrorNotifiedCount
+      ) {
+        this.lastErrorNotifiedCount = queryState.errorUpdateCount;
+        this.isNotifyingError = true;
+        try {
+          this.errorListeners.forEach((fn) => {
+            fn(result.error!, void 0);
+          });
+        } finally {
+          this.isNotifyingError = false;
+        }
       }
     }
   }
