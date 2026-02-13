@@ -22,6 +22,7 @@ import {
   when,
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
+import type { Maybe } from 'yummies/types';
 import { enableHolder } from './constants.js';
 import type {
   QueryConfig,
@@ -111,6 +112,8 @@ export class Query<
 
   protected errorListeners: QueryErrorListener<TError>[];
   protected doneListeners: QueryDoneListener<TData>[];
+  private lastDoneNotifiedAt: Maybe<number>;
+  private lastErrorNotifiedAt: Maybe<number>;
 
   protected cumulativeQueryKeyHashesSet: Set<string>;
 
@@ -641,13 +644,19 @@ export class Query<
     }
 
     if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
-      this.doneListeners.forEach((fn) => {
-        fn(result.data!, void 0);
-      });
+      if (result.dataUpdatedAt !== this.lastDoneNotifiedAt) {
+        this.lastDoneNotifiedAt = result.dataUpdatedAt;
+        this.doneListeners.forEach((fn) => {
+          fn(result.data!, void 0);
+        });
+      }
     } else if (result.error) {
-      this.errorListeners.forEach((fn) => {
-        fn(result.error!, void 0);
-      });
+      if (result.errorUpdatedAt !== this.lastErrorNotifiedAt) {
+        this.lastErrorNotifiedAt = result.errorUpdatedAt;
+        this.errorListeners.forEach((fn) => {
+          fn(result.error!, void 0);
+        });
+      }
     }
   }
 

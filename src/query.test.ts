@@ -224,6 +224,43 @@ describe('Query', () => {
     query.destroy();
   });
 
+  it('should call onDone once when query.data is read inside onDone', async () => {
+    class Foo {
+      query;
+
+      onDoneSpy = vi.fn();
+
+      constructor() {
+        this.query = new QueryMock({
+          queryKey: ['on-done-read-data-inside-callback'] as const,
+          queryFn: () => ({ foo: { foo: 1 } }),
+          onDone: () => {
+            this.onDoneSpy();
+            if (this.data?.foo) {
+              // noop: emulate user-land data access in onDone
+            }
+          },
+        });
+
+        makeObservable(this, {
+          data: computed.struct,
+        });
+      }
+
+      get data() {
+        return this.query.data?.foo ?? null;
+      }
+    }
+
+    const foo = new Foo();
+
+    await when(() => !foo.query._rawResult.isLoading);
+
+    expect(foo.onDoneSpy).toBeCalledTimes(1);
+
+    foo.query.destroy();
+  });
+
   describe('"queryKey" reactive parameter', () => {
     it('should rerun queryFn after queryKey change', async () => {
       const boxCounter = observable.box(0);
