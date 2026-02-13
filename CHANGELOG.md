@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 6.12.1
+
+### Patch Changes
+
+- [`514d16e`](https://github.com/js2me/mobx-tanstack-query/commit/514d16e673278b1e3818a4d1d381607ee871798b) Thanks [@js2me](https://github.com/js2me)! - fixed twice+ calls of onDone onError for queries"
+
+- [`091f71e`](https://github.com/js2me/mobx-tanstack-query/commit/091f71e1a25f3ae6e130f3d6794df991bdfca8fb) Thanks [@js2me](https://github.com/js2me)! - fixed bug with cyclic calls (onDone + enableOnDemand flag)
+
 ## 6.12.0
 
 ### Minor Changes
