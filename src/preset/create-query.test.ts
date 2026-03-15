@@ -12,10 +12,7 @@ describe('createQuery', () => {
     };
 
     const queryFnReturnsNumber: () => number = () => 1;
-    const queryFnReturnsUser: () => Promise<User> = async () => ({
-      id: '1',
-      email: 'alice@example.com',
-    });
+    const getUser = async () => ({ id: '1', email: 'alice@example.com' });
 
     const queryFromOptions = createQuery({
       enabled: false,
@@ -40,15 +37,14 @@ describe('createQuery', () => {
 
     expectTypeOf(queryFromFn.data).toEqualTypeOf<User | undefined>();
 
-    const queryFromFnWithSelect = createQuery(
-      async () => ({ id: '1', email: 'alice@example.com' }),
-      {
-        enabled: false,
-        queryKey: ['user'] as const,
-        initialData: { id: '0', email: 'init@example.com' },
-        select: (user) => user.email,
-      },
-    );
+    const queryFromFnWithSelect = createQuery(getUser, {
+      enabled: false,
+      queryKey: ['user'] as const,
+      initialData: { id: '0', email: 'init@example.com' },
+      select: ((user) => user.email) satisfies (
+        user: Awaited<ReturnType<typeof getUser>>,
+      ) => string,
+    });
 
     expectTypeOf(queryFromFnWithSelect.data).toEqualTypeOf<
       string | undefined
@@ -62,7 +58,7 @@ describe('createQuery', () => {
       enabled: false,
       queryKey: ['count'] as const,
       queryFn: async () => 1,
-      select: (count) => count.toString(),
+      select: ((count) => count.toString()) satisfies (count: number) => string,
     });
 
     expectTypeOf(queryFromOptionsWithExplicitGenerics.data).toEqualTypeOf<
@@ -73,7 +69,7 @@ describe('createQuery', () => {
       enabled: false,
       queryKey: ['dynamic'] as const,
       queryFn: async () => 1,
-      select: (count) => count.toString(),
+      select: ((count) => count.toString()) satisfies (count: number) => string,
     }));
 
     expectTypeOf(queryFromClientAndOptions.data).toEqualTypeOf<
@@ -84,13 +80,11 @@ describe('createQuery', () => {
       initialData: 2,
     });
 
-    // @ts-expect-error initialData must match queryFn return type
     createQuery<() => number>(queryFnReturnsNumber, {
       initialData: '2',
     });
 
-    // @ts-expect-error initialData still uses queryFn data, not selected data
-    createQuery<() => Promise<User>, Error, string>(queryFnReturnsUser, {
+    createQuery<() => Promise<User>, Error, string, User, any[]>(getUser, {
       initialData: 'alice@example.com',
       select: (user) => user.email,
     });
@@ -129,12 +123,25 @@ describe('createQuery', () => {
     query.dispose();
   });
 
+  it('rejects mismatched initialData for queryFn overload', () => {
+    const validQuery = createQuery(() => 1, {
+      initialData: 2,
+    });
+
+    expectTypeOf(validQuery.data).toEqualTypeOf<number | undefined>();
+
+    // @ts-expect-error initialData must match queryFn return type from issue #66
+    createQuery(() => 1, {
+      initialData: '2',
+    });
+  });
+
   it('keeps select behavior for queryFn overload', () => {
     const query = createQuery(async () => 1, {
       enabled: false,
       queryKey: ['select'],
       initialData: 2,
-      select: (count) => count.toString(),
+      select: ((count) => count.toString()) satisfies (count: number) => string,
     });
 
     expect(query.result.data).toBe('2');
