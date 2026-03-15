@@ -18,10 +18,21 @@ export type CreateQueryParams<
   TQueryKey extends QueryKey = QueryKey,
 > = Omit<
   QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  'queryClient' | 'queryFn'
+  'queryClient' | 'queryFn' | 'initialData'
 > & {
+  initialData?: QueryConfig<
+    TQueryFnData,
+    TError,
+    TQueryFnData,
+    TQueryData,
+    TQueryKey
+  >['initialData'];
   queryClient?: QueryClient;
 };
+
+type QueryFnDataFromFn<TQueryFn extends (...args: any[]) => unknown> = Awaited<
+  ReturnType<TQueryFn>
+>;
 
 export function createQuery<
   TQueryFnData = unknown,
@@ -40,21 +51,22 @@ export function createQuery<
 ): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery<
-  TQueryFnData = unknown,
+  TQueryFn extends (...args: any[]) => unknown,
   TError = DefaultError,
-  TData = TQueryFnData,
-  TQueryData = TQueryFnData,
+  TData = QueryFnDataFromFn<TQueryFn>,
+  TQueryData = QueryFnDataFromFn<TQueryFn>,
   TQueryKey extends QueryKey = QueryKey,
 >(
-  queryFn: QueryFn<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  queryFn: TQueryFn &
+    QueryFn<QueryFnDataFromFn<TQueryFn>, TError, TData, TQueryData, TQueryKey>,
   params?: CreateQueryParams<
-    TQueryFnData,
+    NoInfer<QueryFnDataFromFn<TQueryFn>>,
     TError,
     TData,
     TQueryData,
     TQueryKey
   >,
-): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+): Query<QueryFnDataFromFn<TQueryFn>, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery<
   TQueryFnData = unknown,

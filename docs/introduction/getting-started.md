@@ -34,6 +34,12 @@ It offers first-class support for React hooks and follows modern React patterns.
 
 The current React integration is implemented via `MobX` React bindings.
 
+## Alternatives
+
+- [@servicetitan/tanstack-query-mobx](https://www.npmjs.com/package/@servicetitan/tanstack-query-mobx)
+- [@mobx-query/core](https://www.npmjs.com/package/@mobx-query/core)
+- [mobx-query](https://www.npmjs.com/package/mobx-query)
+
 ## Creating instance of [`QueryClient`](/api/QueryClient)
 
 This is extended version of original [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)

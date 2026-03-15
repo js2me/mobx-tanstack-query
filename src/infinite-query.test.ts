@@ -435,6 +435,141 @@ describe('InfiniteQuery', () => {
   });
 
   describe('typings', () => {
+    it('should preserve page typings with refetchInterval callback', () => {
+      type Service = {
+        id: number;
+      };
+
+      type ServicePage = {
+        meta: {
+          pageNumber: number;
+          pageSize: number;
+          total: number;
+        };
+        services: Service[];
+      };
+
+      const queryClient = new QueryClient({});
+      const initialPageParam = { page: 1, pageSize: 500 };
+
+      const queryWithAny = new InfiniteQuery({
+        queryClient,
+        initialPageParam,
+        options: () => ({
+          enabled: true,
+          queryKey: ['services-with-any'],
+        }),
+        queryFn: async ({ pageParam }) => {
+          return {
+            meta: {
+              pageNumber: pageParam.page,
+              pageSize: pageParam.pageSize,
+              total: 1_000,
+            },
+            services: [{ id: 1 }],
+          } satisfies ServicePage;
+        },
+        getNextPageParam: (lastPage) => {
+          expectTypeOf(lastPage).toEqualTypeOf<ServicePage>();
+
+          if (
+            lastPage.meta.pageNumber * lastPage.meta.pageSize >=
+            lastPage.meta.total
+          ) {
+            return undefined;
+          }
+
+          return {
+            page: lastPage.meta.pageNumber + 1,
+            pageSize: lastPage.meta.pageSize,
+          };
+        },
+        refetchInterval: (query: any): number | false => {
+          const pagesCount = query.state.data?.pages.length ?? 0;
+
+          return pagesCount === 1 && query.state.status === 'success'
+            ? 5000
+            : false;
+        },
+        select: (data) => {
+          expectTypeOf(data).toEqualTypeOf<
+            InfiniteData<ServicePage, { page: number; pageSize: number }>
+          >();
+
+          return {
+            ...data,
+            total: data.pages.at(-1)?.meta.total ?? 0,
+            services: data.pages.flatMap(({ services }) => services),
+          };
+        },
+      });
+
+      expectTypeOf(queryWithAny.result.data).toEqualTypeOf<
+        | undefined
+        | (InfiniteData<ServicePage, { page: number; pageSize: number }> & {
+            total: number;
+            services: Service[];
+          })
+      >();
+
+      const queryWithoutAny = new InfiniteQuery({
+        queryClient,
+        initialPageParam,
+        options: () => ({
+          enabled: true,
+          queryKey: ['services-without-any'],
+        }),
+        queryFn: async ({ pageParam }) => {
+          return {
+            meta: {
+              pageNumber: pageParam.page,
+              pageSize: pageParam.pageSize,
+              total: 1_000,
+            },
+            services: [{ id: 1 }],
+          } satisfies ServicePage;
+        },
+        refetchInterval: (query): number | false => {
+          const pagesCount = query.state.data?.pages.length ?? 0;
+
+          return pagesCount === 1 && query.state.status === 'success'
+            ? 5000
+            : false;
+        },
+        getNextPageParam: (lastPage) => {
+          expectTypeOf(lastPage).toEqualTypeOf<ServicePage>();
+
+          if (
+            lastPage.meta.pageNumber * lastPage.meta.pageSize >=
+            lastPage.meta.total
+          ) {
+            return undefined;
+          }
+
+          return initialPageParam;
+        },
+        select: (data) => {
+          expectTypeOf(data).toEqualTypeOf<
+            InfiniteData<ServicePage, { page: number; pageSize: number }>
+          >();
+
+          return {
+            ...data,
+            total: data.pages.at(-1)?.meta.total ?? 0,
+            services: data.pages.flatMap(({ services }) => services),
+          };
+        },
+      });
+
+      expectTypeOf(queryWithoutAny.result.data).toEqualTypeOf<
+        | undefined
+        | (InfiniteData<ServicePage, { page: number; pageSize: number }> & {
+            total: number;
+            services: Service[];
+          })
+      >();
+    });
+
     it('should work fine "result" typings with "select" property', () => {
       type Foo = { foo: 1 };
 
