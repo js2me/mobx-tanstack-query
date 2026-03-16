@@ -3982,4 +3982,27 @@ describe('Query', () => {
 
     expect(queryFn).toBeCalledTimes(1);
   });
+
+  it('onDone should call each time async queryFn returns data', async () => {
+    let counter = 0;
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      queryKey: ['on-done-async'],
+      queryFn: async () => ++counter,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 1);
+
+      await query.refetch();
+      await when(() => query.result.data === 2);
+
+      expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
+      expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
+    } finally {
+      query.destroy();
+    }
+  });
 });
