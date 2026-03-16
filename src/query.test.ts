@@ -4033,6 +4033,115 @@ describe('Query', () => {
     }
   });
 
+  it('should not call onDone again when switching back to cached query without new fetch', async () => {
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => `value-${queryKey[1]}`);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      staleTime: Infinity,
+      queryKey: () =>
+        ['on-done-return-to-cached-query', queryKeyPart.get()] as const,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      runInAction(() => {
+        queryKeyPart.set(1);
+      });
+
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
+      expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
+      expect(onDone).toHaveBeenNthCalledWith(3, 'value-1', undefined);
+      expect(onDone).toHaveBeenNthCalledWith(4, 'value-2', undefined);
+      expect(onDone).toBeCalledTimes(4);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('should call onError again when switching back to cached query without new fetch', async () => {
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => {
+      throw new Error(`boom-${queryKey[1]}`);
+    });
+    const onError = vi.fn();
+    const query = new Query<never, Error>({
+      queryClient: new QueryClient({}),
+      staleTime: Infinity,
+      retry: false,
+      queryKey: () =>
+        ['on-error-return-to-cached-query', queryKeyPart.get()] as const,
+      queryFn,
+      onError,
+    });
+
+    try {
+      await when(() => query.result.error?.message === 'boom-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.error?.message === 'boom-2');
+
+      runInAction(() => {
+        queryKeyPart.set(1);
+      });
+
+      await when(() => query.result.error?.message === 'boom-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.error?.message === 'boom-2');
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onError).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ message: 'boom-1' }),
+        undefined,
+      );
+      expect(onError).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ message: 'boom-2' }),
+        undefined,
+      );
+      expect(onError).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({ message: 'boom-1' }),
+        undefined,
+      );
+      expect(onError).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({ message: 'boom-2' }),
+        undefined,
+      );
+      expect(onError).toBeCalledTimes(4);
+    } finally {
+      query.destroy();
+    }
+  });
+
   it('onError should call again after reactive queryKey change', async () => {
     const queryKeyPart = observable.box(1);
     const onError = vi.fn();
