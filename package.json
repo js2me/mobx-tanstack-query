@@ -6,7 +6,7 @@
     "clean": "rimraf dist",
     "lint:check": "pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
     "ts:check": "tsc --noEmit",
-    "check": "npm run lint:check && npm run ts:check",
+    "check": "npm run lint:check && npm run ts:check && npm run test:types",
     "prebuild": "npm run clean && npm run check",
     "build:watch": "pnpm build && nodemon --watch src --ext ts,tsx --exec \"pnpm build\"",
     "build": "vite build",
