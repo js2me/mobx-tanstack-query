@@ -4005,4 +4005,70 @@ describe('Query', () => {
       query.destroy();
     }
   });
+
+  it('onDone should call again after reactive queryKey change', async () => {
+    const queryKeyPart = observable.box(1);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      queryKey: () => ['on-done-query-key-change', queryKeyPart.get()] as const,
+      queryFn: async ({ queryKey }) => `value-${queryKey[1]}`,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
+      expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
+      expect(onDone).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('onError should call again after reactive queryKey change', async () => {
+    const queryKeyPart = observable.box(1);
+    const onError = vi.fn();
+    const query = new Query<never, Error>({
+      queryClient: new QueryClient({}),
+      queryKey: () =>
+        ['on-error-query-key-change', queryKeyPart.get()] as const,
+      retry: false,
+      queryFn: async ({ queryKey }) => {
+        throw new Error(`boom-${queryKey[1]}`);
+      },
+      onError,
+    });
+
+    try {
+      await when(() => query.result.error?.message === 'boom-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.error?.message === 'boom-2');
+
+      expect(onError).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ message: 'boom-1' }),
+        undefined,
+      );
+      expect(onError).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ message: 'boom-2' }),
+        undefined,
+      );
+      expect(onError).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
 });

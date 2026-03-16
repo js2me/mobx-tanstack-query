@@ -41,6 +41,22 @@ import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
 import type { QueryOptionsParams } from './query-options.js';
 import { Destroyable } from './utils/destroyable.js';
 
+type CurrentObserverQuery<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData,
+  TQueryKey extends QueryKey,
+> = ReturnType<
+  QueryObserver<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >['getCurrentQuery']
+>;
+
 const originalQueryProperties = [
   'data',
   'dataUpdatedAt',
@@ -114,6 +130,12 @@ export class Query<
   protected doneListeners: QueryDoneListener<TData>[];
   private lastDoneNotifiedCount: Maybe<number>;
   private lastErrorNotifiedCount: Maybe<number>;
+  private lastDoneNotifiedQuery: Maybe<
+    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  >;
+  private lastErrorNotifiedQuery: Maybe<
+    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  >;
   private isNotifyingDone: boolean;
   private isNotifyingError: boolean;
   private suppressNextDoneNotification: boolean;
@@ -335,6 +357,8 @@ export class Query<
     this.doneListeners = [];
     this.lastDoneNotifiedCount = undefined;
     this.lastErrorNotifiedCount = undefined;
+    this.lastDoneNotifiedQuery = undefined;
+    this.lastErrorNotifiedQuery = undefined;
     this.isNotifyingDone = false;
     this.isNotifyingError = false;
     this.suppressNextDoneNotification = false;
@@ -649,7 +673,8 @@ export class Query<
    */
   private updateResult(result: QueryObserverResult<TData, TError>) {
     this._result = result;
-    const queryState = this.queryObserver.getCurrentQuery().state;
+    const currentQuery = this.queryObserver.getCurrentQuery();
+    const queryState = currentQuery.state;
 
     if (this.features.transformError && this._result.error) {
       this._result.error = this.features.transformError(this._result.error);
@@ -662,8 +687,10 @@ export class Query<
       }
       if (
         !this.isNotifyingDone &&
-        queryState.dataUpdateCount !== this.lastDoneNotifiedCount
+        (currentQuery !== this.lastDoneNotifiedQuery ||
+          queryState.dataUpdateCount !== this.lastDoneNotifiedCount)
       ) {
+        this.lastDoneNotifiedQuery = currentQuery;
         this.lastDoneNotifiedCount = queryState.dataUpdateCount;
         this.isNotifyingDone = true;
         try {
@@ -677,8 +704,10 @@ export class Query<
     } else if (result.error) {
       if (
         !this.isNotifyingError &&
-        queryState.errorUpdateCount !== this.lastErrorNotifiedCount
+        (currentQuery !== this.lastErrorNotifiedQuery ||
+          queryState.errorUpdateCount !== this.lastErrorNotifiedCount)
       ) {
+        this.lastErrorNotifiedQuery = currentQuery;
         this.lastErrorNotifiedCount = queryState.errorUpdateCount;
         this.isNotifyingError = true;
         try {
@@ -808,6 +837,8 @@ export class Query<
 
     this.doneListeners = [];
     this.errorListeners = [];
+    this.lastDoneNotifiedQuery = undefined;
+    this.lastErrorNotifiedQuery = undefined;
 
     this.queryObserver.destroy();
 
