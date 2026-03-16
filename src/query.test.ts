@@ -1,5 +1,5 @@
 /* eslint-disable no-async-promise-executor */
-/** biome-ignore-all lint/nursery/noFloatingPromises: <explanation> */
+/** biome-ignore-all lint/nursery/noFloatingPromises: tests intentionally leave promises unawaited */
 import {
   type DefaultError,
   hashKey,
@@ -233,7 +233,7 @@ describe('Query', () => {
       constructor(queryClient: QueryClient) {
         this.query = new QueryMock(
           {
-            queryKey: ['on-done-cycle', 0] as const,
+            queryKey: ['on-done-cycle', 0 as number] as const,
             queryFn: ({ queryKey }) => ({
               foo: { foo: queryKey[1] as number },
             }),
@@ -3950,9 +3950,20 @@ describe('Query', () => {
     // }
   });
 
+  it('type bug #66: initialData must match queryFn return type', () => {
+    createQuery(() => 1, {
+      initialData: 2,
+    });
+
+    // @ts-expect-error initialData should be compatible with queryFn return type
+    createQuery(() => 1, {
+      initialData: '2',
+    });
+  });
+
   it('bug #64 (options is not reactive sometimes)', () => {
     const isEnabled = observable.box(false);
-    let query: Maybe<Query>;
+    let query: Maybe<Query<{ status: string }>>;
 
     const queryFn = vi.fn(() => Promise.resolve({ status: 'success' }));
 
