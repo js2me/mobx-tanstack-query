@@ -152,6 +152,131 @@ describe('InfiniteQuery', () => {
     query.dispose();
   });
 
+  it('should use initialPageParam from dynamic options without top-level initialPageParam', async () => {
+    type PageParam = {
+      limit: number;
+      offset: number;
+      total: number;
+    };
+
+    type PageData = {
+      data: Record<string, { items: number[] }>;
+    };
+
+    const initialPageParam = {
+      limit: 2,
+      offset: 0,
+      total: 3,
+    } satisfies PageParam;
+
+    const queryFn = vi.fn(async ({ pageParam }: { pageParam: PageParam }) => {
+      return {
+        data: {
+          group: {
+            items: [pageParam.offset + 1],
+          },
+        },
+      } satisfies PageData;
+    });
+
+    const query = new InfiniteQuery({
+      queryClient: new QueryClient({}),
+      options: () => ({
+        enabled: true,
+        queryKey: ['dynamic-initial-page-param'],
+        initialPageParam,
+      }),
+      queryFn,
+      refetchInterval: (infiniteQuery) => {
+        const pagesCount = infiniteQuery.state.data?.pages.length ?? 0;
+
+        if (pagesCount === 1 && infiniteQuery.state.status === 'success') {
+          return 15_000;
+        }
+
+        return false;
+      },
+      getNextPageParam: (lastPage, _, lastPageParam) => {
+        const lastLoadedItems = Object.values(lastPage.data || {})[0]?.items;
+
+        if (!lastLoadedItems?.length) {
+          return undefined;
+        }
+
+        const nextOffset = lastPageParam.offset + lastPageParam.limit;
+
+        if (nextOffset > lastPageParam.total) {
+          return undefined;
+        }
+
+        return {
+          limit: lastPageParam.limit,
+          offset: nextOffset,
+          total: lastPageParam.total,
+        };
+      },
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toBeCalledTimes(1);
+    expect(queryFn).toBeCalledWith({
+      ...queryFn.mock.calls[0][0],
+      direction: 'forward',
+      meta: undefined,
+      pageParam: initialPageParam,
+      queryKey: ['dynamic-initial-page-param'],
+    });
+
+    await query.fetchNextPage();
+
+    expect(queryFn).toBeCalledTimes(2);
+    expect(queryFn).toHaveBeenLastCalledWith({
+      ...queryFn.mock.calls[1][0],
+      direction: 'forward',
+      meta: undefined,
+      pageParam: {
+        limit: 2,
+        offset: 2,
+        total: 3,
+      },
+      queryKey: ['dynamic-initial-page-param'],
+    });
+
+    expect(query.result.data).toStrictEqual({
+      pageParams: [
+        {
+          limit: 2,
+          offset: 0,
+          total: 3,
+        },
+        {
+          limit: 2,
+          offset: 2,
+          total: 3,
+        },
+      ],
+      pages: [
+        {
+          data: {
+            group: {
+              items: [1],
+            },
+          },
+        },
+        {
+          data: {
+            group: {
+              items: [3],
+            },
+          },
+        },
+      ],
+    });
+
+    query.destroy();
+  });
+
   it('should call queryFn with getNextPageParam', async () => {
     const query = new InfiniteQueryMock({
       queryKey: ['test'],
@@ -608,8 +733,7 @@ describe('InfiniteQuery', () => {
           kek: 1,
         }),
         initialPageParam: { offset: 0, limit: 10 },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getNextPageParam: (page, allPages, lastPageParam) => {
+        getNextPageParam: (_page, _allPages, _lastPageParam) => {
           if (globalThis) {
             return null;
           }
@@ -777,6 +901,110 @@ describe('InfiniteQuery', () => {
       expectTypeOf(anotherTest).toEqualTypeOf<number>();
     });
 
+    it('should infer types from initialPageParam inside dynamic options', () => {
+      type PageParam = {
+        limit: number;
+        offset: number;
+        total: number;
+      };
+
+      type PageData = {
+        data: Record<string, { items: number[] }>;
+      };
+
+      const queryClient = new QueryClient({});
+      const sourceData = {
+        items: [1, 2, 3],
+      };
+
+      const dynamicInfiniteQuery = new InfiniteQuery({
+        queryClient,
+        options: () => {
+          const inputParams: object | undefined = globalThis ? {} : undefined;
+
+          if (!inputParams) {
+            return {
+              enabled: false,
+            };
+          }
+
+          return {
+            enabled: true,
+            queryKey: [1, 2, 3] as const,
+            initialPageParam: {
+              limit: 500,
+              offset: 0,
+              total: sourceData.items.length,
+            },
+          };
+        },
+        queryFn: async ({ pageParam }) => {
+          expectTypeOf(pageParam).toEqualTypeOf<PageParam>();
+
+          return {
+            data: {
+              group: {
+                items: [pageParam.offset + 1],
+              },
+            },
+          } satisfies PageData;
+        },
+        refetchInterval: (query) => {
+          expectTypeOf(query.state.data).toMatchTypeOf<
+            InfiniteData<PageData, PageParam> | undefined
+          >();
+
+          const pagesCount = query.state.data?.pages.length ?? 0;
+
+          if (pagesCount === 1 && query.state.status === 'success') {
+            return 15_000;
+          }
+
+          return false;
+        },
+        getNextPageParam: (lastPage, _, lastPageParam) => {
+          expectTypeOf(lastPage).toMatchTypeOf<PageData>();
+          expectTypeOf(lastPageParam).toEqualTypeOf<PageParam>();
+
+          const lastLoadedItems = Object.values(lastPage.data || {})[0]?.items;
+
+          if (!lastLoadedItems?.length) {
+            return undefined;
+          }
+
+          const nextOffset = lastPageParam.offset + lastPageParam.limit;
+
+          if (nextOffset > sourceData.items.length) {
+            return undefined;
+          }
+
+          return {
+            limit: lastPageParam.limit,
+            offset: nextOffset,
+            total: sourceData.items.length,
+          };
+        },
+      });
+
+      expectTypeOf(dynamicInfiniteQuery.result.data).toEqualTypeOf<
+        | InfiniteData<
+            {
+              data: {
+                group: {
+                  items: number[];
+                };
+              };
+            },
+            {
+              limit: number;
+              offset: number;
+              total: number;
+            }
+          >
+        | undefined
+      >();
+    });
+
     it('update() method parameters (throwOnError)', () => {
       type Foo = { foo: 1 };
 
@@ -785,8 +1013,7 @@ describe('InfiniteQuery', () => {
       const infiniteQuery = new InfiniteQuery({
         queryClient: new QueryClient({}),
         initialPageParam: { offset: 0, limit: 10 },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getNextPageParam: (page, allPages, lastPageParam) => {
+        getNextPageParam: (_page, _allPages, _lastPageParam) => {
           if (globalThis) {
             return null;
           }

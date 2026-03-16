@@ -261,10 +261,11 @@ export interface InfiniteQueryConfig<
         TQueryKey,
         TPageParam
       >,
-      'queryKey'
+      'queryKey' | 'initialPageParam'
     >,
     QueryFeatures {
   queryClient: AnyQueryClient;
+  initialPageParam?: TPageParam;
   /**
    * TanStack Query manages query caching for you based on query keys.
    * Query keys have to be an Array at the top level, and can be as simple as an Array with a single string, or as complex as an array of many strings and nested objects.
