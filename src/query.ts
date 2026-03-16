@@ -22,7 +22,6 @@ import {
   when,
 } from 'mobx';
 import { lazyObserve } from 'yummies/mobx';
-import type { Maybe } from 'yummies/types';
 import { enableHolder } from './constants.js';
 import type {
   QueryConfig,
@@ -128,13 +127,13 @@ export class Query<
 
   protected errorListeners: QueryErrorListener<TError>[];
   protected doneListeners: QueryDoneListener<TData>[];
-  private lastDoneNotifiedCount: Maybe<number>;
-  private lastErrorNotifiedCount: Maybe<number>;
-  private lastDoneNotifiedQuery: Maybe<
-    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  private doneNotifiedCounts: WeakMap<
+    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    number
   >;
-  private lastErrorNotifiedQuery: Maybe<
-    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  private errorNotifiedCounts: WeakMap<
+    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    number
   >;
   private isNotifyingDone: boolean;
   private isNotifyingError: boolean;
@@ -355,10 +354,8 @@ export class Query<
 
     this.errorListeners = [];
     this.doneListeners = [];
-    this.lastDoneNotifiedCount = undefined;
-    this.lastErrorNotifiedCount = undefined;
-    this.lastDoneNotifiedQuery = undefined;
-    this.lastErrorNotifiedQuery = undefined;
+    this.doneNotifiedCounts = new WeakMap();
+    this.errorNotifiedCounts = new WeakMap();
     this.isNotifyingDone = false;
     this.isNotifyingError = false;
     this.suppressNextDoneNotification = false;
@@ -685,13 +682,12 @@ export class Query<
         this.suppressNextDoneNotification = false;
         return;
       }
+      const lastDoneCount = this.doneNotifiedCounts.get(currentQuery);
       if (
         !this.isNotifyingDone &&
-        (currentQuery !== this.lastDoneNotifiedQuery ||
-          queryState.dataUpdateCount !== this.lastDoneNotifiedCount)
+        queryState.dataUpdateCount !== lastDoneCount
       ) {
-        this.lastDoneNotifiedQuery = currentQuery;
-        this.lastDoneNotifiedCount = queryState.dataUpdateCount;
+        this.doneNotifiedCounts.set(currentQuery, queryState.dataUpdateCount);
         this.isNotifyingDone = true;
         try {
           this.doneListeners.forEach((fn) => {
@@ -702,13 +698,12 @@ export class Query<
         }
       }
     } else if (result.error) {
+      const lastErrorCount = this.errorNotifiedCounts.get(currentQuery);
       if (
         !this.isNotifyingError &&
-        (currentQuery !== this.lastErrorNotifiedQuery ||
-          queryState.errorUpdateCount !== this.lastErrorNotifiedCount)
+        queryState.errorUpdateCount !== lastErrorCount
       ) {
-        this.lastErrorNotifiedQuery = currentQuery;
-        this.lastErrorNotifiedCount = queryState.errorUpdateCount;
+        this.errorNotifiedCounts.set(currentQuery, queryState.errorUpdateCount);
         this.isNotifyingError = true;
         try {
           this.errorListeners.forEach((fn) => {
@@ -837,8 +832,8 @@ export class Query<
 
     this.doneListeners = [];
     this.errorListeners = [];
-    this.lastDoneNotifiedQuery = undefined;
-    this.lastErrorNotifiedQuery = undefined;
+    this.doneNotifiedCounts = new WeakMap();
+    this.errorNotifiedCounts = new WeakMap();
 
     this.queryObserver.destroy();
 

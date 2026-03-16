@@ -4070,15 +4070,13 @@ describe('Query', () => {
       expect(queryFn).toBeCalledTimes(2);
       expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
       expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
-      expect(onDone).toHaveBeenNthCalledWith(3, 'value-1', undefined);
-      expect(onDone).toHaveBeenNthCalledWith(4, 'value-2', undefined);
-      expect(onDone).toBeCalledTimes(4);
+      expect(onDone).toBeCalledTimes(2);
     } finally {
       query.destroy();
     }
   });
 
-  it('should call onError again when switching back to cached query without new fetch', async () => {
+  it('should call onError again when switching back to query', async () => {
     const queryKeyPart = observable.box(1);
     const queryFn = vi.fn(async ({ queryKey }) => {
       throw new Error(`boom-${queryKey[1]}`);
@@ -4115,7 +4113,7 @@ describe('Query', () => {
 
       await when(() => query.result.error?.message === 'boom-2');
 
-      expect(queryFn).toBeCalledTimes(2);
+      expect(queryFn).toBeCalledTimes(4);
       expect(onError).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ message: 'boom-1' }),
