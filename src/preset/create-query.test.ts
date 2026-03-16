@@ -80,11 +80,13 @@ describe('createQuery', () => {
       initialData: 2,
     });
 
-    createQuery<() => number>(queryFnReturnsNumber, {
+    // @ts-expect-error initialData must match queryFn return type
+    createQuery(queryFnReturnsNumber, {
       initialData: '2',
     });
 
-    createQuery<() => Promise<User>, Error, string, User, any[]>(getUser, {
+    // @ts-expect-error initialData still uses queryFn data, not selected data
+    createQuery<User, Error, string, User, any[]>(getUser, {
       initialData: 'alice@example.com',
       select: (user) => user.email,
     });

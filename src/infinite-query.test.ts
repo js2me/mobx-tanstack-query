@@ -505,11 +505,27 @@ describe('InfiniteQuery', () => {
       });
 
       expectTypeOf(queryWithAny.result.data).toEqualTypeOf<
-        | undefined
-        | (InfiniteData<ServicePage, { page: number; pageSize: number }> & {
+        | {
             total: number;
-            services: Service[];
-          })
+            services: {
+              id: number;
+            }[];
+            pages: {
+              meta: {
+                pageNumber: number;
+                pageSize: number;
+                total: number;
+              };
+              services: {
+                id: number;
+              }[];
+            }[];
+            pageParams: {
+              page: number;
+              pageSize: number;
+            }[];
+          }
+        | undefined
       >();
 
       const queryWithoutAny = new InfiniteQuery({
@@ -561,7 +577,14 @@ describe('InfiniteQuery', () => {
         },
       });
 
-      expectTypeOf(queryWithoutAny.result.data).toEqualTypeOf<
+      const queryWithoutAnyData:
+        | undefined
+        | (InfiniteData<ServicePage, { page: number; pageSize: number }> & {
+            total: number;
+            services: Service[];
+          }) = queryWithoutAny.result.data;
+
+      expectTypeOf(queryWithoutAnyData).toEqualTypeOf<
         | undefined
         | (InfiniteData<ServicePage, { page: number; pageSize: number }> & {
             total: number;

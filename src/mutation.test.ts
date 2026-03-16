@@ -5,8 +5,12 @@ import {
 import { reaction } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { Mutation } from './mutation';
-import type { MutationConfig } from './mutation.types';
+import { Mutation } from './mutation.js';
+import type {
+  MutationConfig,
+  MutationFn,
+  MutationFunctionContext,
+} from './mutation.types.js';
 
 class MutationMock<
   TData = unknown,
@@ -28,15 +32,14 @@ class MutationMock<
       'queryClient'
     >,
   ) {
-    const mutationFn = vi.fn((...args: any[]) => {
-      // @ts-expect-error
-      const result = options.mutationFn?.(...args);
-      return result;
-    });
+    const mutationFn: MutationFn<TData, TVariables> = vi.fn(
+      (variables: TVariables, context: MutationFunctionContext) => {
+        return options.mutationFn!(variables, context);
+      },
+    );
     super({
       ...options,
       queryClient: new QueryClientCore({}),
-      // @ts-expect-error
       mutationFn,
     });
 

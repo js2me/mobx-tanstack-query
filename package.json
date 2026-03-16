@@ -15,6 +15,7 @@
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
     "pub:major": "PUBLISH_VERSION=major pnpm pub",
     "test": "vitest run",
+    "test:types": "tsc --noEmit --project tsconfig.test.json",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "docs": "pnpm build && cd docs && pnpm dev",
