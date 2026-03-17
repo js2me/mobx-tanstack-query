@@ -4178,4 +4178,299 @@ describe('Query', () => {
       query.destroy();
     }
   });
+
+  it('onDone should still dedupe cached query with cumulativeQueryHash', async () => {
+    vi.useRealTimers();
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => `value-${queryKey[1]}`);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      cumulativeQueryHash: true,
+      staleTime: Infinity,
+      queryKey: () =>
+        ['on-done-cumulative-query-hash', queryKeyPart.get()] as const,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      runInAction(() => {
+        queryKeyPart.set(1);
+      });
+
+      await when(() => query.result.data === 'value-1');
+      await sleep(20);
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onDone).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('onDone should refetch removed queries with autoRemovePreviousQuery from query client', async () => {
+    vi.useRealTimers();
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => `value-${queryKey[1]}`);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            autoRemovePreviousQuery: true,
+          },
+        },
+      }),
+      staleTime: Infinity,
+      queryKey: () =>
+        ['on-done-auto-remove-previous-query', queryKeyPart.get()] as const,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      runInAction(() => {
+        queryKeyPart.set(1);
+      });
+
+      await when(
+        () =>
+          query.result.data === 'value-1' && queryFn.mock.calls.length === 3,
+      );
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(
+        () =>
+          query.result.data === 'value-2' && queryFn.mock.calls.length === 4,
+      );
+
+      expect(queryFn).toBeCalledTimes(4);
+      expect(onDone).toBeCalledTimes(4);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('onDone should work after destroy with resetOnDestroy from query client', async () => {
+    vi.useRealTimers();
+    let counter = 0;
+    const onDone = vi.fn();
+    const queryClient = new MobxQueryClient({
+      defaultOptions: {
+        queries: {
+          resetOnDestroy: true,
+        },
+      },
+    });
+    const firstQuery = new Query({
+      queryClient,
+      staleTime: Infinity,
+      queryKey: ['on-done-reset-on-destroy'],
+      queryFn: async () => ++counter,
+      onDone,
+    });
+
+    try {
+      await when(() => firstQuery.result.data === 1);
+      firstQuery.destroy();
+
+      const secondQuery = new Query({
+        queryClient,
+        staleTime: Infinity,
+        queryKey: ['on-done-reset-on-destroy'],
+        queryFn: async () => ++counter,
+        onDone,
+      });
+
+      try {
+        await when(() => secondQuery.result.data === 2);
+
+        expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
+        expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
+        expect(onDone).toBeCalledTimes(2);
+      } finally {
+        secondQuery.destroy();
+      }
+    } finally {
+      firstQuery.destroy();
+    }
+  });
+
+  it('onDone should work after destroy with removeOnDestroy from query client', async () => {
+    vi.useRealTimers();
+    let counter = 0;
+    const onDone = vi.fn();
+    const queryClient = new MobxQueryClient({
+      defaultOptions: {
+        queries: {
+          removeOnDestroy: true,
+        },
+      },
+    });
+    const firstQuery = new Query({
+      queryClient,
+      staleTime: Infinity,
+      queryKey: ['on-done-remove-on-destroy'],
+      queryFn: async () => ++counter,
+      onDone,
+    });
+
+    try {
+      await when(() => firstQuery.result.data === 1);
+      firstQuery.destroy();
+
+      const secondQuery = new Query({
+        queryClient,
+        staleTime: Infinity,
+        queryKey: ['on-done-remove-on-destroy'],
+        queryFn: async () => ++counter,
+        onDone,
+      });
+
+      try {
+        await when(() => secondQuery.result.data === 2);
+
+        expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
+        expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
+        expect(onDone).toBeCalledTimes(2);
+      } finally {
+        secondQuery.destroy();
+      }
+    } finally {
+      firstQuery.destroy();
+    }
+  });
+
+  it('onDone should respect dynamicOptionsUpdateDelay', async () => {
+    vi.useRealTimers();
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => `value-${queryKey[1]}`);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      dynamicOptionsUpdateDelay: 40,
+      queryKey: () =>
+        ['on-done-dynamic-options-update-delay', queryKeyPart.get()] as const,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      expect(query.result.data).toBe('value-1');
+
+      await when(() => query.result.data === 'value-2');
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onDone).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('onDone should respect dynamicOptionsComparer', async () => {
+    vi.useRealTimers();
+    const queryState = observable.box({ id: 1, noise: 0 });
+    const queryFn = vi.fn(async ({ queryKey }) => `value-${queryKey[1].id}`);
+    const onDone = vi.fn();
+    const query = new Query({
+      queryClient: new QueryClient({}),
+      dynamicOptionsComparer: (left, right) =>
+        left.queryKey?.[1]?.id === right.queryKey?.[1]?.id,
+      queryKey: () =>
+        ['on-done-dynamic-options-comparer', queryState.get()] as const,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data === 'value-1');
+
+      runInAction(() => {
+        queryState.set({ id: 1, noise: 1 });
+      });
+
+      await sleep(20);
+
+      expect(queryFn).toBeCalledTimes(1);
+      expect(onDone).toBeCalledTimes(1);
+
+      runInAction(() => {
+        queryState.set({ id: 2, noise: 0 });
+      });
+
+      await when(() => query.result.data === 'value-2');
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onDone).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('onError should keep listener args original and transform result.error', async () => {
+    vi.useRealTimers();
+    const queryKeyPart = observable.box(1);
+    const onError = vi.fn();
+    const query = new Query<never, Error>({
+      queryClient: new QueryClient({}),
+      transformError: (error: Error) =>
+        new Error(`transformed:${error.message}`),
+      retry: false,
+      queryKey: () => ['on-error-transform-error', queryKeyPart.get()] as const,
+      queryFn: async ({ queryKey }) => {
+        throw new Error(`boom-${queryKey[1]}`);
+      },
+      onError,
+    });
+
+    try {
+      await when(() => query.result.error?.message === 'transformed:boom-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.error?.message === 'transformed:boom-2');
+
+      expect(onError).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ message: 'boom-1' }),
+        undefined,
+      );
+      expect(onError).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ message: 'boom-2' }),
+        undefined,
+      );
+      expect(onError).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
+  });
 });

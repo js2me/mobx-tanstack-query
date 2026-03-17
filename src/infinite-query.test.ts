@@ -8,8 +8,9 @@ import {
   type QueryKey,
   type RefetchOptions,
 } from '@tanstack/query-core';
-import { when } from 'mobx';
+import { observable, runInAction, when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { sleep } from 'yummies/async';
 
 import { InfiniteQuery } from './inifinite-query.js';
 import type {
@@ -557,6 +558,85 @@ describe('InfiniteQuery', () => {
 
       query.dispose();
     });
+  });
+
+  it('onDone should call again after reactive queryKey change', async () => {
+    const queryKeyPart = observable.box(1);
+    const onDone = vi.fn();
+    const query = new InfiniteQuery({
+      queryClient: new QueryClient({}),
+      queryKey: () =>
+        ['infinite-on-done-query-key-change', queryKeyPart.get()] as const,
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      queryFn: async ({ queryKey }) => ({
+        value: `value-${queryKey[1]}`,
+      }),
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data?.pages[0]?.value === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data?.pages[0]?.value === 'value-2');
+
+      expect(onDone).toBeCalledTimes(2);
+      expect(onDone.mock.calls[0]?.[0]?.pages[0]).toStrictEqual({
+        value: 'value-1',
+      });
+      expect(onDone.mock.calls[1]?.[0]?.pages[0]).toStrictEqual({
+        value: 'value-2',
+      });
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('should not call onDone again when switching back to cached query without new fetch', async () => {
+    const queryKeyPart = observable.box(1);
+    const queryFn = vi.fn(async ({ queryKey }) => ({
+      value: `value-${queryKey[1]}`,
+    }));
+    const onDone = vi.fn();
+    const query = new InfiniteQuery({
+      queryClient: new QueryClient({}),
+      staleTime: Infinity,
+      queryKey: () =>
+        [
+          'infinite-on-done-return-to-cached-query',
+          queryKeyPart.get(),
+        ] as const,
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      queryFn,
+      onDone,
+    });
+
+    try {
+      await when(() => query.result.data?.pages[0]?.value === 'value-1');
+
+      runInAction(() => {
+        queryKeyPart.set(2);
+      });
+
+      await when(() => query.result.data?.pages[0]?.value === 'value-2');
+
+      runInAction(() => {
+        queryKeyPart.set(1);
+      });
+
+      await when(() => query.result.data?.pages[0]?.value === 'value-1');
+      await sleep(20);
+
+      expect(queryFn).toBeCalledTimes(2);
+      expect(onDone).toBeCalledTimes(2);
+    } finally {
+      query.destroy();
+    }
   });
 
   describe('typings', () => {

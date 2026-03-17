@@ -10,19 +10,8 @@ import {
   type InfiniteQueryObserverResult,
   type QueryKey,
   type QueryStatus,
-  type RefetchOptions,
-  type SetDataOptions,
-  type Updater,
 } from '@tanstack/query-core';
-import {
-  action,
-  makeObservable,
-  observable,
-  reaction,
-  runInAction,
-} from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
-
+import { BaseQuery } from './base-query.js';
 import type {
   InfiniteQueryConfig,
   InfiniteQueryDoneListener,
@@ -35,11 +24,8 @@ import type {
   InfiniteQueryStartParams,
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types.js';
-import { Query } from './query.js';
-import type { QueryFeatures } from './query.types.js';
 import type { QueryClient } from './query-client.js';
-import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
-import { Destroyable } from './utils/destroyable.js';
+import type { AnyQueryClient } from './query-client.types.js';
 
 const originalQueryProperties = [
   'data',
@@ -80,17 +66,33 @@ export class InfiniteQuery<
     TData = InfiniteData<TQueryFnData, TPageParam>,
     TQueryKey extends QueryKey = QueryKey,
   >
-  extends Destroyable
+  extends BaseQuery<
+    InfiniteData<TQueryFnData, TPageParam>,
+    TError,
+    TData,
+    InfiniteQueryOptions<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
+    InfiniteQueryObserverResult<TData, TError>,
+    InfiniteQueryObserver<TData, TError, TData, TQueryKey, TPageParam>,
+    InfiniteQueryDoneListener<TData>,
+    InfiniteQueryErrorListener<TError>,
+    InfiniteQueryUpdateOptionsAllVariants<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TQueryKey
+    >,
+    InfiniteQueryResetParams,
+    InfiniteQueryRemoveParams,
+    InfiniteQueryInvalidateParams,
+    InfiniteQueryStartParams<TQueryFnData, TError, TPageParam, TData, TQueryKey>
+  >
   implements
     Pick<
       InfiniteQueryObserverBaseResult<TData, TError>,
       (typeof originalQueryProperties)[number]
     >
 {
-  protected queryClient: AnyQueryClient;
-
-  protected _result: InfiniteQueryObserverResult<TData, TError>;
-
   protected config: InfiniteQueryConfig<
     TQueryFnData,
     TError,
@@ -226,44 +228,6 @@ export class InfiniteQuery<
    */
   isFetchingPreviousPage!: boolean;
 
-  options: InfiniteQueryOptions<
-    TQueryFnData,
-    TError,
-    TPageParam,
-    TData,
-    TQueryKey
-  >;
-  queryObserver: InfiniteQueryObserver<
-    TData,
-    TError,
-    TData,
-    TQueryKey,
-    TPageParam
-  >;
-
-  isResultRequsted: boolean;
-
-  protected features: QueryFeatures;
-
-  /**
-   * This parameter is responsible for holding the enabled value,
-   * in cases where the "enableOnDemand" option is enabled
-   */
-  private holdedEnabledOption: InfiniteQueryOptions<
-    TQueryFnData,
-    TError,
-    TPageParam,
-    TData,
-    TQueryKey
-  >['enabled'];
-  private _observerSubscription?: VoidFunction;
-  private hooks?: QueryClientHooks;
-
-  protected errorListeners: InfiniteQueryErrorListener<TError>[];
-  protected doneListeners: InfiniteQueryDoneListener<TData>[];
-
-  protected cumulativeQueryKeyHashesSet: Set<string>;
-
   constructor(
     config: InfiniteQueryConfig<
       TQueryFnData,
@@ -324,40 +288,11 @@ export class InfiniteQuery<
       queryClient,
     };
 
-    this.queryClient = queryClient;
-    this._result = undefined as any;
-    this.isResultRequsted = false;
-
-    this.errorListeners = [];
-    this.doneListeners = [];
-
-    // simple type override to make typescript happy
-    // and do less for javascript
     const qc = queryClient as unknown as Partial<
       Pick<QueryClient, 'queryFeatures' | 'hooks'>
     >;
-
-    this.features = {
-      cumulativeQueryHash:
-        config.cumulativeQueryHash ?? qc.queryFeatures?.cumulativeQueryHash,
-      enableOnDemand: config.enableOnDemand ?? qc.queryFeatures?.enableOnDemand,
-      lazy: config.lazy ?? qc.queryFeatures?.lazy,
-      resetOnDestroy:
-        config.resetOnDestroy ??
-        config.resetOnDispose ??
-        qc.queryFeatures?.resetOnDestroy ??
-        qc.queryFeatures?.resetOnDispose,
-      removeOnDestroy:
-        config.removeOnDestroy ?? qc.queryFeatures?.removeOnDestroy,
-      transformError: config.transformError ?? qc.queryFeatures?.transformError,
-      dynamicOptionsUpdateDelay:
-        config.dynamicOptionsUpdateDelay ??
-        qc.queryFeatures?.dynamicOptionsUpdateDelay,
-      autoRemovePreviousQuery:
-        config.autoRemovePreviousQuery ??
-        qc.queryFeatures?.autoRemovePreviousQuery,
-    };
-    this.hooks = qc.hooks;
+    this.features = BaseQuery.mergeQueryFeatures(config, queryClient);
+    this.initializeBaseState(queryClient, this.features, qc.hooks);
 
     const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
 
@@ -412,111 +347,19 @@ export class InfiniteQuery<
     // @ts-expect-error
     this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
 
-    // @ts-expect-error
-    this.updateResult(this.queryObserver.getOptimisticResult(this.options));
-
-    observable.deep(this, '_result');
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
-    this.refetch = this.refetch.bind(this);
-    this.start = this.start.bind(this);
-
-    originalQueryProperties.forEach((property) => {
-      if (!this[property]) {
-        Object.defineProperty(this, property, {
-          get: () => this.result[property],
-        });
-      }
+    this.finalizeInitialization({
+      originalQueryProperties,
+      getAllDynamicOptions,
+      abortSignal: config.abortSignal,
+      preserveExistingProperties: true,
     });
-
-    makeObservable(this);
-
-    if (this.features.lazy) {
-      const cleanup = lazyObserve({
-        context: this,
-        property: '_result',
-        onStart: () => {
-          if (!this._observerSubscription) {
-            if (getAllDynamicOptions) {
-              this.update(getAllDynamicOptions());
-            }
-            this._observerSubscription = this.queryObserver.subscribe(
-              this.updateResult,
-            );
-            if (getAllDynamicOptions) {
-              return reaction(getAllDynamicOptions, this.update, {
-                delay: this.config.dynamicOptionsUpdateDelay,
-                signal: config.abortSignal,
-                fireImmediately: true,
-              });
-            }
-          }
-        },
-        onEnd: (disposeFn, cleanup) => {
-          if (this._observerSubscription) {
-            disposeFn?.();
-            this._observerSubscription();
-            this._observerSubscription = undefined;
-            config.abortSignal?.removeEventListener('abort', cleanup);
-          }
-        },
-      });
-
-      config.abortSignal?.addEventListener('abort', cleanup);
-    } else {
-      if (getAllDynamicOptions) {
-        reaction(getAllDynamicOptions, this.update, {
-          delay: this.config.dynamicOptionsUpdateDelay,
-          signal: config.abortSignal,
-          fireImmediately: true,
-          equals: this.features.dynamicOptionsComparer,
-        });
-      }
-      this._observerSubscription = this.queryObserver.subscribe(
-        this.updateResult,
-      );
-    }
-
-    if (config.onDone) {
-      this.doneListeners.push(config.onDone);
-    }
-    if (config.onError) {
-      this.errorListeners.push(config.onError);
-    }
+    this.registerInitialListeners({
+      onDone: config.onDone,
+      onError: config.onError,
+    });
 
     this.config.onInit?.(this);
     this.hooks?.onInfiniteQueryInit?.(this);
-  }
-
-  protected createQueryHash(
-    queryKey: any,
-    options: InfiniteQueryOptions<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TQueryKey
-    >,
-  ) {
-    // @ts-expect-error
-    return Query.prototype.createQueryHash.call(this, queryKey, options);
-  }
-
-  protected getCurrentThrowableError(options?: RefetchOptions) {
-    // @ts-expect-error
-    return Query.prototype.getCurrentThrowableError.call(this, options);
-  }
-
-  setData(
-    updater: Updater<
-      NoInfer<InfiniteData<TQueryFnData, TPageParam>> | undefined,
-      NoInfer<InfiniteData<TQueryFnData, TPageParam>> | undefined
-    >,
-    options?: SetDataOptions,
-  ) {
-    return Query.prototype.setData.call(this, updater, options);
   }
 
   /**
@@ -533,90 +376,8 @@ export class InfiniteQuery<
     return this._result.fetchPreviousPage(options);
   }
 
-  update(
-    optionsUpdate: InfiniteQueryUpdateOptionsAllVariants<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TQueryKey
-    >,
-  ) {
-    return Query.prototype.update.call(this, optionsUpdate);
-  }
-
-  private isEnableHolded = false;
-
-  private processOptions(
-    options: InfiniteQueryOptions<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TQueryKey
-    >,
-  ) {
-    // @ts-expect-error works the same
-    return Query.prototype.processOptions.call(this, options);
-  }
-
-  public get result() {
-    if (this.features.enableOnDemand && !this.isResultRequsted) {
-      runInAction(() => {
-        this.isResultRequsted = true;
-      });
-      this.update({});
-    }
-    return this._result;
-  }
-
-  /**
-   * Modify this result so it matches the tanstack query result.
-   */
-  private updateResult(result: InfiniteQueryObserverResult<TData, TError>) {
-    // @ts-expect-error
-    return Query.prototype.updateResult.call(this, result);
-  }
-
-  async refetch(options?: RefetchOptions) {
-    return await Query.prototype.refetch.call(this, options);
-  }
-
-  async reset(params?: InfiniteQueryResetParams) {
-    return await Query.prototype.reset.call(this, params);
-  }
-
-  remove(params?: InfiniteQueryRemoveParams) {
-    return Query.prototype.remove.call(this, params);
-  }
-
-  async invalidate(options?: InfiniteQueryInvalidateParams) {
-    return await Query.prototype.invalidate.call(this, options);
-  }
-
-  onDone(doneListener: InfiniteQueryDoneListener<TData>): void {
-    this.doneListeners.push(doneListener);
-  }
-
-  onError(errorListener: InfiniteQueryErrorListener<TError>): void {
-    this.errorListeners.push(errorListener);
-  }
-
-  async start(
-    params: InfiniteQueryStartParams<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TQueryKey
-    > = {},
-  ) {
-    return await Query.prototype.start.call(this, params);
-  }
-
   protected handleDestroy() {
-    // @ts-expect-error
-    Query.prototype.cleanup.call(this);
+    this.cleanup();
     this.hooks?.onInfiniteQueryDestroy?.(this);
   }
 }

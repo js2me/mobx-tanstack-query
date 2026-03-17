@@ -1,12 +1,15 @@
 import type {
   DefaultError,
   InfiniteData,
+  InfiniteQueryObserverResult,
   DefaultedInfiniteQueryObserverOptions as LibDefaultedInfiniteQueryObserverOptions,
   InfiniteQueryObserverOptions as LibInfiniteQueryObserverOptions,
   QueryKey,
   RefetchOptions,
   ThrowOnError,
 } from '@tanstack/query-core';
+
+export type { InfiniteQueryObserverResult };
 
 import type { InfiniteQuery } from './inifinite-query.js';
 import type {

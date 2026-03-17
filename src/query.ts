@@ -1,60 +1,24 @@
 import {
-  type CancelOptions,
   type DefaultError,
   type FetchStatus,
-  hashKey,
   type QueryKey,
   QueryObserver,
   type QueryObserverBaseResult,
   type QueryObserverResult,
   type QueryStatus,
-  type RefetchOptions,
-  type ResetOptions,
-  type SetDataOptions,
-  type Updater,
 } from '@tanstack/query-core';
-import {
-  action,
-  makeObservable,
-  observable,
-  reaction,
-  runInAction,
-  when,
-} from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
-import { enableHolder } from './constants.js';
+import { BaseQuery } from './base-query.js';
 import type {
   QueryConfig,
   QueryDoneListener,
   QueryErrorListener,
-  QueryFeatures,
-  QueryInvalidateParams,
   QueryOptions,
-  QueryRemoveParams,
   QueryResetParams,
   QueryStartParams,
-  QueryUpdateOptionsAllVariants,
 } from './query.types.js';
 import type { QueryClient } from './query-client.js';
-import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
+import type { AnyQueryClient } from './query-client.types.js';
 import type { QueryOptionsParams } from './query-options.js';
-import { Destroyable } from './utils/destroyable.js';
-
-type CurrentObserverQuery<
-  TQueryFnData,
-  TError,
-  TData,
-  TQueryData,
-  TQueryKey extends QueryKey,
-> = ReturnType<
-  QueryObserver<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >['getCurrentQuery']
->;
 
 const originalQueryProperties = [
   'data',
@@ -87,60 +51,32 @@ export class Query<
     TQueryData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey,
   >
-  extends Destroyable
+  extends BaseQuery<
+    TQueryFnData,
+    TError,
+    TData,
+    QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    QueryObserverResult<TData, TError>,
+    QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    QueryDoneListener<TData>,
+    QueryErrorListener<TError>,
+    Partial<QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>>,
+    QueryResetParams,
+    { safe?: boolean; predicate?: (query: any) => boolean } | undefined,
+    | {
+        exact?: boolean;
+        queryKey?: TQueryKey;
+        predicate?: (query: any) => boolean;
+      }
+    | undefined,
+    QueryStartParams<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  >
   implements
     Pick<
       QueryObserverBaseResult<TData, TError>,
       (typeof originalQueryProperties)[number]
     >
 {
-  protected queryClient: AnyQueryClient;
-
-  protected _result: QueryObserverResult<TData, TError>;
-
-  options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
-  queryObserver: QueryObserver<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >;
-
-  isResultRequsted: boolean;
-
-  protected features: QueryFeatures;
-
-  /**
-   * This parameter is responsible for holding the enabled value,
-   * in cases where the "enableOnDemand" option is enabled
-   */
-  private holdedEnabledOption: QueryOptions<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >['enabled'];
-  private _observerSubscription?: VoidFunction;
-  private hooks?: QueryClientHooks;
-
-  protected errorListeners: QueryErrorListener<TError>[];
-  protected doneListeners: QueryDoneListener<TData>[];
-  private doneNotifiedCounts: WeakMap<
-    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-    number
-  >;
-  private errorNotifiedCounts: WeakMap<
-    CurrentObserverQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-    number
-  >;
-  private isNotifyingDone: boolean;
-  private isNotifyingError: boolean;
-  private suppressNextDoneNotification: boolean;
-
-  protected cumulativeQueryKeyHashesSet: Set<string>;
-
   protected config: QueryConfig<
     TQueryFnData,
     TError,
@@ -348,45 +284,11 @@ export class Query<
       queryClient,
     };
 
-    this.queryClient = queryClient;
-    this._result = undefined as any;
-    this.isResultRequsted = false;
-
-    this.errorListeners = [];
-    this.doneListeners = [];
-    this.doneNotifiedCounts = new WeakMap();
-    this.errorNotifiedCounts = new WeakMap();
-    this.isNotifyingDone = false;
-    this.isNotifyingError = false;
-    this.suppressNextDoneNotification = false;
-
-    // simple type override to make typescript happy
-    // and do less for javascript
     const qc = queryClient as unknown as Partial<
       Pick<QueryClient, 'queryFeatures' | 'hooks'>
     >;
-
-    this.features = {
-      cumulativeQueryHash:
-        config.cumulativeQueryHash ?? qc.queryFeatures?.cumulativeQueryHash,
-      enableOnDemand: config.enableOnDemand ?? qc.queryFeatures?.enableOnDemand,
-      lazy: config.lazy ?? qc.queryFeatures?.lazy,
-      resetOnDestroy:
-        config.resetOnDestroy ??
-        config.resetOnDispose ??
-        qc.queryFeatures?.resetOnDestroy ??
-        qc.queryFeatures?.resetOnDispose,
-      removeOnDestroy:
-        config.removeOnDestroy ?? qc.queryFeatures?.removeOnDestroy,
-      transformError: config.transformError ?? qc.queryFeatures?.transformError,
-      dynamicOptionsUpdateDelay:
-        config.dynamicOptionsUpdateDelay ??
-        qc.queryFeatures?.dynamicOptionsUpdateDelay,
-      autoRemovePreviousQuery:
-        config.autoRemovePreviousQuery ??
-        qc.queryFeatures?.autoRemovePreviousQuery,
-    };
-    this.hooks = qc.hooks;
+    this.features = BaseQuery.mergeQueryFeatures(config, queryClient);
+    this.initializeBaseState(queryClient, this.features, qc.hooks);
 
     const isQueryKeyDynamic = typeof queryKeyOrDynamicQueryKey === 'function';
 
@@ -438,449 +340,18 @@ export class Query<
       TQueryKey
     >(queryClient as QueryClient, this.options);
 
-    this.updateResult(this.queryObserver.getOptimisticResult(this.options));
-
-    observable.deep(this, '_result');
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
-    this.refetch = this.refetch.bind(this);
-    this.start = this.start.bind(this);
-
-    originalQueryProperties.forEach((property) => {
-      Object.defineProperty(this, property, {
-        get: () => this.result[property],
-      });
+    this.finalizeInitialization({
+      originalQueryProperties,
+      getAllDynamicOptions,
+      abortSignal: config.abortSignal,
     });
-
-    makeObservable(this);
-
-    if (this.features.lazy) {
-      const cleanup = lazyObserve({
-        context: this,
-        property: '_result',
-        onStart: () => {
-          if (!this._observerSubscription) {
-            if (getAllDynamicOptions) {
-              this.update(getAllDynamicOptions());
-            }
-            this._observerSubscription = this.queryObserver.subscribe(
-              this.updateResult,
-            );
-            if (getAllDynamicOptions) {
-              return reaction(getAllDynamicOptions, this.update, {
-                delay: this.features.dynamicOptionsUpdateDelay,
-                signal: config.abortSignal,
-                fireImmediately: true,
-                equals: this.features.dynamicOptionsComparer,
-              });
-            }
-          }
-        },
-        onEnd: (disposeFn, cleanup) => {
-          if (this._observerSubscription) {
-            disposeFn?.();
-            this._observerSubscription();
-            this._observerSubscription = undefined;
-            config.abortSignal?.removeEventListener('abort', cleanup);
-          }
-        },
-      });
-
-      config.abortSignal?.addEventListener('abort', cleanup);
-    } else {
-      if (getAllDynamicOptions) {
-        reaction(getAllDynamicOptions, this.update, {
-          delay: this.features.dynamicOptionsUpdateDelay,
-          signal: config.abortSignal,
-          fireImmediately: true,
-          equals: this.features.dynamicOptionsComparer,
-        });
-      }
-      this._observerSubscription = this.queryObserver.subscribe(
-        this.updateResult,
-      );
-    }
-
-    if (config.onDone) {
-      this.doneListeners.push(config.onDone);
-    }
-    if (config.onError) {
-      this.errorListeners.push(config.onError);
-    }
+    this.registerInitialListeners({
+      onDone: config.onDone,
+      onError: config.onError,
+    });
 
     this.config.onInit?.(this);
     this.hooks?.onQueryInit?.(this);
-  }
-
-  async refetch(options?: RefetchOptions) {
-    const result = await this.queryObserver.refetch(options);
-    const throwableError = this.getCurrentThrowableError(options);
-
-    if (throwableError) {
-      throw throwableError;
-    }
-
-    return result;
-  }
-
-  protected createQueryHash(
-    queryKey: any,
-    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  ) {
-    if (options.queryKeyHashFn) {
-      return options.queryKeyHashFn(queryKey);
-    }
-
-    return hashKey(queryKey);
-  }
-
-  protected getCurrentThrowableError(options?: RefetchOptions) {
-    const query = this.queryObserver.getCurrentQuery();
-
-    if (
-      query.state.error &&
-      (options?.throwOnError ||
-        this.options.throwOnError === true ||
-        (typeof this.options.throwOnError === 'function' &&
-          this.options.throwOnError(query.state.error, query)))
-    ) {
-      return query.state.error;
-    }
-
-    return undefined;
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#setdata-updater-options)
-   */
-  setData(
-    updater: Updater<
-      NoInfer<TQueryFnData> | undefined,
-      NoInfer<TQueryFnData> | undefined
-    >,
-    options?: SetDataOptions,
-  ) {
-    return this.queryClient.setQueryData<TQueryFnData>(
-      this.options.queryKey,
-      updater,
-      options,
-    );
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#update-options)
-   */
-  update(
-    optionsUpdate: QueryUpdateOptionsAllVariants<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >,
-  ) {
-    if (this.abortController.signal.aborted) {
-      return;
-    }
-
-    const nextOptions = {
-      ...this.options,
-      ...optionsUpdate,
-    };
-
-    this.processOptions(nextOptions);
-
-    this.options = nextOptions;
-
-    this.queryObserver.setOptions(this.options);
-
-    if (this.features.lazy) {
-      this.updateResult(this.queryObserver.getCurrentResult());
-    }
-  }
-
-  private isEnableHolded = false;
-
-  private processOptions(
-    options: QueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  ) {
-    const nextQueryHash = this.createQueryHash(options.queryKey, options);
-
-    if (
-      this.features.autoRemovePreviousQuery &&
-      options.queryHash !== nextQueryHash
-    ) {
-      this.remove({ safe: true });
-    }
-
-    options.queryHash = nextQueryHash;
-
-    if (this.features.cumulativeQueryHash) {
-      this.cumulativeQueryKeyHashesSet.add(options.queryHash);
-    }
-
-    // If the on-demand query mode is enabled (when using the result property)
-    // then, if the user does not request the result, the queries should not be executed
-    // to do this, we hold the original value of the enabled option
-    // and set enabled to false until the user requests the result (this.isResultRequsted)
-    if (this.features.enableOnDemand) {
-      if (this.isEnableHolded && options.enabled !== enableHolder) {
-        this.holdedEnabledOption = options.enabled;
-      }
-
-      if (this.isResultRequsted) {
-        if (this.isEnableHolded) {
-          options.enabled =
-            this.holdedEnabledOption === enableHolder
-              ? undefined
-              : this.holdedEnabledOption;
-          this.isEnableHolded = false;
-        }
-      } else {
-        this.isEnableHolded = true;
-        this.holdedEnabledOption = options.enabled;
-        options.enabled = enableHolder;
-      }
-    }
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#result-queryobserverresult)
-   */
-  public get result() {
-    if (this.features.enableOnDemand && !this.isResultRequsted) {
-      runInAction(() => {
-        this.isResultRequsted = true;
-      });
-      if (this.isNotifyingDone) {
-        this.suppressNextDoneNotification = true;
-      }
-      this.update({});
-    }
-    return this._result || this.queryObserver.getCurrentResult();
-  }
-
-  /**
-   * Modify this result so it matches the tanstack query result.
-   */
-  private updateResult(result: QueryObserverResult<TData, TError>) {
-    this._result = result;
-    const currentQuery = this.queryObserver.getCurrentQuery();
-    const queryState = currentQuery.state;
-
-    if (this.features.transformError && this._result.error) {
-      this._result.error = this.features.transformError(this._result.error);
-    }
-
-    if (result.isSuccess && !result.error && result.fetchStatus === 'idle') {
-      if (this.suppressNextDoneNotification) {
-        this.suppressNextDoneNotification = false;
-        return;
-      }
-      const lastDoneCount = this.doneNotifiedCounts.get(currentQuery);
-      if (
-        !this.isNotifyingDone &&
-        queryState.dataUpdateCount !== lastDoneCount
-      ) {
-        this.doneNotifiedCounts.set(currentQuery, queryState.dataUpdateCount);
-        this.isNotifyingDone = true;
-        try {
-          this.doneListeners.forEach((fn) => {
-            fn(result.data!, void 0);
-          });
-        } finally {
-          this.isNotifyingDone = false;
-        }
-      }
-    } else if (result.error) {
-      const lastErrorCount = this.errorNotifiedCounts.get(currentQuery);
-      if (
-        !this.isNotifyingError &&
-        queryState.errorUpdateCount !== lastErrorCount
-      ) {
-        this.errorNotifiedCounts.set(currentQuery, queryState.errorUpdateCount);
-        this.isNotifyingError = true;
-        try {
-          this.errorListeners.forEach((fn) => {
-            fn(result.error!, void 0);
-          });
-        } finally {
-          this.isNotifyingError = false;
-        }
-      }
-    }
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#reset-params-options)
-   */
-  async reset(params?: QueryResetParams, options?: ResetOptions) {
-    if (this.features.cumulativeQueryHash) {
-      return await this.queryClient.resetQueries({
-        predicate: (query) => {
-          return (
-            this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
-            (query.observers.length === 0 ||
-              (query.observers.length === 1 &&
-                query.observers[0] === this.queryObserver)) &&
-            (!params?.predicate || params.predicate(query))
-          );
-        },
-        ...params,
-      });
-    }
-
-    return await this.queryClient.resetQueries(
-      {
-        queryKey: this.options.queryKey,
-        exact: true,
-        ...params,
-      },
-      options,
-    );
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#remove-params)
-   */
-  remove(params?: QueryRemoveParams) {
-    if (this.features.cumulativeQueryHash) {
-      return this.queryClient.removeQueries({
-        predicate: (query) => {
-          return (
-            this.cumulativeQueryKeyHashesSet.has(query.options.queryHash!) &&
-            (query.observers.length === 0 ||
-              (query.observers.length === 1 &&
-                query.observers[0] === this.queryObserver)) &&
-            (!params?.predicate || params.predicate(query))
-          );
-        },
-        ...params,
-      });
-    }
-
-    if (params?.safe) {
-      return this.queryClient.removeQueries({
-        ...params,
-        predicate: (query) =>
-          query.queryHash === this.options.queryHash &&
-          (query.observers.length === 0 ||
-            (query.observers.length === 1 &&
-              query.observers[0] === this.queryObserver)) &&
-          (!params?.predicate || params.predicate(query)),
-      });
-    }
-
-    return this.queryClient.removeQueries({
-      queryKey: this.options.queryKey,
-      exact: true,
-      ...params,
-    });
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#cancel-options)
-   */
-  async cancel(options?: CancelOptions) {
-    return await this.queryClient.cancelQueries(
-      {
-        queryKey: this.options.queryKey,
-        exact: true,
-      },
-      options,
-    );
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#invalidate-params)
-   */
-  async invalidate(params?: QueryInvalidateParams) {
-    return await this.queryClient.invalidateQueries({
-      exact: true,
-      queryKey: this.options.queryKey,
-      ...params,
-    } as any);
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#ondone-listener)
-   */
-  onDone(doneListener: QueryDoneListener<TData>): void {
-    this.doneListeners.push(doneListener);
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#onerror-listener)
-   */
-  onError(errorListener: QueryErrorListener<TError>): void {
-    this.errorListeners.push(errorListener);
-  }
-
-  protected cleanup() {
-    this._observerSubscription?.();
-
-    this.doneListeners = [];
-    this.errorListeners = [];
-    this.doneNotifiedCounts = new WeakMap();
-    this.errorNotifiedCounts = new WeakMap();
-
-    this.queryObserver.destroy();
-
-    if (this.features.resetOnDestroy) {
-      // biome-ignore lint/nursery/noFloatingPromises: <explanation>
-      this.reset();
-    }
-
-    if (this.features.removeOnDestroy) {
-      this.remove({
-        safe: this.features.removeOnDestroy === 'safe',
-      });
-    }
-
-    delete this._observerSubscription;
-
-    this.cumulativeQueryKeyHashesSet.clear();
-  }
-
-  /**
-   *
-   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#start-params)
-   */
-  async start(
-    params: QueryStartParams<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    > = {},
-  ) {
-    this.update({ ...params });
-
-    if (this.result.isFetching) {
-      await when(() => !this.result.isFetching, {
-        signal: this.abortController.signal,
-      });
-      const throwableError = this.getCurrentThrowableError();
-      if (throwableError) {
-        throw throwableError;
-      }
-    } else {
-      await this.refetch();
-    }
-
-    return this.result;
   }
 
   protected handleDestroy() {
