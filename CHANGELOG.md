@@ -1,5 +1,17 @@
 # mobx-tanstack-query
 
+## 6.13.0
+
+### Minor Changes
+
+- [`7c52772`](https://github.com/js2me/mobx-tanstack-query/commit/7c5277208bc7d3e41e98c268398ee3afbcedf782) Thanks [@js2me](https://github.com/js2me)! - refactored Query and InfiniteQuery (extends from BaseQuery as root of logic for queries)
+
+### Patch Changes
+
+- [`c9f82d5`](https://github.com/js2me/mobx-tanstack-query/commit/c9f82d50528da459ea4c794fc326e8495aad5425) Thanks [@js2me](https://github.com/js2me)! - improve onDone onError callback handlers
+
+- [#70](https://github.com/js2me/mobx-tanstack-query/pull/70) [`e6fff8c`](https://github.com/js2me/mobx-tanstack-query/commit/e6fff8ceba6ef03cc62384a0ea3e1bbfb1af9da2) Thanks [@js2me](https://github.com/js2me)! - fixed bug with initial data in preset style (#66)
+
 ## 6.12.1
 
 ### Patch Changes
