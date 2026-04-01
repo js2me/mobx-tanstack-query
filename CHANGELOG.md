@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.14.0
+
+### Minor Changes
+
+- [`0f5e9a9`](https://github.com/js2me/mobx-tanstack-query/commit/0f5e9a90429e5539b877b51fe73949a696e9bae1) Thanks [@js2me](https://github.com/js2me)! - [internal] update all deps to latest (vite 8.x, typescript 6.x, jsdoc 29, yummies 7.12.x)
+
 ## 6.13.0
 
 ### Minor Changes
