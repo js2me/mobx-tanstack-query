@@ -1,9 +1,11 @@
 import type { DefaultError, QueryClient, QueryKey } from '@tanstack/query-core';
 
-import { Query } from '../query.js';
-import type { QueryConfig } from '../query.types.js';
-import type { AnyQueryClient } from '../query-client.types.js';
-import type { QueryOptionsParams } from '../query-options.js';
+import {
+  type AnyQueryClient,
+  Query,
+  type QueryConfig,
+  type QueryOptionsParams,
+} from 'mobx-tanstack-query';
 
 import { queryClient } from './query-client.js';
 

@@ -1,4 +1,4 @@
-import { defineLibViteConfig } from "sborshik/vite";
-import { ConfigsManager } from "sborshik/utils";
- 
-export default defineLibViteConfig(ConfigsManager.create()) 
+import { ConfigsManager } from 'sborshik/utils';
+import { defineLibViteConfig } from 'sborshik/vite';
+
+export default defineLibViteConfig(ConfigsManager.create());

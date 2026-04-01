@@ -168,6 +168,8 @@ describe('Mutation', () => {
   it('should be able to do abort using second argument in mutationFn', async () => {
     vi.useFakeTimers();
 
+    let mutationSignal: AbortSignal | undefined;
+
     const fakeFetch = (data: any = 'OK', signal?: AbortSignal) => {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -186,6 +188,7 @@ describe('Mutation', () => {
     const mutation = new MutationMock({
       mutationKey: ['test'],
       mutationFn: async (_, { signal }) => {
+        mutationSignal = signal;
         await fakeFetch('OK', signal);
       },
     });
@@ -194,11 +197,11 @@ describe('Mutation', () => {
       await vi.runAllTimersAsync();
       expect(false).toBe('abort should happen');
     } catch (error) {
-      if (error instanceof DOMException) {
-        expect(error.message).toBe('The operation was aborted.');
-      } else {
-        expect(false).toBe('error should be DOMException');
-      }
+      expect(mutationSignal).toBeDefined();
+      expect(mutationSignal!.aborted).toBe(true);
+      // Same reference as signal.reason from the abort listener — not an unrelated AbortError
+      expect(error).toBe(mutationSignal!.reason);
+      expect(error).toEqual(expect.objectContaining({ name: 'AbortError' }));
     }
 
     vi.useRealTimers();

@@ -351,33 +351,16 @@ export type MobxQueryStartParams<
 export type InferQuery<
   T extends QueryConfig | Query,
   TInferValue extends 'data' | 'key' | 'error' | 'query' | 'config',
-> = T extends QueryConfig<
-  infer TQueryFnData,
-  infer TError,
-  infer TData,
-  infer TQueryData,
-  infer TQueryKey
->
-  ? TInferValue extends 'config'
-    ? T
-    : TInferValue extends 'data'
-      ? TData
-      : TInferValue extends 'key'
-        ? TQueryKey
-        : TInferValue extends 'error'
-          ? TError
-          : TInferValue extends 'query'
-            ? Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>
-            : never
-  : T extends Query<
-        infer TQueryFnData,
-        infer TError,
-        infer TData,
-        infer TQueryData,
-        infer TQueryKey
-      >
+> =
+  T extends QueryConfig<
+    infer TQueryFnData,
+    infer TError,
+    infer TData,
+    infer TQueryData,
+    infer TQueryKey
+  >
     ? TInferValue extends 'config'
-      ? QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+      ? T
       : TInferValue extends 'data'
         ? TData
         : TInferValue extends 'key'
@@ -385,6 +368,24 @@ export type InferQuery<
           : TInferValue extends 'error'
             ? TError
             : TInferValue extends 'query'
-              ? T
+              ? Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>
               : never
-    : never;
+    : T extends Query<
+          infer TQueryFnData,
+          infer TError,
+          infer TData,
+          infer TQueryData,
+          infer TQueryKey
+        >
+      ? TInferValue extends 'config'
+        ? QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'key'
+            ? TQueryKey
+            : TInferValue extends 'error'
+              ? TError
+              : TInferValue extends 'query'
+                ? T
+                : never
+      : never;

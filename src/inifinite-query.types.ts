@@ -360,43 +360,16 @@ export type InferInfiniteQuery<
     | 'error'
     | 'query'
     | 'config',
-> = T extends InfiniteQueryConfig<
-  infer TQueryFnData,
-  infer TError,
-  infer TPageParam,
-  infer TData,
-  infer TQueryKey
->
-  ? TInferValue extends 'config'
-    ? T
-    : TInferValue extends 'data'
-      ? TData
-      : TInferValue extends 'query-data'
-        ? TQueryFnData
-        : TInferValue extends 'key'
-          ? TQueryKey
-          : TInferValue extends 'page-param'
-            ? TPageParam
-            : TInferValue extends 'error'
-              ? TError
-              : TInferValue extends 'query'
-                ? InfiniteQuery<
-                    TQueryFnData,
-                    TError,
-                    TPageParam,
-                    TData,
-                    TQueryKey
-                  >
-                : never
-  : T extends InfiniteQuery<
-        infer TQueryFnData,
-        infer TError,
-        infer TPageParam,
-        infer TData,
-        infer TQueryKey
-      >
+> =
+  T extends InfiniteQueryConfig<
+    infer TQueryFnData,
+    infer TError,
+    infer TPageParam,
+    infer TData,
+    infer TQueryKey
+  >
     ? TInferValue extends 'config'
-      ? InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>
+      ? T
       : TInferValue extends 'data'
         ? TData
         : TInferValue extends 'query-data'
@@ -408,6 +381,40 @@ export type InferInfiniteQuery<
               : TInferValue extends 'error'
                 ? TError
                 : TInferValue extends 'query'
-                  ? T
+                  ? InfiniteQuery<
+                      TQueryFnData,
+                      TError,
+                      TPageParam,
+                      TData,
+                      TQueryKey
+                    >
                   : never
-    : never;
+    : T extends InfiniteQuery<
+          infer TQueryFnData,
+          infer TError,
+          infer TPageParam,
+          infer TData,
+          infer TQueryKey
+        >
+      ? TInferValue extends 'config'
+        ? InfiniteQueryConfig<
+            TQueryFnData,
+            TError,
+            TPageParam,
+            TData,
+            TQueryKey
+          >
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'query-data'
+            ? TQueryFnData
+            : TInferValue extends 'key'
+              ? TQueryKey
+              : TInferValue extends 'page-param'
+                ? TPageParam
+                : TInferValue extends 'error'
+                  ? TError
+                  : TInferValue extends 'query'
+                    ? T
+                    : never
+      : never;

@@ -158,33 +158,15 @@ export type InferMutation<
     | 'context'
     | 'mutation'
     | 'config',
-> = T extends MutationConfig<
-  infer TData,
-  infer TVariables,
-  infer TError,
-  infer TContext
->
-  ? TInferValue extends 'config'
-    ? T
-    : TInferValue extends 'data'
-      ? TData
-      : TInferValue extends 'variables'
-        ? TVariables
-        : TInferValue extends 'error'
-          ? TError
-          : TInferValue extends 'context'
-            ? TContext
-            : TInferValue extends 'mutation'
-              ? Mutation<TData, TVariables, TError, TContext>
-              : never
-  : T extends Mutation<
-        infer TData,
-        infer TVariables,
-        infer TError,
-        infer TContext
-      >
+> =
+  T extends MutationConfig<
+    infer TData,
+    infer TVariables,
+    infer TError,
+    infer TContext
+  >
     ? TInferValue extends 'config'
-      ? MutationConfig<TData, TVariables, TError, TContext>
+      ? T
       : TInferValue extends 'data'
         ? TData
         : TInferValue extends 'variables'
@@ -194,6 +176,25 @@ export type InferMutation<
             : TInferValue extends 'context'
               ? TContext
               : TInferValue extends 'mutation'
-                ? T
+                ? Mutation<TData, TVariables, TError, TContext>
                 : never
-    : never;
+    : T extends Mutation<
+          infer TData,
+          infer TVariables,
+          infer TError,
+          infer TContext
+        >
+      ? TInferValue extends 'config'
+        ? MutationConfig<TData, TVariables, TError, TContext>
+        : TInferValue extends 'data'
+          ? TData
+          : TInferValue extends 'variables'
+            ? TVariables
+            : TInferValue extends 'error'
+              ? TError
+              : TInferValue extends 'context'
+                ? TContext
+                : TInferValue extends 'mutation'
+                  ? T
+                  : never
+      : never;
