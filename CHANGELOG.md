@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.14.1
+
+### Patch Changes
+
+- [`1ee4270`](https://github.com/js2me/mobx-tanstack-query/commit/1ee427060b4ee43b4edbcf4a8291a1981c000ddf) Thanks [@js2me](https://github.com/js2me)! - [docs] update homepage for npm
+
 ## 6.14.0
 
 ### Minor Changes
