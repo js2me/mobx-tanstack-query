@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.15.0
+
+### Minor Changes
+
+- [`73207cc`](https://github.com/js2me/mobx-tanstack-query/commit/73207cc8e22303d0a2975bac12eedcd4c14945a0) Thanks [@js2me](https://github.com/js2me)! - added `resultObservable` query and mutation features
+
 ## 6.14.1
 
 ### Patch Changes
