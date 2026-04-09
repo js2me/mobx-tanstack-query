@@ -4316,6 +4316,109 @@ describe('Query', () => {
     }
   });
 
+  describe('resetOnDestroy vs deprecated resetOnDispose (BaseQuery.mergeQueryFeatures)', () => {
+    /**
+     * Uses the same construction path as production: `new Query` → `BaseQuery.mergeQueryFeatures(config, queryClient)`.
+     * `resetOnDispose` is no longer read; only `config.resetOnDestroy ?? queryClient.queryFeatures?.resetOnDestroy`.
+     */
+    const makeRegressionQuery = (
+      queryClient: MobxQueryClient,
+      queryFn: () => Promise<number>,
+      featurePatch: Record<string, unknown>,
+    ) =>
+      new Query({
+        queryClient,
+        staleTime: Infinity,
+        queryKey: ['merge-features-reset-regression'],
+        queryFn,
+        ...featurePatch,
+      } as QueryConfig<number>);
+
+    it('honors config.resetOnDestroy: second instance refetches after destroy (cache reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+      });
+      await when(() => second.result.data === 2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+
+      second.destroy();
+    });
+
+    it('does not fall back to resetOnDispose alone: cache kept, second instance reuses data', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDispose: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDispose: true,
+      });
+      await when(() => second.result.data === 1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+
+      second.destroy();
+    });
+
+    it('when both keys exist, explicit resetOnDestroy: false wins over resetOnDispose (no cache reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: false,
+        resetOnDispose: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: false,
+        resetOnDispose: true,
+      });
+      await when(() => second.result.data === 1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+
+      second.destroy();
+    });
+
+    it('when both keys exist, resetOnDestroy: true is honored (resetOnDispose does not block reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+        resetOnDispose: false,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+        resetOnDispose: false,
+      });
+      await when(() => second.result.data === 2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+
+      second.destroy();
+    });
+  });
+
   it('onDone should work after destroy with removeOnDestroy from query client', async () => {
     vi.useRealTimers();
     let counter = 0;

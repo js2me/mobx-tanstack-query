@@ -11,6 +11,7 @@ import type {
   MutationFn,
   MutationFunctionContext,
 } from './mutation.types.js';
+import { QueryClient as MobxQueryClient } from './query-client.js';
 
 class MutationMock<
   TData = unknown,
@@ -218,5 +219,95 @@ describe('Mutation', () => {
     expectTypeOf(testMutation).toEqualTypeOf<
       Mutation<void, void, Error, unknown>
     >();
+  });
+
+  describe('resetOnDestroy vs deprecated resetOnDispose (Mutation constructor features)', () => {
+    /**
+     * Targets `resetOnDestroy: config.resetOnDestroy ?? qc.mutationFeatures?.resetOnDestroy`.
+     * `qc.mutationFeatures.resetOnDispose` must not enable reset-on-destroy.
+     */
+    it('does not use qc.mutationFeatures.resetOnDispose when config.resetOnDestroy is undefined', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          // Legacy runtime key; must not map to reset-on-destroy (see Mutation constructor).
+          mutations: {
+            resetOnDispose: true,
+          } as MobxQueryClient['mutationFeatures'],
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression'],
+        mutationFn: async () => 'ok',
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('success');
+    });
+
+    it('honors qc.mutationFeatures.resetOnDestroy when config.resetOnDestroy is undefined', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: { resetOnDestroy: true },
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-qc'],
+        mutationFn: async () => 'ok',
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('idle');
+    });
+
+    it('config.resetOnDestroy true wins over qc.mutationFeatures.resetOnDispose', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            resetOnDestroy: false,
+            resetOnDispose: true,
+          } as MobxQueryClient['mutationFeatures'],
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-both'],
+        mutationFn: async () => 'ok',
+        resetOnDestroy: true,
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('idle');
+    });
+
+    it('explicit config.resetOnDestroy false overrides qc.mutationFeatures.resetOnDestroy', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: { resetOnDestroy: true },
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-config-false'],
+        mutationFn: async () => 'ok',
+        resetOnDestroy: false,
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('success');
+    });
   });
 });

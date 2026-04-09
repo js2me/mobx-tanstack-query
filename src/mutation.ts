@@ -384,6 +384,7 @@ export class Mutation<
 
     if (this.features.resetOnDestroy) {
       this.reset();
+      this.updateResult(this.mutationObserver.getCurrentResult());
     }
 
     delete this._observerSubscription;
