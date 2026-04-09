@@ -7,9 +7,8 @@ import {
   type MutationObserverResult,
   type MutationStatus,
 } from '@tanstack/query-core';
-import { action, makeObservable, observable } from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
-
+import { action, makeObservable } from 'mobx';
+import { annotation, lazyObserve } from 'yummies/mobx';
 import type {
   MutationConfig,
   MutationDoneListener,
@@ -201,7 +200,13 @@ export class Mutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    observable.deep(this, 'result');
+    const resultAnnotation = annotation.observable(
+      this.features.resultObservable,
+    );
+    if (resultAnnotation) {
+      resultAnnotation(this, 'result');
+    }
+
     action.bound(this, 'updateResult');
     this.mutate = this.mutate.bind(this);
     this.start = this.start.bind(this);

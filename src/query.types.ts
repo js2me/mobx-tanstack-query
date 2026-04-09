@@ -7,6 +7,7 @@ import type {
   QueryObserverOptions,
 } from '@tanstack/query-core';
 import type { IReactionOptions } from 'mobx';
+import type { ObservableTypes } from 'yummies/mobx';
 import type { Query } from './query.js';
 import type { AnyQueryClient } from './query-client.types.js';
 
@@ -180,6 +181,23 @@ export interface QueryFeatures {
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#dynamicoptionscomparer)
    */
   dynamicOptionsComparer?: IReactionOptions<any, any>['equals'];
+
+  /**
+   * MobX observable flavour for the internal TanStack Query result object (`_result`), applied with
+   * `annotation.observable()` from `yummies/mobx`. Public fields (`data`, `status`, `isLoading`, …) read from
+   * this object, so the option controls how deeply updates to the query result propagate to observers.
+   *
+   * - `'deep'` — default when omitted; deep observability for plain objects and arrays.
+   * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
+   * - `'ref'` — track only the result reference (useful when the whole result object is replaced each update).
+   * - `true` — base `observable` (same as omitting the option).
+   * - `false` — skip decorating `_result` (no automatic MobX tracking for the result; advanced use only).
+   *
+   * @default 'deep'
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#resultobservable-queryfeature)
+   */
+  resultObservable?: ObservableTypes | boolean;
 }
 
 /**

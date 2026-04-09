@@ -152,6 +152,27 @@ const mutation = createMutation(queryClient, () => ({
 // no reactions and subscriptions will be created
 ```
 
+### `resultObservable` <Badge type="tip">MutationFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#mutationfeatures)
+
+Chooses how MobX observes the mutation **`result`** property (the `MutationObserverResult`). The library applies `annotation.observable()` from [`yummies/mobx`](https://github.com/js2me/yummies). [`Query`](https://js2me.github.io/mobx-tanstack-query/api/Query.html#resultobservable-queryfeature) stores the payload on a private `_result` and exposes TanStack fields via getters; **`Mutation` decorates the public `result` field directly** — there is no `_result`.
+
+- **Default** — when omitted, behaviour matches **`'deep'`** (deep observability for plain objects and arrays in the result).
+- **`'ref'`** — only the reference to the result object is tracked; reactions run when the whole result is replaced, not when nested fields change in place.
+- **`'shallow'`** / **`'struct'`** — shallow or structural comparison for nested properties.
+- **`false`** — do not decorate `result` (rare; you lose automatic MobX tracking for the result blob).
+
+Example:
+
+```ts
+const mutation = new Mutation({
+  queryClient,
+  resultObservable: 'ref',
+  mutationFn: async (name: string) => api.createPet(name),
+});
+```
+
 ### `destroy()` method
 
 This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class
@@ -177,3 +198,7 @@ Reset current mutation
 ### property `result` <Badge type="info" text="observable.deep" />
 
 Mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))
+
+::: info `observable.deep` is configurable
+The badge reflects the **default**: the public `result` property is decorated as deep observable (unlike `Query`, which uses a private `_result` behind getters). Change the MobX flavour with [`resultObservable`](#resultobservable-mutationfeature) (`ref`, `shallow`, `struct`, `true`, or `false`).
+:::

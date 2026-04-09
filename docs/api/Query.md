@@ -295,6 +295,10 @@ This field is needed for `enableOnDemand` option
 
 Query original result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
 
+::: info `observable.deep` is configurable
+The badge reflects the **default**: the internal `_result` field is decorated as deep observable. You can change the MobX flavour (`ref`, `shallow`, `struct`, `true`, or `false`) with the [`resultObservable`](#resultobservable-queryfeature) query feature.
+:::
+
 ### `setData(updater, options)`
 
 Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
@@ -747,6 +751,28 @@ const query = new Query({
     enabled: false,
   })
 })
+```
+
+### `resultObservable` <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+Chooses how MobX observes the internal TanStack Query result object (`_result`). The library applies [`annotation.observable()`](https://github.com/js2me/yummies) from `yummies/mobx`, so this maps directly to MobX flavours: `ref`, `deep`, `shallow`, `struct`, or `true` / `false`.
+
+- **Default** — when omitted, behaviour matches **`'deep'`** (deep observability for plain objects and arrays in the result).
+- **`'ref'`** — only the reference to the result object is tracked; use when the observer should react when the whole result is replaced, not when nested fields change in place.
+- **`'shallow'`** / **`'struct'`** — shallow or structural comparison for nested properties.
+- **`false`** — do not decorate `_result` with an observable annotation (rare; you lose automatic MobX tracking for the result blob).
+
+Example:
+
+```ts
+const query = new Query({
+  queryClient,
+  resultObservable: 'ref',
+  queryKey: ['pets'],
+  queryFn: async () => api.fetchPets(),
+});
 ```
 
 ## Recommendations

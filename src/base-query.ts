@@ -15,7 +15,7 @@ import {
   runInAction,
   when,
 } from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
+import { annotation, lazyObserve } from 'yummies/mobx';
 import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
 import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
@@ -162,7 +162,13 @@ export abstract class BaseQuery<
   }) {
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    observable.deep(this, '_result');
+    const resultAnnotation = annotation.observable(
+      this.features.resultObservable,
+    );
+    if (resultAnnotation) {
+      resultAnnotation(this, '_result');
+    }
+
     observable.ref(this, 'isResultRequsted');
     action.bound(this, 'setData');
     action.bound(this, 'update');
