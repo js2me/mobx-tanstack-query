@@ -20,7 +20,7 @@ class MutationMock<
 > extends Mutation<TData, TVariables, TError, TContext> {
   spies = {
     mutationFn: null as unknown as ReturnType<typeof vi.fn>,
-    dispose: vi.fn(),
+    destroy: vi.fn(),
     reset: vi.fn(),
     onDone: vi.fn(),
     onError: vi.fn(),
@@ -54,9 +54,9 @@ class MutationMock<
     this.spies.reset.mockReturnValue(result)();
   }
 
-  dispose(): void {
-    const result = super.dispose();
-    this.spies.dispose.mockReturnValue(result)();
+  destroy(): void {
+    const result = super.destroy();
+    this.spies.destroy.mockReturnValue(result)();
   }
 }
 

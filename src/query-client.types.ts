@@ -15,16 +15,6 @@ export type IQueryClientCore = {
   [K in keyof QueryClientCore]: QueryClientCore[K];
 };
 
-/**
- * @deprecated ⚠️ use `IQueryClientCore`. This type will be removed in next major release
- */
-export type IQueryClient = IQueryClientCore;
-
-/**
- * @deprecated renamed to `IQueryClient`. Will be removed in next major release.
- */
-export type QueryClientInterface = IQueryClientCore;
-
 export type AnyQueryClient = QueryClient | IQueryClientCore | QueryClientCore;
 
 export interface DefaultOptions<TError = DefaultError>
@@ -32,11 +22,6 @@ export interface DefaultOptions<TError = DefaultError>
   queries?: DefaultCoreOptions<TError>['queries'] & QueryFeatures;
   mutations?: DefaultCoreOptions<TError>['mutations'] & MutationFeatures;
 }
-
-/**
- * @deprecated ⚠️ use `DefaultOptions`. This type will be removed in next major release
- */
-export type MobxDefaultOptions<TError = DefaultError> = DefaultOptions<TError>;
 
 export interface QueryClientHooks {
   onQueryInit?: (query: AnyQuery) => void;
@@ -49,18 +34,8 @@ export interface QueryClientHooks {
   onMutationDestroy?: (query: Mutation<any, any, any, any>) => void;
 }
 
-/**
- * @deprecated ⚠️ use `QueryClientHooks`. This type will be removed in next major release
- */
-export type MobxQueryClientHooks = QueryClientHooks;
-
 export interface QueryClientConfig
   extends Omit<QueryClientCoreConfig, 'defaultOptions'> {
   defaultOptions?: DefaultOptions;
   hooks?: QueryClientHooks;
 }
-
-/**
- * @deprecated ⚠️ use `QueryClientConfig`. This type will be removed in next major release
- */
-export type MobxQueryClientConfig = QueryClientConfig;

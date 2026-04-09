@@ -18,12 +18,6 @@ export interface MutationFeatures {
   invalidateByKey?:
     | boolean
     | Omit<InvalidateQueryFilters, 'queryKey' | 'predicate'>;
-  /**
-   * Reset mutation when dispose is called
-   *
-   * @deprecated Please use 'resetOnDestroy'
-   */
-  resetOnDispose?: boolean;
 
   /**
    * Reset mutation when destroy or abort signal is called
@@ -39,11 +33,6 @@ export interface MutationFeatures {
   transformError?: (error: any) => any;
 }
 
-/**
- * @deprecated ⚠️ use `MutationFeatures`. This type will be removed in next major release
- */
-export type MobxMutationFeatures = MutationFeatures;
-
 export interface MutationInvalidateQueriesOptions
   extends Omit<InvalidateQueryFilters, 'queryKey'> {
   queryKey?: InvalidateQueryFilters['queryKey'];
@@ -51,24 +40,10 @@ export interface MutationInvalidateQueriesOptions
   allQueryKeys?: true;
 }
 
-/**
- * @deprecated ⚠️ use `MutationInvalidateQueriesOptions`. This type will be removed in next major release
- */
-export type MobxMutationInvalidateQueriesOptions =
-  MutationInvalidateQueriesOptions;
-
 export type MutationFn<TData = unknown, TVariables = unknown> = (
   variables: TVariables,
   context: MutationFunctionContext,
 ) => Promise<TData>;
-
-/**
- * @deprecated ⚠️ use `MutationFn`. This type will be removed in next major release
- */
-export type MobxMutationFunction<
-  TData = unknown,
-  TVariables = unknown,
-> = MutationFn<TData, TVariables>;
 
 export type MutationSettledListener<
   TData = unknown,
@@ -119,16 +94,6 @@ export interface MutationFunctionContext extends MutationFunctionContextCore {
   signal: AbortSignal;
 }
 
-/**
- * @deprecated ⚠️ use `MutationConfig`. This type will be removed in next major release
- */
-export type MobxMutationConfig<
-  TData = unknown,
-  TVariables = void,
-  TError = DefaultError,
-  TContext = unknown,
-> = MutationConfig<TData, TVariables, TError, TContext>;
-
 export type MutationConfigFromFn<
   T extends (...args: any[]) => any,
   TError = DefaultError,
@@ -139,15 +104,6 @@ export type MutationConfigFromFn<
   TError,
   TContext
 >;
-
-/**
- * @deprecated ⚠️ use `MutationConfigFromFn`. This type will be removed in next major release
- */
-export type MobxMutationConfigFromFn<
-  T extends (...args: any[]) => any,
-  TError = DefaultError,
-  TContext = unknown,
-> = MutationConfigFromFn<T, TError, TContext>;
 
 export type InferMutation<
   T extends MutationConfig | Mutation,

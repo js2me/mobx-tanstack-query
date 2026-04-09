@@ -118,11 +118,7 @@ export abstract class BaseQuery<
         config.cumulativeQueryHash ?? qf?.cumulativeQueryHash,
       enableOnDemand: config.enableOnDemand ?? qf?.enableOnDemand,
       lazy: config.lazy ?? qf?.lazy,
-      resetOnDestroy:
-        config.resetOnDestroy ??
-        config.resetOnDispose ??
-        qf?.resetOnDestroy ??
-        qf?.resetOnDispose,
+      resetOnDestroy: config.resetOnDestroy ?? qf?.resetOnDestroy,
       removeOnDestroy: config.removeOnDestroy ?? qf?.removeOnDestroy,
       transformError: config.transformError ?? qf?.transformError,
       dynamicOptionsUpdateDelay:

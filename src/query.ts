@@ -359,14 +359,3 @@ export class Query<
     this.hooks?.onQueryDestroy?.(this);
   }
 }
-
-/**
- * @deprecated ⚠️ use `Query`. This export will be removed in next major release
- */
-export class MobxQuery<
-  TQueryFnData = unknown,
-  TError = DefaultError,
-  TData = TQueryFnData,
-  TQueryData = TQueryFnData,
-  TQueryKey extends QueryKey = QueryKey,
-> extends Query<TQueryFnData, TError, TData, TQueryData, TQueryKey> {}

@@ -54,7 +54,7 @@ class QueryMock<
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
     update: vi.fn(),
-    dispose: vi.fn(),
+    destroy: vi.fn(),
     refetch: vi.fn(),
     invalidate: vi.fn(),
     onDone: vi.fn(),
@@ -121,9 +121,9 @@ class QueryMock<
     return result;
   }
 
-  dispose(): void {
+  destroy(): void {
     const result = super.destroy();
-    this.spies.dispose.mockReturnValue(result)();
+    this.spies.destroy.mockReturnValue(result)();
   }
 }
 

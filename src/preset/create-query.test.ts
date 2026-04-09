@@ -105,7 +105,7 @@ describe('createQuery', () => {
     expect(query.options.queryKey).toEqual(['plain-options']);
     expect(query.options.queryFn).toBe(queryFn);
 
-    query.dispose();
+    query.destroy();
   });
 
   it('creates query from queryFn overload and keeps initialData', () => {
@@ -122,7 +122,7 @@ describe('createQuery', () => {
     expect(query.options.queryFn).toBe(queryFn);
     expect(query.result.data).toBe(2);
 
-    query.dispose();
+    query.destroy();
   });
 
   it('rejects mismatched initialData for queryFn overload', () => {
@@ -148,7 +148,7 @@ describe('createQuery', () => {
 
     expect(query.result.data).toBe('2');
 
-    query.dispose();
+    query.destroy();
   });
 
   it('creates query from queryClient and dynamic options overload', () => {
@@ -165,6 +165,6 @@ describe('createQuery', () => {
     expect(query.options.queryKey).toEqual(['dynamic-options']);
     expect(query.options.queryFn).toBe(queryFn);
 
-    query.dispose();
+    query.destroy();
   });
 });
