@@ -1,5 +1,7 @@
+/// <reference types="node" />
 /* eslint-disable no-async-promise-executor */
 /** biome-ignore-all lint/nursery/noFloatingPromises: tests intentionally leave promises unawaited */
+import { types } from 'node:util';
 import {
   type DefaultError,
   hashKey,
@@ -42,6 +44,7 @@ import type {
   QueryUpdateOptions,
 } from './query.types.js';
 import { QueryClient as MobxQueryClient } from './query-client.js';
+import type { QueryClientConfig } from './query-client.types.js';
 
 class QueryMock<
   TQueryFnData = unknown,
@@ -4472,5 +4475,112 @@ describe('Query', () => {
     } finally {
       query.destroy();
     }
+  });
+
+  describe('_result type checks', () => {
+    const createQuery = (
+      cfg?: Partial<QueryConfig>,
+      qcCfg?: Partial<QueryClientConfig>,
+    ) => {
+      const queryClient = new MobxQueryClient(qcCfg);
+
+      class TestQuery extends Query {
+        getInternalResult() {
+          return this._result;
+        }
+      }
+
+      return new TestQuery({
+        queryClient,
+        queryKey: ['smoke'],
+        queryFn: async () => 42,
+        ...cfg,
+      });
+    };
+
+    it('basic', () => {
+      const query = createQuery();
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: false)', () => {
+      const query = createQuery({ resultObservable: false });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: ref)', () => {
+      const query = createQuery({ resultObservable: 'ref' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: shallow)', () => {
+      const query = createQuery({ resultObservable: 'shallow' });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: struct)', () => {
+      const query = createQuery({ resultObservable: 'struct' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: false)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: false } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: ref)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'ref' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: shallow)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'shallow' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(queryClient: resultObservable: struct)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'struct' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: false)(queryClient: resultObservable: deep)', () => {
+      const query = createQuery(
+        { resultObservable: false },
+        { defaultOptions: { queries: { resultObservable: 'deep' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: ref)', () => {
+      const query = createQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'ref' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: ref)(queryClient: resultObservable: shallow)', () => {
+      const query = createQuery(
+        { resultObservable: 'ref' },
+        { defaultOptions: { queries: { resultObservable: 'shallow' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: struct)', () => {
+      const query = createQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'struct' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
   });
 });

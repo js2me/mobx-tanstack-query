@@ -172,6 +172,10 @@ export class Mutation<
         qc.mutationFeatures?.resetOnDispose,
       transformError:
         config.transformError ?? qc.mutationFeatures?.transformError,
+      resultObservable:
+        config.resultObservable ??
+        qc.mutationFeatures?.resultObservable ??
+        'deep',
     };
 
     this.hooks = qc.hooks;

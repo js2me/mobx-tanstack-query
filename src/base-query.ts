@@ -131,6 +131,8 @@ export abstract class BaseQuery<
         config.dynamicOptionsComparer ?? qf?.dynamicOptionsComparer,
       autoRemovePreviousQuery:
         config.autoRemovePreviousQuery ?? qf?.autoRemovePreviousQuery,
+      resultObservable:
+        config.resultObservable ?? qf?.resultObservable ?? 'deep',
     };
   }
 

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["vitest"],
+    "types": ["vitest", "node"],
     "target": "ESNext",
     "rootDir": "src",
     "outDir": "dist",
