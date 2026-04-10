@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.15.1
+
+### Patch Changes
+
+- [`eeb0abf`](https://github.com/js2me/mobx-tanstack-query/commit/eeb0abf73cbbe75551d94eb164cc25b0b12a75a5) Thanks [@js2me](https://github.com/js2me)! - fixed `resultObservable` work with merging with query client
+
 ## 6.15.0
 
 ### Minor Changes
