@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.16.0
+
+### Minor Changes
+
+- [`da6909d`](https://github.com/js2me/mobx-tanstack-query/commit/da6909daed63441f63e8240eea32c31b37c7f668) Thanks [@js2me](https://github.com/js2me)! - added `lazyDelay` option for queries and mutations as features
+
 ## 6.15.1
 
 ### Patch Changes
