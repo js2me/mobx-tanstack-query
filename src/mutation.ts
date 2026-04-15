@@ -165,6 +165,7 @@ export class Mutation<
       invalidateByKey:
         config.invalidateByKey ?? qc.mutationFeatures?.invalidateByKey,
       lazy: config.lazy ?? qc.mutationFeatures?.lazy,
+      lazyDelay: config.lazyDelay ?? qc.mutationFeatures?.lazyDelay,
       resetOnDestroy:
         config.resetOnDestroy ??
         config.resetOnDispose ??
@@ -227,6 +228,7 @@ export class Mutation<
       const cleanup = lazyObserve({
         context: this,
         property: 'result',
+        endDelay: this.features.lazyDelay,
         onStart: () => {
           if (!this._observerSubscription) {
             this.updateResult(this.mutationObserver.getCurrentResult());

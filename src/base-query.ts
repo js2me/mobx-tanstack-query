@@ -118,6 +118,7 @@ export abstract class BaseQuery<
         config.cumulativeQueryHash ?? qf?.cumulativeQueryHash,
       enableOnDemand: config.enableOnDemand ?? qf?.enableOnDemand,
       lazy: config.lazy ?? qf?.lazy,
+      lazyDelay: config.lazyDelay ?? qf?.lazyDelay,
       resetOnDestroy:
         config.resetOnDestroy ??
         config.resetOnDispose ??
@@ -193,6 +194,7 @@ export abstract class BaseQuery<
       const cleanup = lazyObserve({
         context: this,
         property: '_result',
+        endDelay: this.features.lazyDelay,
         onStart: () => {
           if (!this._observerSubscription) {
             if (params.getAllDynamicOptions) {

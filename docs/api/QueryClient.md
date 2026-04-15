@@ -44,6 +44,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       lazy: true,
+      // lazyDelay: 300,
       enableOnDemand: true,
       // resetOnDestroy: false,
       // dynamicOptionsUpdateDelay: undefined,
@@ -71,6 +72,7 @@ export const queryClient = new QueryClient({
       // invalidateByKey: true,
       // resetOnDestroy: true,
       lazy: true,
+      // lazyDelay: 300,
       // transformError: (error) => error,
     },
   },

@@ -572,6 +572,124 @@ describe('Query', () => {
     dependentQuery.destroy();
   });
 
+  describe('lazyDelay', () => {
+    class QueryWithMergedFeatures extends QueryMock {
+      get mergedFeatures() {
+        return this.features;
+      }
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('merges lazyDelay from QueryClient defaultOptions.queries', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            lazy: true,
+            lazyDelay: 4242,
+          },
+        },
+      });
+      const query = new QueryWithMergedFeatures(
+        {
+          queryKey: ['lazy-delay-merge'],
+          queryFn: () => 1,
+          lazy: true,
+        },
+        queryClient,
+      );
+
+      expect(query.mergedFeatures.lazyDelay).toBe(4242);
+      query.destroy();
+    });
+
+    it('query lazyDelay overrides QueryClient defaultOptions.queries', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            lazy: true,
+            lazyDelay: 1,
+          },
+        },
+      });
+      const query = new QueryWithMergedFeatures(
+        {
+          queryKey: ['lazy-delay-override'],
+          queryFn: () => 1,
+          lazy: true,
+          lazyDelay: 2,
+        },
+        queryClient,
+      );
+
+      expect(query.mergedFeatures.lazyDelay).toBe(2);
+      query.destroy();
+    });
+
+    it('delays tearing down the observer so a quick re-subscribe does not refetch', async () => {
+      vi.useFakeTimers();
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 0,
+          },
+        },
+      });
+      const query = new QueryMock(
+        {
+          queryKey: ['lazy-delay-behavior'] as const,
+          queryFn: async () => 'x',
+          lazy: true,
+          lazyDelay: 10_000,
+        },
+        queryClient,
+      );
+
+      const disposer1 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await when(() => query.isSuccess);
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
+
+      disposer1();
+
+      const disposer2 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
+
+      disposer2();
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      const disposer3 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await when(() => !query.isFetching);
+      await vi.runAllTimersAsync();
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      disposer3();
+      query.destroy();
+    });
+  });
+
   it('missing "queryKey" bug', async () => {
     const abortController = new AbortController();
     const params = {

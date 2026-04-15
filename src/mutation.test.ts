@@ -34,6 +34,7 @@ class MutationMock<
       MutationConfig<TData, TVariables, TError, TContext>,
       'queryClient'
     >,
+    queryClient: QueryClientCore = new QueryClientCore({}),
   ) {
     const mutationFn: MutationFn<TData, TVariables> = vi.fn(
       (variables: TVariables, context: MutationFunctionContext) => {
@@ -42,7 +43,7 @@ class MutationMock<
     );
     super({
       ...options,
-      queryClient: new QueryClientCore({}),
+      queryClient,
       mutationFn,
     });
 
@@ -327,6 +328,61 @@ describe('Mutation', () => {
         { defaultOptions: { mutations: { resultObservable: 'struct' } } },
       );
       expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+  });
+
+  describe('lazyDelay', () => {
+    class MutationWithMergedFeatures extends MutationMock {
+      get mergedFeatures() {
+        return this.features;
+      }
+    }
+
+    it('merges lazyDelay from QueryClient defaultOptions.mutations', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            lazy: true,
+            lazyDelay: 5151,
+          },
+        },
+      });
+
+      const mutation = new MutationWithMergedFeatures(
+        {
+          mutationKey: ['lazy-delay-merge'],
+          mutationFn: async () => {},
+          lazy: true,
+        },
+        queryClient,
+      );
+
+      expect(mutation.mergedFeatures.lazyDelay).toBe(5151);
+      mutation.dispose();
+    });
+
+    it('mutation lazyDelay overrides QueryClient defaultOptions.mutations', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            lazy: true,
+            lazyDelay: 1,
+          },
+        },
+      });
+
+      const mutation = new MutationWithMergedFeatures(
+        {
+          mutationKey: ['lazy-delay-override'],
+          mutationFn: async () => {},
+          lazy: true,
+          lazyDelay: 3,
+        },
+        queryClient,
+      );
+
+      expect(mutation.mergedFeatures.lazyDelay).toBe(3);
+      mutation.dispose();
     });
   });
 });

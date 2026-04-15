@@ -645,6 +645,32 @@ const query = createQuery(queryClient, () => ({
 // no reactions and subscriptions will be created
 ```
 
+### `lazyDelay` option <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+Only applies when [`lazy`](#lazy-option-queryfeature) is enabled.
+
+After the last MobX observer stops reading the query result, the library keeps the TanStack `QueryObserver` subscription alive for an extra **`lazyDelay` milliseconds** before tearing it down. Internally this maps to the `endDelay` option of [`lazyObserve`](https://www.npmjs.com/package/yummies) from `yummies/mobx`.
+
+Use this to avoid churn when UI code briefly mounts and unmounts (for example route transitions or conditional panels): if something starts observing the result again before the delay elapses, the existing subscription is reused and you avoid an immediate unsubscribe/resubscribe cycle.
+
+- **Omitted or `undefined`** — teardown runs as soon as nothing observes the result (equivalent to `endDelay: false` in [`lazyObserve`](https://www.npmjs.com/package/yummies) / `yummies/mobx`).
+- **A positive number** — milliseconds to wait after the last observer detaches before unsubscribing from the TanStack observer.
+
+Example (global default via `QueryClient`):
+
+```ts
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      lazy: true,
+      lazyDelay: 300,
+    },
+  },
+});
+```
+
 ### `transformError` <Badge type="tip">QueryFeature</Badge>
 
 [_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)

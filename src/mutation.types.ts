@@ -36,6 +36,14 @@ export interface MutationFeatures {
    * They exists only when mutation result is observed.
    */
   lazy?: boolean;
+
+  /**
+   * When `lazy` is enabled, delay in milliseconds before tearing down the `MutationObserver` subscription after the last MobX observer stops reading `result` (`lazyObserve` `endDelay` from `yummies/mobx`).
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Mutation.html#lazydelay-option-mutationfeature)
+   */
+  lazyDelay?: number;
+
   transformError?: (error: any) => any;
 
   /**

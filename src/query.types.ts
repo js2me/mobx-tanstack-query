@@ -156,6 +156,13 @@ export interface QueryFeatures {
   lazy?: boolean;
 
   /**
+   * When `lazy` is enabled, delay in milliseconds before tearing down the TanStack observer after the last MobX observer stops reading the result (`lazyObserve` `endDelay` from `yummies/mobx`).
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#lazydelay-option-queryfeature)
+   */
+  lazyDelay?: number;
+
+  /**
    *
    *
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#transformerror-queryfeature)

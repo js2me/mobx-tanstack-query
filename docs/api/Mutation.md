@@ -152,6 +152,27 @@ const mutation = createMutation(queryClient, () => ({
 // no reactions and subscriptions will be created
 ```
 
+### `lazyDelay` option <Badge type="tip">MutationFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#mutationfeatures)
+
+Only applies when [`lazy`](#lazy-option) is enabled.
+
+After the last MobX observer stops reading the mutation **`result`**, the library keeps the `MutationObserver` subscription alive for an extra **`lazyDelay` milliseconds** before tearing it down. This uses the `endDelay` option of [`lazyObserve`](https://www.npmjs.com/package/yummies) from `yummies/mobx`, same as for [`Query` `lazyDelay`](https://js2me.github.io/mobx-tanstack-query/api/Query.html#lazydelay-option-queryfeature).
+
+Use it to smooth over short-lived UI changes so you do not drop the observer subscription on every transient unmount.
+
+When **`lazyDelay`** is omitted, teardown follows the same rules as for [`Query` `lazyDelay`](https://js2me.github.io/mobx-tanstack-query/api/Query.html#lazydelay-option-queryfeature) (no extra delay unless you set a number).
+
+```ts
+const mutation = new Mutation({
+  queryClient,
+  lazy: true,
+  lazyDelay: 300,
+  mutationFn: async () => api.updatePet(),
+});
+```
+
 ### `resultObservable` <Badge type="tip">MutationFeature</Badge>
 
 [_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#mutationfeatures)
