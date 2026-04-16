@@ -14,6 +14,7 @@ import {
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
+  comparer,
   computed,
   makeAutoObservable,
   makeObservable,
@@ -4700,5 +4701,84 @@ describe('Query', () => {
       );
       expect(types.isProxy(query.getInternalResult())).toBe(true);
     });
+  });
+
+  it('autoRemovePreviousQuery should not remove whole query after destroy', async () => {
+    const qc = new MobxQueryClient({
+      defaultOptions: {
+        queries: {
+          autoRemovePreviousQuery: true,
+          enableOnDemand: true,
+          throwOnError: true,
+          refetchOnWindowFocus: false,
+          refetchOnReconnect: false,
+          staleTime: (query) => {
+            if (query.getObserversCount() > 1) {
+              return Infinity;
+            }
+
+            return 0;
+          },
+          retry: false,
+          gcTime: 0,
+          dynamicOptionsComparer: comparer.structural,
+        },
+        mutations: {
+          gcTime: 0,
+          networkMode: 'always',
+          throwOnError: true,
+        },
+      },
+    });
+
+    const abortController = new AbortController();
+
+    const queryKeyBox = observable.box<string[]>();
+
+    const q = new Query({
+      abortSignal: abortController.signal,
+      enableOnDemand: false,
+      queryClient: qc,
+      options: () => {
+        const queryKey = queryKeyBox.get();
+        const isEnabled = queryKey?.[0] === 'enabled';
+
+        return {
+          queryKey: queryKey,
+          enabled: isEnabled,
+        };
+      },
+      queryFn: () => true,
+    });
+
+    queryKeyBox.set(['disabled', 'afo', 'asf']);
+
+    await sleep();
+
+    queryKeyBox.set(['enabled', 'afo', 'asf']);
+
+    await sleep();
+
+    await sleep();
+
+    await sleep();
+
+    await when(() => q.isSuccess);
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    abortController.abort();
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    q.destroy();
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    expect(qc.getQueryCache().getAll()[0].queryKey).toEqual([
+      'enabled',
+      'afo',
+      'asf',
+    ]);
   });
 });
