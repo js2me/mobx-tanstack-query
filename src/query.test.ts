@@ -4809,60 +4809,58 @@ describe('Query', () => {
         },
       });
 
-      await vi.runAllTimersAsync();
+      const tricks = {
+        runQuery: async () => {
+          await vi.runAllTimersAsync();
 
-      vi.useRealTimers();
+          vi.useRealTimers();
+        },
+        updateQuery: async () => {
+          vi.useFakeTimers();
 
-      const updateQuery = async () => {
-        vi.useFakeTimers();
+          box.set(box.get() + 1);
 
-        box.set(box.get() + 1);
+          await vi.runAllTimersAsync();
 
-        await vi.runAllTimersAsync();
+          vi.useRealTimers();
 
-        vi.useRealTimers();
+          vi.useFakeTimers();
 
-        vi.useFakeTimers();
+          box.set(box.get() + 1);
 
-        box.set(box.get() + 1);
+          await vi.runAllTimersAsync();
 
-        await vi.runAllTimersAsync();
+          vi.useRealTimers();
 
-        vi.useRealTimers();
+          vi.useFakeTimers();
 
-        vi.useFakeTimers();
+          box.set(box.get() + 1);
 
-        box.set(box.get() + 1);
+          await vi.runAllTimersAsync();
 
-        await vi.runAllTimersAsync();
+          vi.useRealTimers();
+        },
+        toggleQueryFail: async () => {
+          vi.useFakeTimers();
 
-        vi.useRealTimers();
-      };
+          isFailedQuery = !isFailedQuery;
+          box.set(box.get() + 1);
 
-      const toggleQueryFail = async () => {
-        vi.useFakeTimers();
+          await vi.runAllTimersAsync();
 
-        isFailedQuery = !isFailedQuery;
-        box.set(box.get() + 1);
-
-        await vi.runAllTimersAsync();
-
-        vi.useRealTimers();
+          vi.useRealTimers();
+        },
       };
 
       // @ts-expect-error
-      query.updateQuery = updateQuery;
-      // @ts-expect-error
-      query.toggleQueryFail = toggleQueryFail;
+      query.tricks = tricks;
 
-      return query as typeof query & {
-        updateQuery: typeof updateQuery;
-        toggleQueryFail: typeof toggleQueryFail;
-      };
+      return query as typeof query & { tricks: typeof tricks };
     };
 
-    type TestCaseCalls = {
-      start: {
+    type TestCaseCalls = Record<
+      'start' | 'lotOfUpdates' | 'error',
+      {
         dataFoo: number;
         dataFooBarBaz: number;
         isLoading: number;
@@ -4870,26 +4868,8 @@ describe('Query', () => {
         data: number;
         isFetching: number;
         isFetched: number;
-      };
-      lotOfUpdates: {
-        dataFoo: number;
-        dataFooBarBaz: number;
-        isLoading: number;
-        isError: number;
-        data: number;
-        isFetching: number;
-        isFetched: number;
-      };
-      error: {
-        dataFoo: number;
-        dataFooBarBaz: number;
-        isLoading: number;
-        isError: number;
-        data: number;
-        isFetching: number;
-        isFetched: number;
-      };
-    };
+      }
+    >;
 
     type TestCase = {
       mode: NonNullable<QueryFeatures['resultObservable']>;
@@ -4898,31 +4878,31 @@ describe('Query', () => {
 
     const baseTestCaseCalls = {
       start: {
-        dataFoo: 1,
-        dataFooBarBaz: 1,
-        isLoading: 1,
+        dataFoo: 2,
+        dataFooBarBaz: 2,
+        isLoading: 2,
         isError: 1,
-        data: 2,
-        isFetched: 1,
-        isFetching: 1,
+        data: 3,
+        isFetched: 2,
+        isFetching: 2,
       },
       lotOfUpdates: {
-        dataFoo: 7,
-        dataFooBarBaz: 7,
-        isLoading: 7,
-        isError: 1,
-        data: 8,
-        isFetched: 7,
-        isFetching: 7,
-      },
-      error: {
         dataFoo: 8,
         dataFooBarBaz: 8,
-        isLoading: 9,
-        isError: 2,
+        isLoading: 8,
+        isError: 1,
         data: 9,
-        isFetched: 9,
-        isFetching: 9,
+        isFetched: 8,
+        isFetching: 8,
+      },
+      error: {
+        dataFoo: 9,
+        dataFooBarBaz: 9,
+        isLoading: 10,
+        isError: 2,
+        data: 10,
+        isFetched: 10,
+        isFetching: 10,
       },
     };
 
@@ -4982,7 +4962,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -4991,16 +4970,18 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         query.setData((curr) => (curr ? { ...curr } : curr));
         query.setData((curr) => (curr ? { ...curr } : curr));
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFoo);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.dataFoo);
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFoo);
 
@@ -5012,7 +4993,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -5021,15 +5001,17 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFooBarBaz);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(
           calls.lotOfUpdates.dataFooBarBaz,
         );
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFooBarBaz);
 
@@ -5049,15 +5031,15 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
-        await when(() => query.isSuccess);
+        await query.tricks.runQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isLoading);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isLoading);
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isLoading);
 
@@ -5069,7 +5051,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -5078,15 +5059,17 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         query.setData((curr) => (curr ? { ...curr } : curr));
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isError);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isError);
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isError);
 
@@ -5098,7 +5081,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -5107,15 +5089,17 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         query.setData((curr) => (curr ? { ...curr } : curr));
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetched);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isFetched);
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetched);
 
@@ -5127,7 +5111,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -5136,17 +5119,19 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         query.setData((curr) => (curr ? { ...curr } : curr));
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetching);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(
           calls.lotOfUpdates.isFetching,
         );
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetching);
 
@@ -5158,7 +5143,6 @@ describe('Query', () => {
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
-        await when(() => query.isSuccess);
 
         const reactionSpy = vi.fn();
         const dispose = reaction(
@@ -5167,15 +5151,17 @@ describe('Query', () => {
           { fireImmediately: true },
         );
 
+        await query.tricks.runQuery();
+
         query.setData((curr) => (curr ? { ...curr, foo: curr.foo + 1 } : curr));
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.start.data);
 
-        await query.updateQuery();
+        await query.tricks.updateQuery();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.data);
 
-        await query.toggleQueryFail();
+        await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.data);
 
