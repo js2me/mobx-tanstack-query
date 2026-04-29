@@ -1,5 +1,23 @@
 # mobx-tanstack-query
 
+## 6.16.0
+
+### Minor Changes
+
+- [`da6909d`](https://github.com/js2me/mobx-tanstack-query/commit/da6909daed63441f63e8240eea32c31b37c7f668) Thanks [@js2me](https://github.com/js2me)! - added `lazyDelay` option for queries and mutations as features
+
+## 6.15.1
+
+### Patch Changes
+
+- [`eeb0abf`](https://github.com/js2me/mobx-tanstack-query/commit/eeb0abf73cbbe75551d94eb164cc25b0b12a75a5) Thanks [@js2me](https://github.com/js2me)! - fixed `resultObservable` work with merging with query client
+
+## 6.15.0
+
+### Minor Changes
+
+- [`73207cc`](https://github.com/js2me/mobx-tanstack-query/commit/73207cc8e22303d0a2975bac12eedcd4c14945a0) Thanks [@js2me](https://github.com/js2me)! - added `resultObservable` query and mutation features
+
 ## 6.14.1
 
 ### Patch Changes

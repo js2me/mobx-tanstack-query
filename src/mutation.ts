@@ -7,9 +7,8 @@ import {
   type MutationObserverResult,
   type MutationStatus,
 } from '@tanstack/query-core';
-import { action, makeObservable, observable } from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
-
+import { action, makeObservable } from 'mobx';
+import { annotation, lazyObserve } from 'yummies/mobx';
 import type {
   MutationConfig,
   MutationDoneListener,
@@ -166,10 +165,15 @@ export class Mutation<
       invalidateByKey:
         config.invalidateByKey ?? qc.mutationFeatures?.invalidateByKey,
       lazy: config.lazy ?? qc.mutationFeatures?.lazy,
+      lazyDelay: config.lazyDelay ?? qc.mutationFeatures?.lazyDelay,
       resetOnDestroy:
         config.resetOnDestroy ?? qc.mutationFeatures?.resetOnDestroy,
       transformError:
         config.transformError ?? qc.mutationFeatures?.transformError,
+      resultObservable:
+        config.resultObservable ??
+        qc.mutationFeatures?.resultObservable ??
+        'deep',
     };
 
     this.hooks = qc.hooks;
@@ -198,7 +202,13 @@ export class Mutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    observable.deep(this, 'result');
+    const resultAnnotation = annotation.observable(
+      this.features.resultObservable,
+    );
+    if (resultAnnotation) {
+      resultAnnotation(this, 'result');
+    }
+
     action.bound(this, 'updateResult');
     this.mutate = this.mutate.bind(this);
     this.start = this.start.bind(this);
@@ -215,6 +225,7 @@ export class Mutation<
       const cleanup = lazyObserve({
         context: this,
         property: 'result',
+        endDelay: this.features.lazyDelay,
         onStart: () => {
           if (!this._observerSubscription) {
             this.updateResult(this.mutationObserver.getCurrentResult());

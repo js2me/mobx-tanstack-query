@@ -295,6 +295,10 @@ This field is needed for `enableOnDemand` option
 
 Query original result (The same as returns the [`useQuery` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
 
+::: info `observable.deep` is configurable
+The badge reflects the **default**: the internal `_result` field is decorated as deep observable. You can change the MobX flavour (`ref`, `shallow`, `struct`, `true`, or `false`) with the [`resultObservable`](#resultobservable-queryfeature) query feature.
+:::
+
 ### `setData(updater, options)`
 
 Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
@@ -641,6 +645,32 @@ const query = createQuery(queryClient, () => ({
 // no reactions and subscriptions will be created
 ```
 
+### `lazyDelay` option <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+Only applies when [`lazy`](#lazy-option-queryfeature) is enabled.
+
+After the last MobX observer stops reading the query result, the library keeps the TanStack `QueryObserver` subscription alive for an extra **`lazyDelay` milliseconds** before tearing it down. Internally this maps to the `endDelay` option of [`lazyObserve`](https://www.npmjs.com/package/yummies) from `yummies/mobx`.
+
+Use this to avoid churn when UI code briefly mounts and unmounts (for example route transitions or conditional panels): if something starts observing the result again before the delay elapses, the existing subscription is reused and you avoid an immediate unsubscribe/resubscribe cycle.
+
+- **Omitted or `undefined`** — teardown runs as soon as nothing observes the result (equivalent to `endDelay: false` in [`lazyObserve`](https://www.npmjs.com/package/yummies) / `yummies/mobx`).
+- **A positive number** — milliseconds to wait after the last observer detaches before unsubscribing from the TanStack observer.
+
+Example (global default via `QueryClient`):
+
+```ts
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      lazy: true,
+      lazyDelay: 300,
+    },
+  },
+});
+```
+
 ### `transformError` <Badge type="tip">QueryFeature</Badge>
 
 [_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
@@ -747,6 +777,28 @@ const query = new Query({
     enabled: false,
   })
 })
+```
+
+### `resultObservable` <Badge type="tip">QueryFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
+
+Chooses how MobX observes the internal TanStack Query result object (`_result`). The library applies [`annotation.observable()`](https://github.com/js2me/yummies) from `yummies/mobx`, so this maps directly to MobX flavours: `ref`, `deep`, `shallow`, `struct`, or `true` / `false`.
+
+- **Default** — when omitted, behaviour matches **`'deep'`** (deep observability for plain objects and arrays in the result).
+- **`'ref'`** — only the reference to the result object is tracked; use when the observer should react when the whole result is replaced, not when nested fields change in place.
+- **`'shallow'`** / **`'struct'`** — shallow or structural comparison for nested properties.
+- **`false`** — do not decorate `_result` with an observable annotation (rare; you lose automatic MobX tracking for the result blob).
+
+Example:
+
+```ts
+const query = new Query({
+  queryClient,
+  resultObservable: 'ref',
+  queryKey: ['pets'],
+  queryFn: async () => api.fetchPets(),
+});
 ```
 
 ## Recommendations

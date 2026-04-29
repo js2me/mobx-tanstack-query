@@ -1,10 +1,11 @@
+/// <reference types="node" />
+import { types } from 'node:util';
 import {
   type DefaultError,
   QueryClient as QueryClientCore,
 } from '@tanstack/query-core';
 import { reaction } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-
 import { Mutation } from './mutation.js';
 import type {
   MutationConfig,
@@ -12,6 +13,7 @@ import type {
   MutationFunctionContext,
 } from './mutation.types.js';
 import { QueryClient as MobxQueryClient } from './query-client.js';
+import type { QueryClientConfig } from './query-client.types.js';
 
 class MutationMock<
   TData = unknown,
@@ -32,6 +34,7 @@ class MutationMock<
       MutationConfig<TData, TVariables, TError, TContext>,
       'queryClient'
     >,
+    queryClient: QueryClientCore = new QueryClientCore({}),
   ) {
     const mutationFn: MutationFn<TData, TVariables> = vi.fn(
       (variables: TVariables, context: MutationFunctionContext) => {
@@ -40,7 +43,7 @@ class MutationMock<
     );
     super({
       ...options,
-      queryClient: new QueryClientCore({}),
+      queryClient,
       mutationFn,
     });
 
@@ -308,6 +311,168 @@ describe('Mutation', () => {
       expect(mutation.result.status).toBe('success');
       mutation.destroy();
       expect(mutation.result.status).toBe('success');
+    });
+  });
+
+  describe('result type checks', () => {
+    const createMutation = (
+      cfg?: Partial<MutationConfig>,
+      qcCfg?: Partial<QueryClientConfig>,
+    ) => {
+      const queryClient = new MobxQueryClient(qcCfg);
+
+      class TestMutation extends Mutation {
+        getInternalResult() {
+          return this.result;
+        }
+      }
+
+      return new TestMutation({
+        queryClient,
+        mutationKey: ['smoke'],
+        mutationFn: async () => 42,
+        ...cfg,
+      });
+    };
+
+    it('basic', () => {
+      const mutation = createMutation();
+      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+
+    it('(mutation: resultObservable: false)', () => {
+      const mutation = createMutation({ resultObservable: false });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(mutation: resultObservable: ref)', () => {
+      const mutation = createMutation({ resultObservable: 'ref' });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(mutation: resultObservable: shallow)', () => {
+      const mutation = createMutation({ resultObservable: 'shallow' });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+
+    it('(mutation: resultObservable: struct)', () => {
+      const mutation = createMutation({ resultObservable: 'struct' });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: false)', () => {
+      const mutation = createMutation(undefined, {
+        defaultOptions: { mutations: { resultObservable: false } },
+      });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: ref)', () => {
+      const mutation = createMutation(undefined, {
+        defaultOptions: { mutations: { resultObservable: 'ref' } },
+      });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: shallow)', () => {
+      const mutation = createMutation(undefined, {
+        defaultOptions: { mutations: { resultObservable: 'shallow' } },
+      });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+
+    it('(queryClient: resultObservable: struct)', () => {
+      const mutation = createMutation(undefined, {
+        defaultOptions: { mutations: { resultObservable: 'struct' } },
+      });
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(mutation: resultObservable: false)(queryClient: resultObservable: deep)', () => {
+      const mutation = createMutation(
+        { resultObservable: false },
+        { defaultOptions: { mutations: { resultObservable: 'deep' } } },
+      );
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(mutation: resultObservable: deep)(queryClient: resultObservable: ref)', () => {
+      const mutation = createMutation(
+        { resultObservable: 'deep' },
+        { defaultOptions: { mutations: { resultObservable: 'ref' } } },
+      );
+      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+
+    it('(mutation: resultObservable: ref)(queryClient: resultObservable: shallow)', () => {
+      const mutation = createMutation(
+        { resultObservable: 'ref' },
+        { defaultOptions: { mutations: { resultObservable: 'shallow' } } },
+      );
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
+    });
+
+    it('(mutation: resultObservable: deep)(queryClient: resultObservable: struct)', () => {
+      const mutation = createMutation(
+        { resultObservable: 'deep' },
+        { defaultOptions: { mutations: { resultObservable: 'struct' } } },
+      );
+      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+    });
+  });
+
+  describe('lazyDelay', () => {
+    class MutationWithMergedFeatures extends MutationMock {
+      get mergedFeatures() {
+        return this.features;
+      }
+    }
+
+    it('merges lazyDelay from QueryClient defaultOptions.mutations', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            lazy: true,
+            lazyDelay: 5151,
+          },
+        },
+      });
+
+      const mutation = new MutationWithMergedFeatures(
+        {
+          mutationKey: ['lazy-delay-merge'],
+          mutationFn: async () => {},
+          lazy: true,
+        },
+        queryClient,
+      );
+
+      expect(mutation.mergedFeatures.lazyDelay).toBe(5151);
+      mutation.destroy();
+    });
+
+    it('mutation lazyDelay overrides QueryClient defaultOptions.mutations', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            lazy: true,
+            lazyDelay: 1,
+          },
+        },
+      });
+
+      const mutation = new MutationWithMergedFeatures(
+        {
+          mutationKey: ['lazy-delay-override'],
+          mutationFn: async () => {},
+          lazy: true,
+          lazyDelay: 3,
+        },
+        queryClient,
+      );
+
+      expect(mutation.mergedFeatures.lazyDelay).toBe(3);
+      mutation.destroy();
     });
   });
 });

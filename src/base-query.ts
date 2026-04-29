@@ -15,7 +15,7 @@ import {
   runInAction,
   when,
 } from 'mobx';
-import { lazyObserve } from 'yummies/mobx';
+import { annotation, lazyObserve } from 'yummies/mobx';
 import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
 import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
@@ -118,6 +118,7 @@ export abstract class BaseQuery<
         config.cumulativeQueryHash ?? qf?.cumulativeQueryHash,
       enableOnDemand: config.enableOnDemand ?? qf?.enableOnDemand,
       lazy: config.lazy ?? qf?.lazy,
+      lazyDelay: config.lazyDelay ?? qf?.lazyDelay,
       resetOnDestroy: config.resetOnDestroy ?? qf?.resetOnDestroy,
       removeOnDestroy: config.removeOnDestroy ?? qf?.removeOnDestroy,
       transformError: config.transformError ?? qf?.transformError,
@@ -127,6 +128,8 @@ export abstract class BaseQuery<
         config.dynamicOptionsComparer ?? qf?.dynamicOptionsComparer,
       autoRemovePreviousQuery:
         config.autoRemovePreviousQuery ?? qf?.autoRemovePreviousQuery,
+      resultObservable:
+        config.resultObservable ?? qf?.resultObservable ?? 'deep',
     };
   }
 
@@ -158,7 +161,13 @@ export abstract class BaseQuery<
   }) {
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    observable.deep(this, '_result');
+    const resultAnnotation = annotation.observable(
+      this.features.resultObservable,
+    );
+    if (resultAnnotation) {
+      resultAnnotation(this, '_result');
+    }
+
     observable.ref(this, 'isResultRequsted');
     action.bound(this, 'setData');
     action.bound(this, 'update');
@@ -181,6 +190,7 @@ export abstract class BaseQuery<
       const cleanup = lazyObserve({
         context: this,
         property: '_result',
+        endDelay: this.features.lazyDelay,
         onStart: () => {
           if (!this._observerSubscription) {
             if (params.getAllDynamicOptions) {

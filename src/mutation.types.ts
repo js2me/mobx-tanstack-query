@@ -4,7 +4,7 @@ import type {
   MutationFunctionContext as MutationFunctionContextCore,
   MutationObserverOptions,
 } from '@tanstack/query-core';
-
+import type { ObservableTypes } from 'yummies/mobx';
 import type { Mutation } from './mutation.js';
 import type { AnyQueryClient } from './query-client.types.js';
 
@@ -30,7 +30,33 @@ export interface MutationFeatures {
    * They exists only when mutation result is observed.
    */
   lazy?: boolean;
+
+  /**
+   * When `lazy` is enabled, delay in milliseconds before tearing down the `MutationObserver` subscription after the last MobX observer stops reading `result` (`lazyObserve` `endDelay` from `yummies/mobx`).
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Mutation.html#lazydelay-option-mutationfeature)
+   */
+  lazyDelay?: number;
+
   transformError?: (error: any) => any;
+
+  /**
+   * MobX observable flavour for the mutation `result` property (`MutationObserverResult`), applied with
+   * `annotation.observable()` from `yummies/mobx`. Unlike `Query` (which keeps the observer payload on `_result`
+   * and exposes fields via getters), `Mutation` decorates the public `result` field directly. Convenience fields
+   * (`data`, `isPending`, `isError`, …) read from that object, so this option controls how deeply updates propagate.
+   *
+   * - `'deep'` — default when omitted; deep observability for plain objects and arrays.
+   * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
+   * - `'ref'` — track only the result reference (useful when the whole result object is replaced each update).
+   * - `true` — base `observable` (same as omitting the option).
+   * - `false` — skip decorating `result` (no automatic MobX tracking for the result; advanced use only).
+   *
+   * @default 'deep'
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Mutation.html#resultobservable-mutationfeature)
+   */
+  resultObservable?: ObservableTypes | boolean;
 }
 
 export interface MutationInvalidateQueriesOptions

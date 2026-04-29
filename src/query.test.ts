@@ -1,5 +1,7 @@
+/// <reference types="node" />
 /* eslint-disable no-async-promise-executor */
 /** biome-ignore-all lint/nursery/noFloatingPromises: tests intentionally leave promises unawaited */
+import { types } from 'node:util';
 import {
   type DefaultError,
   hashKey,
@@ -12,6 +14,7 @@ import {
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
+  comparer,
   computed,
   makeAutoObservable,
   makeObservable,
@@ -38,10 +41,12 @@ import { Query } from './query.js';
 import type {
   QueryConfig,
   QueryDynamicOptions,
+  QueryFeatures,
   QueryInvalidateParams,
   QueryUpdateOptions,
 } from './query.types.js';
 import { QueryClient as MobxQueryClient } from './query-client.js';
+import type { QueryClientConfig } from './query-client.types.js';
 
 class QueryMock<
   TQueryFnData = unknown,
@@ -259,8 +264,8 @@ describe('Query', () => {
     foo.query.update({ queryKey: ['on-done-cycle', 1] as const });
     await sleep(20);
 
-    expect(foo.query.spies.update).toBeCalledTimes(2);
-    expect(foo.onDoneSpy).toBeCalledTimes(1);
+    expect(foo.query.spies.update).toHaveBeenCalledTimes(2);
+    expect(foo.onDoneSpy).toHaveBeenCalledTimes(1);
 
     foo.query.destroy();
   });
@@ -283,7 +288,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 1);
 
@@ -304,7 +309,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
       query.destroy();
@@ -328,7 +333,7 @@ describe('Query', () => {
         queryClient,
       );
 
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.destroy();
     });
@@ -350,7 +355,7 @@ describe('Query', () => {
         queryClient,
       );
 
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.destroy();
     });
@@ -366,7 +371,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
       query.destroy();
@@ -384,7 +389,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
       query.destroy();
@@ -410,7 +415,7 @@ describe('Query', () => {
       await when(() => !disabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         1,
@@ -443,7 +448,7 @@ describe('Query', () => {
       await when(() => !disabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         1,
@@ -474,7 +479,7 @@ describe('Query', () => {
       await when(() => !tempDisabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       // результат с 0 потому что options.enabled у первой квери - это функция и
       // !!tempDisabledQuery.options.enabled будет всегда true
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
@@ -509,7 +514,7 @@ describe('Query', () => {
     await when(() => !tempDisabledQuery._rawResult.isLoading);
     await when(() => !dependentQuery._rawResult.isLoading);
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
     // результат с 0 потому что options.enabled у первой квери - это функция и
     // !!tempDisabledQuery.options.enabled будет всегда true
     expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
@@ -547,7 +552,7 @@ describe('Query', () => {
 
     await sleep(100);
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(0);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(0);
 
     await sleep(100);
 
@@ -558,7 +563,7 @@ describe('Query', () => {
       { fireImmediately: true },
     );
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
     expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
       'test',
       1,
@@ -567,6 +572,124 @@ describe('Query', () => {
 
     tempDisabledQuery.destroy();
     dependentQuery.destroy();
+  });
+
+  describe('lazyDelay', () => {
+    class QueryWithMergedFeatures extends QueryMock {
+      get mergedFeatures() {
+        return this.features;
+      }
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('merges lazyDelay from QueryClient defaultOptions.queries', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            lazy: true,
+            lazyDelay: 4242,
+          },
+        },
+      });
+      const query = new QueryWithMergedFeatures(
+        {
+          queryKey: ['lazy-delay-merge'],
+          queryFn: () => 1,
+          lazy: true,
+        },
+        queryClient,
+      );
+
+      expect(query.mergedFeatures.lazyDelay).toBe(4242);
+      query.destroy();
+    });
+
+    it('query lazyDelay overrides QueryClient defaultOptions.queries', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          queries: {
+            lazy: true,
+            lazyDelay: 1,
+          },
+        },
+      });
+      const query = new QueryWithMergedFeatures(
+        {
+          queryKey: ['lazy-delay-override'],
+          queryFn: () => 1,
+          lazy: true,
+          lazyDelay: 2,
+        },
+        queryClient,
+      );
+
+      expect(query.mergedFeatures.lazyDelay).toBe(2);
+      query.destroy();
+    });
+
+    it('delays tearing down the observer so a quick re-subscribe does not refetch', async () => {
+      vi.useFakeTimers();
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 0,
+          },
+        },
+      });
+      const query = new QueryMock(
+        {
+          queryKey: ['lazy-delay-behavior'] as const,
+          queryFn: async () => 'x',
+          lazy: true,
+          lazyDelay: 10_000,
+        },
+        queryClient,
+      );
+
+      const disposer1 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await when(() => query.isSuccess);
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
+
+      disposer1();
+
+      const disposer2 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
+
+      disposer2();
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      const disposer3 = reaction(
+        () => query.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await when(() => !query.isFetching);
+      await vi.runAllTimersAsync();
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      disposer3();
+      query.destroy();
+    });
   });
 
   it('missing "queryKey" bug', async () => {
@@ -610,7 +733,7 @@ describe('Query', () => {
 
     expect(mockQuery.options.queryKey).toStrictEqual(['missing-query-key-bug']);
 
-    expect(queryFn).toBeCalledTimes(1);
+    expect(queryFn).toHaveBeenCalledTimes(1);
 
     runInAction(() => {
       params.pageNumber = 1;
@@ -624,11 +747,11 @@ describe('Query', () => {
       params.pageNumber = 3;
     });
 
-    expect(queryFn).toBeCalledTimes(4);
+    expect(queryFn).toHaveBeenCalledTimes(4);
 
     await sleep();
 
-    expect(queryFn).toBeCalledTimes(4);
+    expect(queryFn).toHaveBeenCalledTimes(4);
 
     abortController.abort();
   });
@@ -653,7 +776,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 10);
 
@@ -678,7 +801,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
       query.destroy();
@@ -702,7 +825,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, true);
 
       query.destroy();
@@ -719,7 +842,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -733,7 +856,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -747,7 +870,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -761,7 +884,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -775,7 +898,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -791,7 +914,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -807,7 +930,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -822,7 +945,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -838,7 +961,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -856,7 +979,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -872,7 +995,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -888,7 +1011,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -912,7 +1035,7 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -934,12 +1057,12 @@ describe('Query', () => {
           queryClient,
         );
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -951,12 +1074,12 @@ describe('Query', () => {
           enableOnDemand: true,
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -976,13 +1099,13 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('value');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1005,7 +1128,7 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set(null);
@@ -1015,13 +1138,13 @@ describe('Query', () => {
           valueBox.set('faslse');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('kek');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1069,7 +1192,7 @@ describe('Query', () => {
 
       query.setData(() => ({ bar: 1, baz: 2 }));
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.result.data).toEqual({ bar: 1, baz: 2 });
 
       query.destroy();
@@ -1114,7 +1237,7 @@ describe('Query', () => {
 
       await when(() => !query.result.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.result.data).toEqual({
         a: {
           b: {
@@ -1187,7 +1310,7 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionSpy).toBeCalledTimes(2);
+      expect(reactionSpy).toHaveBeenCalledTimes(2);
       expect(reactionSpy).toHaveBeenNthCalledWith(
         2,
         {
@@ -1372,7 +1495,7 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionFooSpy).toBeCalledTimes(2);
+      expect(reactionFooSpy).toHaveBeenCalledTimes(2);
 
       expect(reactionFooSpy).toHaveBeenNthCalledWith(
         2,
@@ -1646,7 +1769,7 @@ describe('Query', () => {
       await when(() => !query._rawResult.isLoading);
 
       expect(query.result.isFetched).toBeTruthy();
-      expect(querySpyFn).toBeCalledTimes(1);
+      expect(querySpyFn).toHaveBeenCalledTimes(1);
 
       query.destroy();
     });
@@ -1666,7 +1789,7 @@ describe('Query', () => {
       await when(() => !query._rawResult.isLoading);
 
       expect(query.result.isFetched).toBeTruthy();
-      expect(querySpyFn).toBeCalledTimes(3);
+      expect(querySpyFn).toHaveBeenCalledTimes(3);
 
       query.destroy();
     });
@@ -1684,12 +1807,12 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(number) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1704,13 +1827,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
@@ -1723,13 +1846,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1744,13 +1867,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
@@ -1763,12 +1886,12 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(condition-fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1783,13 +1906,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('dynamic enabled + dynamic refetchInterval', async () => {
       const abortController = new AbortController();
@@ -1812,13 +1935,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
     });
     it('dynamic enabled + dynamic refetchInterval(refetchInterval is fixed)', async () => {
       const abortController = new AbortController();
@@ -1841,13 +1964,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
     });
     it('dynamic enabled + dynamic refetchInterval (+enabledOnDemand)', async () => {
       const abortController = new AbortController();
@@ -1871,17 +1994,17 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.result.data;
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(10);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(10);
 
       query.result.data;
       query.result.isLoading;
       await sleep(50);
-      expect(query.spies.queryFn).toBeCalledTimes(15);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
       abortController.abort();
 
       query.result.data;
@@ -1893,7 +2016,7 @@ describe('Query', () => {
       query.result.data;
       query.result.isLoading;
 
-      expect(query.spies.queryFn).toBeCalledTimes(15);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
     });
 
     it('after abort identical (by query key) query another query should work', async () => {
@@ -2245,8 +2368,8 @@ describe('Query', () => {
 
       enabled.set(true);
 
-      expect(queryFnSpy).toBeCalledTimes(1);
-      expect(getDynamicOptionsSpy).toBeCalledTimes(3);
+      expect(queryFnSpy).toHaveBeenCalledTimes(1);
+      expect(getDynamicOptionsSpy).toHaveBeenCalledTimes(3);
     });
 
     it('after abort signal for inprogress success work query create new instance with the same key and it should work', async () => {
@@ -3980,7 +4103,7 @@ describe('Query', () => {
 
     query?.result.data; // this won't trigger fetching, which is unexpected
 
-    expect(queryFn).toBeCalledTimes(1);
+    expect(queryFn).toHaveBeenCalledTimes(1);
   });
 
   it('onDone should call each time async queryFn returns data', async () => {
@@ -4027,7 +4150,7 @@ describe('Query', () => {
 
       expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
       expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
-      expect(onDone).toBeCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4067,10 +4190,10 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
       expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
       expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
-      expect(onDone).toBeCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4113,7 +4236,7 @@ describe('Query', () => {
 
       await when(() => query.result.error?.message === 'boom-2');
 
-      expect(queryFn).toBeCalledTimes(4);
+      expect(queryFn).toHaveBeenCalledTimes(4);
       expect(onError).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ message: 'boom-1' }),
@@ -4134,7 +4257,7 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(4);
+      expect(onError).toHaveBeenCalledTimes(4);
     } finally {
       query.destroy();
     }
@@ -4173,7 +4296,7 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(2);
+      expect(onError).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4210,8 +4333,8 @@ describe('Query', () => {
       await when(() => query.result.data === 'value-1');
       await sleep(20);
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4264,8 +4387,8 @@ describe('Query', () => {
           query.result.data === 'value-2' && queryFn.mock.calls.length === 4,
       );
 
-      expect(queryFn).toBeCalledTimes(4);
-      expect(onDone).toBeCalledTimes(4);
+      expect(queryFn).toHaveBeenCalledTimes(4);
+      expect(onDone).toHaveBeenCalledTimes(4);
     } finally {
       query.destroy();
     }
@@ -4307,7 +4430,7 @@ describe('Query', () => {
 
         expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
         expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
-        expect(onDone).toBeCalledTimes(2);
+        expect(onDone).toHaveBeenCalledTimes(2);
       } finally {
         secondQuery.destroy();
       }
@@ -4523,7 +4646,7 @@ describe('Query', () => {
 
         expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
         expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
-        expect(onDone).toBeCalledTimes(2);
+        expect(onDone).toHaveBeenCalledTimes(2);
       } finally {
         secondQuery.destroy();
       }
@@ -4557,8 +4680,8 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4588,8 +4711,8 @@ describe('Query', () => {
 
       await sleep(20);
 
-      expect(queryFn).toBeCalledTimes(1);
-      expect(onDone).toBeCalledTimes(1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+      expect(onDone).toHaveBeenCalledTimes(1);
 
       runInAction(() => {
         queryState.set({ id: 2, noise: 0 });
@@ -4597,8 +4720,8 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4639,9 +4762,655 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(2);
+      expect(onError).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
+  });
+
+  describe('_result type checks', () => {
+    const createQuery = (
+      cfg?: Partial<QueryConfig>,
+      qcCfg?: Partial<QueryClientConfig>,
+    ) => {
+      const queryClient = new MobxQueryClient(qcCfg);
+
+      class TestQuery extends Query {
+        getInternalResult() {
+          return this._result;
+        }
+      }
+
+      return new TestQuery({
+        queryClient,
+        queryKey: ['smoke'],
+        queryFn: async () => 42,
+        ...cfg,
+      });
+    };
+
+    it('basic', () => {
+      const query = createQuery();
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: false)', () => {
+      const query = createQuery({ resultObservable: false });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: ref)', () => {
+      const query = createQuery({ resultObservable: 'ref' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: shallow)', () => {
+      const query = createQuery({ resultObservable: 'shallow' });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: struct)', () => {
+      const query = createQuery({ resultObservable: 'struct' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: false)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: false } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: ref)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'ref' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: shallow)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'shallow' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(queryClient: resultObservable: struct)', () => {
+      const query = createQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'struct' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: false)(queryClient: resultObservable: deep)', () => {
+      const query = createQuery(
+        { resultObservable: false },
+        { defaultOptions: { queries: { resultObservable: 'deep' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: ref)', () => {
+      const query = createQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'ref' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: ref)(queryClient: resultObservable: shallow)', () => {
+      const query = createQuery(
+        { resultObservable: 'ref' },
+        { defaultOptions: { queries: { resultObservable: 'shallow' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: struct)', () => {
+      const query = createQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'struct' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+  });
+
+  it('autoRemovePreviousQuery should not remove whole query after destroy', async () => {
+    const qc = new MobxQueryClient({
+      defaultOptions: {
+        queries: {
+          autoRemovePreviousQuery: true,
+          enableOnDemand: true,
+          throwOnError: true,
+          refetchOnWindowFocus: false,
+          refetchOnReconnect: false,
+          staleTime: (query) => {
+            if (query.getObserversCount() > 1) {
+              return Infinity;
+            }
+
+            return 0;
+          },
+          retry: false,
+          gcTime: 0,
+          dynamicOptionsComparer: comparer.structural,
+        },
+        mutations: {
+          gcTime: 0,
+          networkMode: 'always',
+          throwOnError: true,
+        },
+      },
+    });
+
+    const abortController = new AbortController();
+
+    const queryKeyBox = observable.box<string[]>();
+
+    const q = new Query({
+      abortSignal: abortController.signal,
+      enableOnDemand: false,
+      queryClient: qc,
+      options: () => {
+        const queryKey = queryKeyBox.get();
+        const isEnabled = queryKey?.[0] === 'enabled';
+
+        return {
+          queryKey: queryKey,
+          enabled: isEnabled,
+        };
+      },
+      queryFn: () => true,
+    });
+
+    queryKeyBox.set(['disabled', 'afo', 'asf']);
+
+    await sleep();
+
+    queryKeyBox.set(['enabled', 'afo', 'asf']);
+
+    await sleep();
+
+    await sleep();
+
+    await sleep();
+
+    await when(() => q.isSuccess);
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    abortController.abort();
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    q.destroy();
+
+    expect(qc.getQueryCache().getAll().length).toBe(1);
+
+    expect(qc.getQueryCache().getAll()[0].queryKey).toEqual([
+      'enabled',
+      'afo',
+      'asf',
+    ]);
+  });
+
+  describe('resultObservable reactions count calls', () => {
+    const createProceedQuery = async (
+      testName: string,
+      resultObservable: NonNullable<QueryFeatures['resultObservable']>,
+    ) => {
+      let isFailedQuery = false;
+      const box = observable.box(0);
+
+      vi.useFakeTimers();
+
+      const query = new QueryMock({
+        queryKey: () => [
+          'result-observable-reaction-count',
+          resultObservable,
+          testName,
+          box.get(),
+        ],
+        resultObservable,
+        queryFn: async ({ queryKey }) => {
+          if (isFailedQuery) {
+            throw new Error('fail :(');
+          }
+          return { foo: 1, bar: { baz: queryKey.at(-1) as number } };
+        },
+      });
+
+      const tricks = {
+        runQuery: async () => {
+          await vi.runAllTimersAsync();
+
+          vi.useRealTimers();
+        },
+        updateQuery: async () => {
+          vi.useFakeTimers();
+
+          box.set(box.get() + 1);
+
+          await vi.runAllTimersAsync();
+        },
+        toggleQueryFail: async () => {
+          vi.useFakeTimers();
+
+          isFailedQuery = !isFailedQuery;
+          box.set(box.get() + 1);
+
+          await vi.runAllTimersAsync();
+
+          vi.useRealTimers();
+        },
+        invalidateQuery: async () => {
+          vi.useFakeTimers();
+
+          const promise = query.invalidate();
+
+          await vi.runAllTimersAsync();
+
+          await promise;
+
+          vi.useRealTimers();
+        },
+      };
+
+      // @ts-expect-error
+      query.tricks = tricks;
+
+      return query as typeof query & { tricks: typeof tricks };
+    };
+
+    type TestCaseCalls = Record<
+      'start' | 'update' | 'error' | 'invalidate',
+      {
+        dataFoo: number;
+        dataFooBarBaz: number;
+        isLoading: number;
+        isError: number;
+        data: number;
+        isFetching: number;
+        isFetched: number;
+      }
+    >;
+
+    type TestCase = {
+      mode: NonNullable<QueryFeatures['resultObservable']>;
+      calls: TestCaseCalls;
+    };
+
+    const baseTestCaseCalls = {
+      start: {
+        dataFoo: 2,
+        dataFooBarBaz: 2,
+        isLoading: 2,
+        isError: 1,
+        data: 3,
+        isFetched: 2,
+        isFetching: 2,
+      },
+      update: {
+        dataFoo: 4,
+        dataFooBarBaz: 4,
+        isLoading: 4,
+        isError: 1,
+        data: 5,
+        isFetched: 4,
+        isFetching: 4,
+      },
+      error: {
+        dataFoo: 5,
+        dataFooBarBaz: 5,
+        isLoading: 6,
+        isError: 2,
+        data: 6,
+        isFetched: 6,
+        isFetching: 6,
+      },
+      invalidate: {
+        dataFoo: 5,
+        dataFooBarBaz: 5,
+        isLoading: 8,
+        isError: 4,
+        data: 6,
+        isFetched: 6,
+        isFetching: 8,
+      },
+    };
+
+    const cases = [
+      {
+        mode: 'ref',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'struct',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'deep',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'shallow',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: false,
+        calls: {
+          start: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+          update: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+          error: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+          invalidate: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+        },
+      },
+    ] as const satisfies TestCase[];
+
+    describe.each(cases)(`reactionObservable: $mode`, ({ mode, calls }) => {
+      it(`data.foo reaction calls (${calls.start.dataFoo} -> ${calls.update.dataFoo} -> ${calls.error.dataFoo} -> ${calls.invalidate.dataFoo})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data?.foo,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFoo);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.dataFoo);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFoo);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.dataFoo);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`data.foo.bar.baz reaction calls (${calls.start.dataFooBarBaz} -> ${calls.update.dataFooBarBaz} -> ${calls.error.dataFooBarBaz} -> ${calls.invalidate.dataFooBarBaz})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data?.bar.baz,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFooBarBaz);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.dataFooBarBaz);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFooBarBaz);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(
+          calls.invalidate.dataFooBarBaz,
+        );
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isLoading reaction calls (${calls.start.isLoading} -> ${calls.update.isLoading} -> ${calls.error.isLoading} -> ${calls.invalidate.isLoading})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isLoading,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isLoading);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isLoading);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isLoading);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isLoading);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isError reaction calls (${calls.start.isError} -> ${calls.update.isError} -> ${calls.error.isError} -> ${calls.invalidate.isError})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isError,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isError);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isError);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isError);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isError);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isFetched reaction calls (${calls.start.isFetched} -> ${calls.update.isFetched} -> ${calls.error.isFetched} -> ${calls.invalidate.isFetched})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isFetched,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetched);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isFetched);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetched);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isFetched);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isFetching reaction calls (${calls.start.isFetching} -> ${calls.update.isFetching} -> ${calls.error.isFetching} -> ${calls.invalidate.isFetching})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isFetching,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetching);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isFetching);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetching);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isFetching);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`data reaction calls (${calls.start.data} -> ${calls.update.data} -> ${calls.error.data} -> ${calls.invalidate.data})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await query.tricks.runQuery();
+
+        query.setData((curr) => (curr ? { ...curr, foo: curr.foo + 1 } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.data);
+
+        await query.tricks.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.data);
+
+        await query.tricks.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.data);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.data);
+
+        dispose();
+        query.destroy();
+      });
+    });
+
+    it.each([
+      { mode: 'deep' as const, calls: 2 },
+      { mode: 'ref' as const, calls: 1 },
+      { mode: 'shallow' as const, calls: 1 },
+      { mode: 'struct' as const, calls: 1 },
+      { mode: false as const, calls: 1 },
+    ])('nested direct mutation affects reactions only in deep mode ($mode)', async ({
+      mode,
+      calls,
+    }) => {
+      const query = await createProceedQuery(
+        `nested-mutation-${String(mode)}`,
+        mode,
+      );
+      await query.tricks.runQuery();
+
+      const reactionSpy = vi.fn();
+      const dispose = reaction(
+        () => query.result.data?.bar.baz,
+        (curr, prev) => reactionSpy(curr, prev),
+        { fireImmediately: true },
+      );
+
+      runInAction(() => {
+        if (query.result.data) {
+          query.result.data.bar.baz += 1;
+        }
+      });
+
+      expect(reactionSpy).toHaveBeenCalledTimes(calls);
+
+      dispose();
+      query.destroy();
+    });
   });
 });

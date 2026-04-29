@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { types } from 'node:util';
 import {
   type DefaultError,
   type FetchNextPageOptions,
@@ -11,13 +13,14 @@ import {
 import { observable, runInAction, when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { sleep } from 'yummies/async';
-
 import { InfiniteQuery } from './inifinite-query.js';
 import type {
   InfiniteQueryConfig,
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types.js';
 import type { QueryInvalidateParams } from './query.types.js';
+import { QueryClient as MobxQueryClient } from './query-client.js';
+import type { QueryClientConfig } from './query-client.types.js';
 
 class InfiniteQueryMock<
   TQueryFnData = unknown,
@@ -1186,6 +1189,115 @@ describe('InfiniteQuery', () => {
 
       infiniteQuery.destroy();
       vi.useRealTimers();
+    });
+  });
+
+  describe('_result type checks', () => {
+    const createInfiniteQuery = (
+      cfg?: Partial<InfiniteQueryConfig>,
+      qcCfg?: Partial<QueryClientConfig>,
+    ) => {
+      const queryClient = new MobxQueryClient(qcCfg);
+
+      class TestInfiniteQuery extends InfiniteQuery {
+        getInternalResult() {
+          return this._result;
+        }
+      }
+
+      return new TestInfiniteQuery({
+        queryClient,
+        queryKey: ['smoke'],
+        initialPageParam: 0,
+        getNextPageParam: () => undefined,
+        queryFn: async () => ({ n: 1 }),
+        ...cfg,
+      });
+    };
+
+    it('basic', () => {
+      const query = createInfiniteQuery();
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: false)', () => {
+      const query = createInfiniteQuery({ resultObservable: false });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: ref)', () => {
+      const query = createInfiniteQuery({ resultObservable: 'ref' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: shallow)', () => {
+      const query = createInfiniteQuery({ resultObservable: 'shallow' });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: struct)', () => {
+      const query = createInfiniteQuery({ resultObservable: 'struct' });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: false)', () => {
+      const query = createInfiniteQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: false } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: ref)', () => {
+      const query = createInfiniteQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'ref' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(queryClient: resultObservable: shallow)', () => {
+      const query = createInfiniteQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'shallow' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(queryClient: resultObservable: struct)', () => {
+      const query = createInfiniteQuery(undefined, {
+        defaultOptions: { queries: { resultObservable: 'struct' } },
+      });
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: false)(queryClient: resultObservable: deep)', () => {
+      const query = createInfiniteQuery(
+        { resultObservable: false },
+        { defaultOptions: { queries: { resultObservable: 'deep' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: ref)', () => {
+      const query = createInfiniteQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'ref' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
+    });
+
+    it('(query: resultObservable: ref)(queryClient: resultObservable: shallow)', () => {
+      const query = createInfiniteQuery(
+        { resultObservable: 'ref' },
+        { defaultOptions: { queries: { resultObservable: 'shallow' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
+    });
+
+    it('(query: resultObservable: deep)(queryClient: resultObservable: struct)', () => {
+      const query = createInfiniteQuery(
+        { resultObservable: 'deep' },
+        { defaultOptions: { queries: { resultObservable: 'struct' } } },
+      );
+      expect(types.isProxy(query.getInternalResult())).toBe(true);
     });
   });
 });
