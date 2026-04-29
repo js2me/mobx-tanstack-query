@@ -4821,24 +4821,6 @@ describe('Query', () => {
           box.set(box.get() + 1);
 
           await vi.runAllTimersAsync();
-
-          vi.useRealTimers();
-
-          vi.useFakeTimers();
-
-          box.set(box.get() + 1);
-
-          await vi.runAllTimersAsync();
-
-          vi.useRealTimers();
-
-          vi.useFakeTimers();
-
-          box.set(box.get() + 1);
-
-          await vi.runAllTimersAsync();
-
-          vi.useRealTimers();
         },
         toggleQueryFail: async () => {
           vi.useFakeTimers();
@@ -4847,6 +4829,17 @@ describe('Query', () => {
           box.set(box.get() + 1);
 
           await vi.runAllTimersAsync();
+
+          vi.useRealTimers();
+        },
+        invalidateQuery: async () => {
+          vi.useFakeTimers();
+
+          const promise = query.invalidate();
+
+          await vi.runAllTimersAsync();
+
+          await promise;
 
           vi.useRealTimers();
         },
@@ -4859,7 +4852,7 @@ describe('Query', () => {
     };
 
     type TestCaseCalls = Record<
-      'start' | 'lotOfUpdates' | 'error',
+      'start' | 'update' | 'error' | 'invalidate',
       {
         dataFoo: number;
         dataFooBarBaz: number;
@@ -4886,23 +4879,32 @@ describe('Query', () => {
         isFetched: 2,
         isFetching: 2,
       },
-      lotOfUpdates: {
-        dataFoo: 8,
-        dataFooBarBaz: 8,
-        isLoading: 8,
+      update: {
+        dataFoo: 4,
+        dataFooBarBaz: 4,
+        isLoading: 4,
         isError: 1,
-        data: 9,
-        isFetched: 8,
-        isFetching: 8,
+        data: 5,
+        isFetched: 4,
+        isFetching: 4,
       },
       error: {
-        dataFoo: 9,
-        dataFooBarBaz: 9,
-        isLoading: 10,
+        dataFoo: 5,
+        dataFooBarBaz: 5,
+        isLoading: 6,
         isError: 2,
-        data: 10,
-        isFetched: 10,
-        isFetching: 10,
+        data: 6,
+        isFetched: 6,
+        isFetching: 6,
+      },
+      invalidate: {
+        dataFoo: 5,
+        dataFooBarBaz: 5,
+        isLoading: 8,
+        isError: 4,
+        data: 6,
+        isFetched: 6,
+        isFetching: 8,
       },
     };
 
@@ -4935,7 +4937,7 @@ describe('Query', () => {
             isFetched: 1,
             isFetching: 1,
           },
-          lotOfUpdates: {
+          update: {
             dataFoo: 1,
             dataFooBarBaz: 1,
             isLoading: 1,
@@ -4953,12 +4955,21 @@ describe('Query', () => {
             isFetched: 1,
             isFetching: 1,
           },
+          invalidate: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
         },
       },
     ] as const satisfies TestCase[];
 
     describe.each(cases)(`reactionObservable: $mode`, ({ mode, calls }) => {
-      it(`data.foo reaction calls (${calls.start.dataFoo} -> ${calls.lotOfUpdates.dataFoo} -> ${calls.error.dataFoo})`, async ({
+      it(`data.foo reaction calls (${calls.start.dataFoo} -> ${calls.update.dataFoo} -> ${calls.error.dataFoo} -> ${calls.invalidate.dataFoo})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -4979,17 +4990,21 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.dataFoo);
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.dataFoo);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFoo);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.dataFoo);
+
         dispose();
         query.destroy();
       });
 
-      it(`data.foo.bar.baz reaction calls (${calls.start.dataFooBarBaz} -> ${calls.lotOfUpdates.dataFooBarBaz} -> ${calls.error.dataFooBarBaz})`, async ({
+      it(`data.foo.bar.baz reaction calls (${calls.start.dataFooBarBaz} -> ${calls.update.dataFooBarBaz} -> ${calls.error.dataFooBarBaz} -> ${calls.invalidate.dataFooBarBaz})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5007,19 +5022,23 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(
-          calls.lotOfUpdates.dataFooBarBaz,
-        );
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.dataFooBarBaz);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFooBarBaz);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(
+          calls.invalidate.dataFooBarBaz,
+        );
+
         dispose();
         query.destroy();
       });
 
-      it(`isLoading reaction calls (${calls.start.isLoading} -> ${calls.lotOfUpdates.isLoading} -> ${calls.error.isLoading})`, async ({
+      it(`isLoading reaction calls (${calls.start.isLoading} -> ${calls.update.isLoading} -> ${calls.error.isLoading} -> ${calls.invalidate.isLoading})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5037,17 +5056,21 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isLoading);
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isLoading);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isLoading);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isLoading);
+
         dispose();
         query.destroy();
       });
 
-      it(`isError reaction calls (${calls.start.isError} -> ${calls.lotOfUpdates.isError} -> ${calls.error.isError})`, async ({
+      it(`isError reaction calls (${calls.start.isError} -> ${calls.update.isError} -> ${calls.error.isError} -> ${calls.invalidate.isError})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5067,17 +5090,21 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isError);
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isError);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isError);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isError);
+
         dispose();
         query.destroy();
       });
 
-      it(`isFetched reaction calls (${calls.start.isFetched} -> ${calls.lotOfUpdates.isFetched} -> ${calls.error.isFetched})`, async ({
+      it(`isFetched reaction calls (${calls.start.isFetched} -> ${calls.update.isFetched} -> ${calls.error.isFetched} -> ${calls.invalidate.isFetched})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5097,17 +5124,21 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isFetched);
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isFetched);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetched);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isFetched);
+
         dispose();
         query.destroy();
       });
 
-      it(`isFetching reaction calls (${calls.start.isFetching} -> ${calls.lotOfUpdates.isFetching} -> ${calls.error.isFetching})`, async ({
+      it(`isFetching reaction calls (${calls.start.isFetching} -> ${calls.update.isFetching} -> ${calls.error.isFetching} -> ${calls.invalidate.isFetching})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5127,19 +5158,21 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(
-          calls.lotOfUpdates.isFetching,
-        );
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.isFetching);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetching);
 
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.isFetching);
+
         dispose();
         query.destroy();
       });
 
-      it(`data reaction calls (${calls.start.data} -> ${calls.lotOfUpdates.data} -> ${calls.error.data})`, async ({
+      it(`data reaction calls (${calls.start.data} -> ${calls.update.data} -> ${calls.error.data} -> ${calls.invalidate.data})`, async ({
         task,
       }) => {
         const query = await createProceedQuery(task.fullTestName, mode);
@@ -5159,11 +5192,15 @@ describe('Query', () => {
 
         await query.tricks.updateQuery();
 
-        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.data);
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.update.data);
 
         await query.tricks.toggleQueryFail();
 
         expect(reactionSpy).toHaveBeenCalledTimes(calls.error.data);
+
+        await query.tricks.invalidateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.invalidate.data);
 
         dispose();
         query.destroy();
