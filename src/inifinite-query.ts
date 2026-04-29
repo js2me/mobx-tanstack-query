@@ -24,31 +24,12 @@ import type {
   InfiniteQueryStartParams,
   InfiniteQueryUpdateOptionsAllVariants,
 } from './inifinite-query.types.js';
+import { originalQueryProperties } from './query.js';
 import type { QueryClient } from './query-client.js';
 import type { AnyQueryClient } from './query-client.types.js';
 
-const originalQueryProperties = [
-  'data',
-  'dataUpdatedAt',
-  'error',
-  'errorUpdatedAt',
-  'failureCount',
-  'failureReason',
-  'errorUpdateCount',
-  'isError',
-  'isFetched',
-  'isFetching',
-  'isLoading',
-  'isPending',
-  'isLoadingError',
-  'isPaused',
-  'isPlaceholderData',
-  'isRefetchError',
-  'isRefetching',
-  'isStale',
-  'isSuccess',
-  'status',
-  'fetchStatus',
+export const originalInfiniteQueryProperties = [
+  ...originalQueryProperties,
   'fetchNextPage',
   'fetchPreviousPage',
   'hasNextPage',
@@ -90,7 +71,7 @@ export class InfiniteQuery<
   implements
     Pick<
       InfiniteQueryObserverBaseResult<TData, TError>,
-      (typeof originalQueryProperties)[number]
+      (typeof originalInfiniteQueryProperties)[number]
     >
 {
   protected config: InfiniteQueryConfig<
@@ -348,7 +329,7 @@ export class InfiniteQuery<
     this.queryObserver = new InfiniteQueryObserver(queryClient, this.options);
 
     this.finalizeInitialization({
-      originalQueryProperties,
+      originalQueryProperties: originalInfiniteQueryProperties,
       getAllDynamicOptions,
       abortSignal: config.abortSignal,
       preserveExistingProperties: true,

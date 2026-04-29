@@ -20,7 +20,7 @@ import type { QueryClient } from './query-client.js';
 import type { AnyQueryClient } from './query-client.types.js';
 import type { QueryOptionsParams } from './query-options.js';
 
-const originalQueryProperties = [
+export const originalQueryProperties = [
   'data',
   'dataUpdatedAt',
   'error',

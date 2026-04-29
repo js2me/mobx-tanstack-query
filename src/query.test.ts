@@ -41,6 +41,7 @@ import { Query } from './query.js';
 import type {
   QueryConfig,
   QueryDynamicOptions,
+  QueryFeatures,
   QueryInvalidateParams,
   QueryUpdateOptions,
 } from './query.types.js';
@@ -263,8 +264,8 @@ describe('Query', () => {
     foo.query.update({ queryKey: ['on-done-cycle', 1] as const });
     await sleep(20);
 
-    expect(foo.query.spies.update).toBeCalledTimes(2);
-    expect(foo.onDoneSpy).toBeCalledTimes(1);
+    expect(foo.query.spies.update).toHaveBeenCalledTimes(2);
+    expect(foo.onDoneSpy).toHaveBeenCalledTimes(1);
 
     foo.query.destroy();
   });
@@ -287,7 +288,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 1);
 
@@ -308,7 +309,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
       query.destroy();
@@ -332,7 +333,7 @@ describe('Query', () => {
         queryClient,
       );
 
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.destroy();
     });
@@ -354,7 +355,7 @@ describe('Query', () => {
         queryClient,
       );
 
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.destroy();
     });
@@ -370,7 +371,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
       query.destroy();
@@ -388,7 +389,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
       query.destroy();
@@ -414,7 +415,7 @@ describe('Query', () => {
       await when(() => !disabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         1,
@@ -447,7 +448,7 @@ describe('Query', () => {
       await when(() => !disabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
         'test',
         1,
@@ -478,7 +479,7 @@ describe('Query', () => {
       await when(() => !tempDisabledQuery._rawResult.isLoading);
       await when(() => !dependentQuery._rawResult.isLoading);
 
-      expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+      expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
       // результат с 0 потому что options.enabled у первой квери - это функция и
       // !!tempDisabledQuery.options.enabled будет всегда true
       expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
@@ -513,7 +514,7 @@ describe('Query', () => {
     await when(() => !tempDisabledQuery._rawResult.isLoading);
     await when(() => !dependentQuery._rawResult.isLoading);
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
     // результат с 0 потому что options.enabled у первой квери - это функция и
     // !!tempDisabledQuery.options.enabled будет всегда true
     expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
@@ -551,7 +552,7 @@ describe('Query', () => {
 
     await sleep(100);
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(0);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(0);
 
     await sleep(100);
 
@@ -562,7 +563,7 @@ describe('Query', () => {
       { fireImmediately: true },
     );
 
-    expect(dependentQuery.spies.queryFn).toBeCalledTimes(1);
+    expect(dependentQuery.spies.queryFn).toHaveBeenCalledTimes(1);
     expect(dependentQuery.spies.queryFn).nthReturnedWith(1, [
       'test',
       1,
@@ -732,7 +733,7 @@ describe('Query', () => {
 
     expect(mockQuery.options.queryKey).toStrictEqual(['missing-query-key-bug']);
 
-    expect(queryFn).toBeCalledTimes(1);
+    expect(queryFn).toHaveBeenCalledTimes(1);
 
     runInAction(() => {
       params.pageNumber = 1;
@@ -746,11 +747,11 @@ describe('Query', () => {
       params.pageNumber = 3;
     });
 
-    expect(queryFn).toBeCalledTimes(4);
+    expect(queryFn).toHaveBeenCalledTimes(4);
 
     await sleep();
 
-    expect(queryFn).toBeCalledTimes(4);
+    expect(queryFn).toHaveBeenCalledTimes(4);
 
     abortController.abort();
   });
@@ -775,7 +776,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(2);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(2);
       expect(query.spies.queryFn).nthReturnedWith(1, 0);
       expect(query.spies.queryFn).nthReturnedWith(2, 10);
 
@@ -800,7 +801,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 10);
 
       query.destroy();
@@ -824,7 +825,7 @@ describe('Query', () => {
 
       await when(() => !query._rawResult.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, true);
 
       query.destroy();
@@ -841,7 +842,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -855,7 +856,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -869,7 +870,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -883,7 +884,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -897,7 +898,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -913,7 +914,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -929,7 +930,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -944,7 +945,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -960,7 +961,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -978,7 +979,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -994,7 +995,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1010,7 +1011,7 @@ describe('Query', () => {
 
         await when(() => !query._rawResult.isLoading);
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1034,7 +1035,7 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.destroy();
       });
@@ -1056,12 +1057,12 @@ describe('Query', () => {
           queryClient,
         );
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1073,12 +1074,12 @@ describe('Query', () => {
           enableOnDemand: true,
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1098,13 +1099,13 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('value');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1127,7 +1128,7 @@ describe('Query', () => {
         query.result.data;
         query.result.isLoading;
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set(null);
@@ -1137,13 +1138,13 @@ describe('Query', () => {
           valueBox.set('faslse');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(0);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
         runInAction(() => {
           valueBox.set('kek');
         });
 
-        expect(query.spies.queryFn).toBeCalledTimes(1);
+        expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
 
         query.destroy();
       });
@@ -1191,7 +1192,7 @@ describe('Query', () => {
 
       query.setData(() => ({ bar: 1, baz: 2 }));
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.result.data).toEqual({ bar: 1, baz: 2 });
 
       query.destroy();
@@ -1236,7 +1237,7 @@ describe('Query', () => {
 
       await when(() => !query.result.isLoading);
 
-      expect(query.spies.queryFn).toBeCalledTimes(1);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
       expect(query.result.data).toEqual({
         a: {
           b: {
@@ -1309,7 +1310,7 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionSpy).toBeCalledTimes(2);
+      expect(reactionSpy).toHaveBeenCalledTimes(2);
       expect(reactionSpy).toHaveBeenNthCalledWith(
         2,
         {
@@ -1494,7 +1495,7 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionFooSpy).toBeCalledTimes(2);
+      expect(reactionFooSpy).toHaveBeenCalledTimes(2);
 
       expect(reactionFooSpy).toHaveBeenNthCalledWith(
         2,
@@ -1768,7 +1769,7 @@ describe('Query', () => {
       await when(() => !query._rawResult.isLoading);
 
       expect(query.result.isFetched).toBeTruthy();
-      expect(querySpyFn).toBeCalledTimes(1);
+      expect(querySpyFn).toHaveBeenCalledTimes(1);
 
       query.destroy();
     });
@@ -1788,7 +1789,7 @@ describe('Query', () => {
       await when(() => !query._rawResult.isLoading);
 
       expect(query.result.isFetched).toBeTruthy();
-      expect(querySpyFn).toBeCalledTimes(3);
+      expect(querySpyFn).toHaveBeenCalledTimes(3);
 
       query.destroy();
     });
@@ -1806,12 +1807,12 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(number) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1826,13 +1827,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
@@ -1845,13 +1846,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1866,13 +1867,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
       const query = new QueryMock({
@@ -1885,12 +1886,12 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
       query.destroy();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('query with refetchInterval(condition-fn) should be stopped after outer abort', async () => {
       const abortController = new AbortController();
@@ -1905,13 +1906,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(5);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
     });
     it('dynamic enabled + dynamic refetchInterval', async () => {
       const abortController = new AbortController();
@@ -1934,13 +1935,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
     });
     it('dynamic enabled + dynamic refetchInterval(refetchInterval is fixed)', async () => {
       const abortController = new AbortController();
@@ -1963,13 +1964,13 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
 
       abortController.abort();
 
       await sleep(100);
 
-      expect(query.spies.queryFn).toBeCalledTimes(3);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
     });
     it('dynamic enabled + dynamic refetchInterval (+enabledOnDemand)', async () => {
       const abortController = new AbortController();
@@ -1993,17 +1994,17 @@ describe('Query', () => {
       });
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(0);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.result.data;
 
       await sleep(100);
-      expect(query.spies.queryFn).toBeCalledTimes(10);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(10);
 
       query.result.data;
       query.result.isLoading;
       await sleep(50);
-      expect(query.spies.queryFn).toBeCalledTimes(15);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
       abortController.abort();
 
       query.result.data;
@@ -2015,7 +2016,7 @@ describe('Query', () => {
       query.result.data;
       query.result.isLoading;
 
-      expect(query.spies.queryFn).toBeCalledTimes(15);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
     });
 
     it('after abort identical (by query key) query another query should work', async () => {
@@ -2367,8 +2368,8 @@ describe('Query', () => {
 
       enabled.set(true);
 
-      expect(queryFnSpy).toBeCalledTimes(1);
-      expect(getDynamicOptionsSpy).toBeCalledTimes(3);
+      expect(queryFnSpy).toHaveBeenCalledTimes(1);
+      expect(getDynamicOptionsSpy).toHaveBeenCalledTimes(3);
     });
 
     it('after abort signal for inprogress success work query create new instance with the same key and it should work', async () => {
@@ -4102,7 +4103,7 @@ describe('Query', () => {
 
     query?.result.data; // this won't trigger fetching, which is unexpected
 
-    expect(queryFn).toBeCalledTimes(1);
+    expect(queryFn).toHaveBeenCalledTimes(1);
   });
 
   it('onDone should call each time async queryFn returns data', async () => {
@@ -4149,7 +4150,7 @@ describe('Query', () => {
 
       expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
       expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
-      expect(onDone).toBeCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4189,10 +4190,10 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
       expect(onDone).toHaveBeenNthCalledWith(1, 'value-1', undefined);
       expect(onDone).toHaveBeenNthCalledWith(2, 'value-2', undefined);
-      expect(onDone).toBeCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4235,7 +4236,7 @@ describe('Query', () => {
 
       await when(() => query.result.error?.message === 'boom-2');
 
-      expect(queryFn).toBeCalledTimes(4);
+      expect(queryFn).toHaveBeenCalledTimes(4);
       expect(onError).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ message: 'boom-1' }),
@@ -4256,7 +4257,7 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(4);
+      expect(onError).toHaveBeenCalledTimes(4);
     } finally {
       query.destroy();
     }
@@ -4295,7 +4296,7 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(2);
+      expect(onError).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4332,8 +4333,8 @@ describe('Query', () => {
       await when(() => query.result.data === 'value-1');
       await sleep(20);
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4386,8 +4387,8 @@ describe('Query', () => {
           query.result.data === 'value-2' && queryFn.mock.calls.length === 4,
       );
 
-      expect(queryFn).toBeCalledTimes(4);
-      expect(onDone).toBeCalledTimes(4);
+      expect(queryFn).toHaveBeenCalledTimes(4);
+      expect(onDone).toHaveBeenCalledTimes(4);
     } finally {
       query.destroy();
     }
@@ -4429,7 +4430,7 @@ describe('Query', () => {
 
         expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
         expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
-        expect(onDone).toBeCalledTimes(2);
+        expect(onDone).toHaveBeenCalledTimes(2);
       } finally {
         secondQuery.destroy();
       }
@@ -4474,7 +4475,7 @@ describe('Query', () => {
 
         expect(onDone).toHaveBeenNthCalledWith(1, 1, undefined);
         expect(onDone).toHaveBeenNthCalledWith(2, 2, undefined);
-        expect(onDone).toBeCalledTimes(2);
+        expect(onDone).toHaveBeenCalledTimes(2);
       } finally {
         secondQuery.destroy();
       }
@@ -4508,8 +4509,8 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4539,8 +4540,8 @@ describe('Query', () => {
 
       await sleep(20);
 
-      expect(queryFn).toBeCalledTimes(1);
-      expect(onDone).toBeCalledTimes(1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+      expect(onDone).toHaveBeenCalledTimes(1);
 
       runInAction(() => {
         queryState.set({ id: 2, noise: 0 });
@@ -4548,8 +4549,8 @@ describe('Query', () => {
 
       await when(() => query.result.data === 'value-2');
 
-      expect(queryFn).toBeCalledTimes(2);
-      expect(onDone).toBeCalledTimes(2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(onDone).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4590,7 +4591,7 @@ describe('Query', () => {
         expect.objectContaining({ message: 'boom-2' }),
         undefined,
       );
-      expect(onError).toBeCalledTimes(2);
+      expect(onError).toHaveBeenCalledTimes(2);
     } finally {
       query.destroy();
     }
@@ -4780,5 +4781,407 @@ describe('Query', () => {
       'afo',
       'asf',
     ]);
+  });
+
+  describe('resultObservable reactions count calls', () => {
+    const createProceedQuery = async (
+      testName: string,
+      resultObservable: NonNullable<QueryFeatures['resultObservable']>,
+    ) => {
+      let isFailedQuery = false;
+      const box = observable.box(0);
+
+      vi.useFakeTimers();
+
+      const query = new QueryMock({
+        queryKey: () => [
+          'result-observable-reaction-count',
+          resultObservable,
+          testName,
+          box.get(),
+        ],
+        resultObservable,
+        queryFn: async ({ queryKey }) => {
+          if (isFailedQuery) {
+            throw new Error('fail :(');
+          }
+          return { foo: 1, bar: { baz: queryKey.at(-1) as number } };
+        },
+      });
+
+      await vi.runAllTimersAsync();
+
+      vi.useRealTimers();
+
+      const updateQuery = async () => {
+        vi.useFakeTimers();
+
+        box.set(box.get() + 1);
+
+        await vi.runAllTimersAsync();
+
+        vi.useRealTimers();
+
+        vi.useFakeTimers();
+
+        box.set(box.get() + 1);
+
+        await vi.runAllTimersAsync();
+
+        vi.useRealTimers();
+
+        vi.useFakeTimers();
+
+        box.set(box.get() + 1);
+
+        await vi.runAllTimersAsync();
+
+        vi.useRealTimers();
+      };
+
+      const toggleQueryFail = async () => {
+        vi.useFakeTimers();
+
+        isFailedQuery = !isFailedQuery;
+        box.set(box.get() + 1);
+
+        await vi.runAllTimersAsync();
+
+        vi.useRealTimers();
+      };
+
+      // @ts-expect-error
+      query.updateQuery = updateQuery;
+      // @ts-expect-error
+      query.toggleQueryFail = toggleQueryFail;
+
+      return query as typeof query & {
+        updateQuery: typeof updateQuery;
+        toggleQueryFail: typeof toggleQueryFail;
+      };
+    };
+
+    type TestCaseCalls = {
+      start: {
+        dataFoo: number;
+        dataFooBarBaz: number;
+        isLoading: number;
+        isError: number;
+        data: number;
+        isFetching: number;
+        isFetched: number;
+      };
+      lotOfUpdates: {
+        dataFoo: number;
+        dataFooBarBaz: number;
+        isLoading: number;
+        isError: number;
+        data: number;
+        isFetching: number;
+        isFetched: number;
+      };
+      error: {
+        dataFoo: number;
+        dataFooBarBaz: number;
+        isLoading: number;
+        isError: number;
+        data: number;
+        isFetching: number;
+        isFetched: number;
+      };
+    };
+
+    type TestCase = {
+      mode: NonNullable<QueryFeatures['resultObservable']>;
+      calls: TestCaseCalls;
+    };
+
+    const baseTestCaseCalls = {
+      start: {
+        dataFoo: 1,
+        dataFooBarBaz: 1,
+        isLoading: 1,
+        isError: 1,
+        data: 2,
+        isFetched: 1,
+        isFetching: 1,
+      },
+      lotOfUpdates: {
+        dataFoo: 7,
+        dataFooBarBaz: 7,
+        isLoading: 7,
+        isError: 1,
+        data: 8,
+        isFetched: 7,
+        isFetching: 7,
+      },
+      error: {
+        dataFoo: 8,
+        dataFooBarBaz: 8,
+        isLoading: 9,
+        isError: 2,
+        data: 9,
+        isFetched: 9,
+        isFetching: 9,
+      },
+    };
+
+    const cases = [
+      {
+        mode: 'ref',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'struct',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'deep',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: 'shallow',
+        calls: baseTestCaseCalls,
+      },
+      {
+        mode: false,
+        calls: {
+          start: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+          lotOfUpdates: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+          error: {
+            dataFoo: 1,
+            dataFooBarBaz: 1,
+            isLoading: 1,
+            isError: 1,
+            data: 1,
+            isFetched: 1,
+            isFetching: 1,
+          },
+        },
+      },
+    ] as const satisfies TestCase[];
+
+    describe.each(cases)(`reactionObservable: $mode`, ({ mode, calls }) => {
+      it(`data.foo reaction calls (${calls.start.dataFoo} -> ${calls.lotOfUpdates.dataFoo} -> ${calls.error.dataFoo})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data?.foo,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFoo);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.dataFoo);
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFoo);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`data.foo.bar.baz reaction calls (${calls.start.dataFooBarBaz} -> ${calls.lotOfUpdates.dataFooBarBaz} -> ${calls.error.dataFooBarBaz})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data?.bar.baz,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.dataFooBarBaz);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(
+          calls.lotOfUpdates.dataFooBarBaz,
+        );
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.dataFooBarBaz);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isLoading reaction calls (${calls.start.isLoading} -> ${calls.lotOfUpdates.isLoading} -> ${calls.error.isLoading})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isLoading,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        await when(() => query.isSuccess);
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isLoading);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isLoading);
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isLoading);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isError reaction calls (${calls.start.isError} -> ${calls.lotOfUpdates.isError} -> ${calls.error.isError})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isError,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isError);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isError);
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isError);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isFetched reaction calls (${calls.start.isFetched} -> ${calls.lotOfUpdates.isFetched} -> ${calls.error.isFetched})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isFetched,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetched);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.isFetched);
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetched);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`isFetching reaction calls (${calls.start.isFetching} -> ${calls.lotOfUpdates.isFetching} -> ${calls.error.isFetching})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.isFetching,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        query.setData((curr) => (curr ? { ...curr } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.isFetching);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(
+          calls.lotOfUpdates.isFetching,
+        );
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.isFetching);
+
+        dispose();
+        query.destroy();
+      });
+
+      it(`data reaction calls (${calls.start.data} -> ${calls.lotOfUpdates.data} -> ${calls.error.data})`, async ({
+        task,
+      }) => {
+        const query = await createProceedQuery(task.fullTestName, mode);
+        await when(() => query.isSuccess);
+
+        const reactionSpy = vi.fn();
+        const dispose = reaction(
+          () => query.result.data,
+          (curr, prev) => reactionSpy(curr, prev),
+          { fireImmediately: true },
+        );
+
+        query.setData((curr) => (curr ? { ...curr, foo: curr.foo + 1 } : curr));
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.start.data);
+
+        await query.updateQuery();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.lotOfUpdates.data);
+
+        await query.toggleQueryFail();
+
+        expect(reactionSpy).toHaveBeenCalledTimes(calls.error.data);
+
+        dispose();
+        query.destroy();
+      });
+    });
   });
 });
