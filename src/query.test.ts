@@ -4620,7 +4620,7 @@ describe('Query', () => {
 
     it('basic', () => {
       const query = createQuery();
-      expect(types.isProxy(query.getInternalResult())).toBe(true);
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
     });
 
     it('(query: resultObservable: false)', () => {

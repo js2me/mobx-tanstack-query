@@ -247,7 +247,7 @@ describe('Mutation', () => {
 
     it('basic', () => {
       const mutation = createMutation();
-      expect(types.isProxy(mutation.getInternalResult())).toBe(true);
+      expect(types.isProxy(mutation.getInternalResult())).toBe(false);
     });
 
     it('(mutation: resultObservable: false)', () => {

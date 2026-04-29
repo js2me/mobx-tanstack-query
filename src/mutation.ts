@@ -176,7 +176,7 @@ export class Mutation<
       resultObservable:
         config.resultObservable ??
         qc.mutationFeatures?.resultObservable ??
-        'deep',
+        'ref',
     };
 
     this.hooks = qc.hooks;

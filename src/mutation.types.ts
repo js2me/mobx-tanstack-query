@@ -52,13 +52,13 @@ export interface MutationFeatures {
    * and exposes fields via getters), `Mutation` decorates the public `result` field directly. Convenience fields
    * (`data`, `isPending`, `isError`, …) read from that object, so this option controls how deeply updates propagate.
    *
-   * - `'deep'` — default when omitted; deep observability for plain objects and arrays.
+   * - `'ref'` — default when omitted; tracks only the result reference.
+   * - `'deep'` — deep observability for plain objects and arrays.
    * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
-   * - `'ref'` — track only the result reference (useful when the whole result object is replaced each update).
    * - `true` — base `observable` (same as omitting the option).
    * - `false` — skip decorating `result` (no automatic MobX tracking for the result; advanced use only).
    *
-   * @default 'deep'
+   * @default 'ref'
    *
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Mutation.html#resultobservable-mutationfeature)
    */
