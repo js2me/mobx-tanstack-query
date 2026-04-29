@@ -1310,9 +1310,9 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionSpy).toHaveBeenCalledTimes(2);
+      expect(reactionSpy).toHaveBeenCalledTimes(1);
       expect(reactionSpy).toHaveBeenNthCalledWith(
-        2,
+        1,
         {
           a: {
             b: {
@@ -1337,25 +1337,7 @@ describe('Query', () => {
             },
           },
         },
-        {
-          a: {
-            b: {
-              c: {
-                d: {
-                  e: {
-                    children: [
-                      {
-                        id: '1',
-                        name: 'John',
-                        age: 20,
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
+        undefined,
       );
 
       query.destroy();
@@ -1495,20 +1477,15 @@ describe('Query', () => {
         return curr;
       });
 
-      expect(reactionFooSpy).toHaveBeenCalledTimes(2);
-
+      expect(reactionFooSpy).toHaveBeenCalledTimes(1);
       expect(reactionFooSpy).toHaveBeenNthCalledWith(
-        2,
+        1,
         {
           age: 20,
           id: '1',
           name: 'Doe',
         },
-        {
-          age: 20,
-          id: '1',
-          name: 'John',
-        },
+        null,
       );
 
       testClass.destroy();
@@ -4583,12 +4560,12 @@ describe('Query', () => {
 
       expect(onError).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ message: 'boom-1' }),
+        expect.objectContaining({ message: 'transformed:boom-1' }),
         undefined,
       );
       expect(onError).toHaveBeenNthCalledWith(
         2,
-        expect.objectContaining({ message: 'boom-2' }),
+        expect.objectContaining({ message: 'transformed:boom-2' }),
         undefined,
       );
       expect(onError).toHaveBeenCalledTimes(2);
