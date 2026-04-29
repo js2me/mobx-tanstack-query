@@ -5206,5 +5206,40 @@ describe('Query', () => {
         query.destroy();
       });
     });
+
+    it.each([
+      { mode: 'deep' as const, calls: 2 },
+      { mode: 'ref' as const, calls: 1 },
+      { mode: 'shallow' as const, calls: 1 },
+      { mode: 'struct' as const, calls: 1 },
+      { mode: false as const, calls: 1 },
+    ])('nested direct mutation affects reactions only in deep mode ($mode)', async ({
+      mode,
+      calls,
+    }) => {
+      const query = await createProceedQuery(
+        `nested-mutation-${String(mode)}`,
+        mode,
+      );
+      await query.tricks.runQuery();
+
+      const reactionSpy = vi.fn();
+      const dispose = reaction(
+        () => query.result.data?.bar.baz,
+        (curr, prev) => reactionSpy(curr, prev),
+        { fireImmediately: true },
+      );
+
+      runInAction(() => {
+        if (query.result.data) {
+          query.result.data.bar.baz += 1;
+        }
+      });
+
+      expect(reactionSpy).toHaveBeenCalledTimes(calls);
+
+      dispose();
+      query.destroy();
+    });
   });
 });
