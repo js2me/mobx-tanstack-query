@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/js2me/mobx-tanstack-query/issues"
   },
-  "homepage": "https://js2me.github.io/mobx-tanstack-query/introduction/getting-started",
+  "homepage": "https://js2me.github.io/mobx-tanstack-query/",
   "repository": {
     "type": "git",
     "url": "git://github.com/js2me/mobx-tanstack-query"

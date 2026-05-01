@@ -1,0 +1,225 @@
+# Mutation
+
+Class wrapper for [@tanstack-query/core mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with **MobX** reactivity
+
+**All documentation about properties and methods of mutation can be found in the original documentation [here](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation)**
+
+[Reference to source code](/src/mutation.ts)
+
+## Usage
+
+Create an instance of `Mutation` with [`mutationFn`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) parameter
+
+```ts
+import { Mutation } from "mobx-tanstack-query";
+import { petsApi } from "@/shared/apis"
+import { queryClient } from "@/shared/config"
+
+const petCreateMutation = new Mutation({
+  queryClient,
+  mutationFn: async (petName: string) => {
+    const response = await petsApi.createPet(petName);
+    return await response.json();
+  },
+  onMutate: () => {
+    console.log('Start creating pet');
+  },
+  onSuccess: (newPet) => {
+    // Invalidate cache after succeed mutation
+    queryClient.invalidateQueries({ queryKey: ['pets'] });
+    console.log('Pet has been created:', newPet);
+  },
+  onError: (error) => {
+    console.error('Failed to create pet:', error.message);
+  },
+});
+
+...
+const result = await petCreateMutation.mutate('Fluffy');
+console.info(result.data, result.isPending, result.isError);
+
+```
+
+## Properties and methods
+
+#### `data: TData | undefined`
+
+The last successfully resolved data for the mutation.
+
+Example:
+
+```ts
+const mutation = new Mutation({
+  queryClient,
+  mutationFn: async () => api.updatePet(),
+});
+
+mutation.data; // updated pet or undefined
+```
+
+#### `error: TError | null`
+
+The error object for the mutation, if an error was encountered.
+
+#### `variables`
+
+The last variables that were passed to the mutation function.
+
+#### `isError`
+
+A boolean variable derived from `status`. Will be `true` if the last mutation attempt resulted in an error.
+
+#### `isIdle`
+
+A boolean variable derived from `status`. Will be `true` if the mutation is in its initial state prior to executing.
+
+#### `isPending`
+
+A boolean variable derived from `status`. Will be `true` if the mutation is currently executing.
+
+#### `isSuccess`
+
+A boolean variable derived from `status`. Will be `true` if the last mutation attempt was successful.
+
+#### `status`
+
+The status of the mutation.
+
+- Will be:
+  - `idle` initial status prior to the mutation function executing.
+  - `pending` if the mutation is currently executing.
+  - `error` if the last mutation attempt resulted in an error.
+  - `success` if the last mutation attempt was successful.
+
+#### `failureCount`
+
+The failure count for the mutation. Incremented every time the mutation fails.
+
+#### `failureReason`
+
+The failure reason for the mutation retry.
+
+#### `isPaused`
+
+will be `true` if the mutation has been paused. See [Network Mode](https://tanstack.com/query/v5/docs/framework/react/guides/network-mode) for more information.
+
+#### `submittedAt`
+
+The timestamp for when the mutation was submitted.
+
+## Built-in Features
+
+### `abortSignal` option
+
+This field is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class
+
+```ts
+const abortController = new AbortController();
+
+const randomPetCreateMutation = new Mutation({
+  queryClient,
+  mutationFn: async (_, { signal }) => {
+    const response = await petsApi.createRandomPet({ signal });
+    return await response.json();
+  },
+});
+
+...
+randomPetCreateMutation.mutate();
+abortController.abort();
+```
+
+This is alternative for `destroy` method
+
+::: tip this option is optional if you are using `lazy` option
+:::
+
+### `lazy` option
+
+This option enables "lazy" mode of the mutation. That means that all subscriptions and reaction will be created only when you request result for this mutation.
+
+Example:
+
+```ts
+const mutation = createMutation(queryClient, () => ({
+  lazy: true,
+  mutationFn: async () => {
+    // api call
+  },
+}));
+
+// happens nothing
+// no reactions and subscriptions will be created
+```
+
+### `lazyDelay` option <Badge type="tip">MutationFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/v6/api/QueryClient.html#mutationfeatures)
+
+Only applies when [`lazy`](#lazy-option) is enabled.
+
+After the last MobX observer stops reading the mutation **`result`**, the library keeps the `MutationObserver` subscription alive for an extra **`lazyDelay` milliseconds** before tearing it down. This uses the `endDelay` option of [`lazyObserve`](https://www.npmjs.com/package/yummies) from `yummies/mobx`, same as for [`Query` `lazyDelay`](https://js2me.github.io/mobx-tanstack-query/v6/api/Query.html#lazydelay-option-queryfeature).
+
+Use it to smooth over short-lived UI changes so you do not drop the observer subscription on every transient unmount.
+
+When **`lazyDelay`** is omitted, teardown follows the same rules as for [`Query` `lazyDelay`](https://js2me.github.io/mobx-tanstack-query/v6/api/Query.html#lazydelay-option-queryfeature) (no extra delay unless you set a number).
+
+```ts
+const mutation = new Mutation({
+  queryClient,
+  lazy: true,
+  lazyDelay: 300,
+  mutationFn: async () => api.updatePet(),
+});
+```
+
+### `resultObservable` <Badge type="tip">MutationFeature</Badge>
+
+[_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/v6/api/QueryClient.html#mutationfeatures)
+
+Chooses how MobX observes the mutation **`result`** property (the `MutationObserverResult`). The library applies `annotation.observable()` from [`yummies/mobx`](https://github.com/js2me/yummies). [`Query`](https://js2me.github.io/mobx-tanstack-query/v6/api/Query.html#resultobservable-queryfeature) stores the payload on a private `_result` and exposes TanStack fields via getters; **`Mutation` decorates the public `result` field directly** — there is no `_result`.
+
+- **Default** — when omitted, behaviour matches **`'deep'`** (deep observability for plain objects and arrays in the result).
+- **`'ref'`** — only the reference to the result object is tracked; reactions run when the whole result is replaced, not when nested fields change in place.
+- **`'shallow'`** / **`'struct'`** — shallow or structural comparison for nested properties.
+- **`false`** — do not decorate `result` (rare; you lose automatic MobX tracking for the result blob).
+
+Example:
+
+```ts
+const mutation = new Mutation({
+  queryClient,
+  resultObservable: 'ref',
+  mutationFn: async (name: string) => api.createPet(name),
+});
+```
+
+### `destroy()` method
+
+This method is necessary to kill all reactions and subscriptions that are created during the creation of an instance of the `Mutation` class
+
+This is alternative for `abortSignal` option
+
+### method `mutate(variables, options?)`
+
+Runs the mutation. (Works the as `mutate` function in [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))
+
+### hook `onDone()`
+
+Subscribe when mutation has been successfully finished
+
+### hook `onError()`
+
+Subscribe when mutation has been finished with failure
+
+### method `reset()`
+
+Reset current mutation
+
+### property `result` <Badge type="info" text="observable.deep" />
+
+Mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))
+
+::: info `observable.deep` is configurable
+The badge reflects the **default**: the public `result` property is decorated as deep observable (unlike `Query`, which uses a private `_result` behind getters). Change the MobX flavour with [`resultObservable`](#resultobservable-mutationfeature) (`ref`, `shallow`, `struct`, `true`, or `false`).
+:::
