@@ -392,6 +392,9 @@ export abstract class BaseQuery<
       }
       this.update({} as TUpdateOptions);
     }
+    if (this.abortController.signal.aborted && this._result) {
+      return this.queryObserver.getOptimisticResult(this.options);
+    }
     return this._result || this.queryObserver.getCurrentResult();
   }
 
