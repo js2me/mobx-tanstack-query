@@ -15,7 +15,7 @@ const { page } = useData();
 
 const items: DefaultTheme.NavItemWithLink[] = [
   { text: "v7 (latest)", link: "/introduction/getting-started" },
-  { text: "v6", link: "/v6/" },
+  { text: "v6", link: "/v6/introduction/getting-started" },
 ];
 
 const buttonLabel = computed(() => {
@@ -39,6 +39,7 @@ const childrenActive = computed(() =>
   />
   <VPFlyout
     v-else
+    class="nav-versions-flyout"
     :class="{
       VPNavBarMenuGroup: true,
       active: childrenActive,
