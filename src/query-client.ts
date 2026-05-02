@@ -35,8 +35,3 @@ export class QueryClient extends QueryClientCore implements IQueryClientCore {
     return this.getDefaultOptions().mutations ?? {};
   }
 }
-
-/**
- * @deprecated ⚠️ use `QueryClient`. This export will be removed in next major release
- */
-export class MobxQueryClient extends QueryClient {}

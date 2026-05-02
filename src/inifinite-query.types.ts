@@ -32,18 +32,8 @@ export type InfiniteQueryDoneListener<TData = unknown> = (
 
 export interface InfiniteQueryInvalidateParams extends QueryInvalidateParams {}
 
-/**
- * @deprecated ⚠️ use `InfiniteQueryInvalidateParams`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryInvalidateParams = InfiniteQueryInvalidateParams;
-
 export interface InfiniteQueryResetParams extends QueryResetParams {}
 export interface InfiniteQueryRemoveParams extends QueryRemoveParams {}
-
-/**
- * @deprecated ⚠️ use `InfiniteQueryResetParams`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryResetParams = InfiniteQueryResetParams;
 
 type InfiniteQueryOptionTypeFixes<
   TQueryFnData = unknown,
@@ -86,22 +76,6 @@ export interface InfiniteQueryDynamicOptions<
   enabled?: boolean;
 }
 
-/**
- * @deprecated ⚠️ use `InfiniteQueryDynamicOptions`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryDynamicOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> = InfiniteQueryDynamicOptions<
-  TData,
-  TError,
-  TPageParam,
-  InfiniteData<TData, TPageParam>,
-  TQueryKey
->;
-
 export interface InfiniteQueryOptions<
   TQueryFnData = unknown,
   TError = DefaultError,
@@ -125,22 +99,6 @@ export interface InfiniteQueryOptions<
       TData,
       TQueryKey
     > {}
-
-/**
- * @deprecated ⚠️ use `InfiniteQueryOptions`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> = InfiniteQueryOptions<
-  TData,
-  TError,
-  TPageParam,
-  InfiniteData<TData, TPageParam>,
-  TQueryKey
->;
 
 export interface InfiniteQueryUpdateOptions<
   TQueryFnData = unknown,
@@ -183,22 +141,6 @@ export interface InfiniteQueryStartParams<
     >,
     Pick<RefetchOptions, 'cancelRefetch'> {}
 
-/**
- * @deprecated ⚠️ use `InfiniteQueryUpdateOptions`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryUpdateOptions<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> = InfiniteQueryUpdateOptions<
-  TData,
-  TError,
-  TPageParam,
-  InfiniteData<TData, TPageParam>,
-  TQueryKey
->;
-
 export type InfiniteQueryConfigFromFn<
   TFn extends (...args: any[]) => any,
   TError = DefaultError,
@@ -239,16 +181,6 @@ export type InfiniteQueryUpdateOptionsAllVariants<
       TData,
       TQueryKey
     >;
-
-/**
- * @deprecated ⚠️ use `InfiniteQueryConfigFromFn`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryConfigFromFn<
-  TFn extends (...args: any[]) => any,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> = InfiniteQueryConfigFromFn<TFn, TError, TQueryKey, TPageParam>;
 
 export interface InfiniteQueryConfig<
   TQueryFnData = unknown,
@@ -331,22 +263,6 @@ export interface InfiniteQueryFlattenConfig<
    */
   queryKey?: TQueryKey;
 }
-
-/**
- * @deprecated ⚠️ use `InfiniteQueryConfig`. This type will be removed in next major release
- */
-export type MobxInfiniteQueryConfig<
-  TData,
-  TError = DefaultError,
-  TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown,
-> = InfiniteQueryConfig<
-  TData,
-  TError,
-  TPageParam,
-  InfiniteData<TData, TPageParam>,
-  TQueryKey
->;
 
 export type InferInfiniteQuery<
   T extends

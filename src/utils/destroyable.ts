@@ -21,13 +21,6 @@ export abstract class Destroyable implements Disposable {
 
   protected abstract handleDestroy(): void;
 
-  /**
-   * @deprecated use `destroy`. This method will be removed in next major release
-   */
-  dispose() {
-    this.destroy();
-  }
-
   [Symbol.dispose](): void {
     this.destroy();
   }

@@ -23,7 +23,7 @@ class MutationMock<
 > extends Mutation<TData, TVariables, TError, TContext> {
   spies = {
     mutationFn: null as unknown as ReturnType<typeof vi.fn>,
-    dispose: vi.fn(),
+    destroy: vi.fn(),
     reset: vi.fn(),
     onDone: vi.fn(),
     onError: vi.fn(),
@@ -58,9 +58,9 @@ class MutationMock<
     this.spies.reset.mockReturnValue(result)();
   }
 
-  dispose(): void {
-    const result = super.dispose();
-    this.spies.dispose.mockReturnValue(result)();
+  destroy(): void {
+    const result = super.destroy();
+    this.spies.destroy.mockReturnValue(result)();
   }
 }
 
@@ -224,6 +224,96 @@ describe('Mutation', () => {
     >();
   });
 
+  describe('resetOnDestroy vs deprecated resetOnDispose (Mutation constructor features)', () => {
+    /**
+     * Targets `resetOnDestroy: config.resetOnDestroy ?? qc.mutationFeatures?.resetOnDestroy`.
+     * `qc.mutationFeatures.resetOnDispose` must not enable reset-on-destroy.
+     */
+    it('does not use qc.mutationFeatures.resetOnDispose when config.resetOnDestroy is undefined', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          // Legacy runtime key; must not map to reset-on-destroy (see Mutation constructor).
+          mutations: {
+            resetOnDispose: true,
+          } as MobxQueryClient['mutationFeatures'],
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression'],
+        mutationFn: async () => 'ok',
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('success');
+    });
+
+    it('honors qc.mutationFeatures.resetOnDestroy when config.resetOnDestroy is undefined', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: { resetOnDestroy: true },
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-qc'],
+        mutationFn: async () => 'ok',
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('idle');
+    });
+
+    it('config.resetOnDestroy true wins over qc.mutationFeatures.resetOnDispose', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: {
+            resetOnDestroy: false,
+            resetOnDispose: true,
+          } as MobxQueryClient['mutationFeatures'],
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-both'],
+        mutationFn: async () => 'ok',
+        resetOnDestroy: true,
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('idle');
+    });
+
+    it('explicit config.resetOnDestroy false overrides qc.mutationFeatures.resetOnDestroy', async () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: {
+          mutations: { resetOnDestroy: true },
+        },
+      });
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['reset-regression-config-false'],
+        mutationFn: async () => 'ok',
+        resetOnDestroy: false,
+      });
+
+      await mutation.mutate();
+      expect(mutation.result.status).toBe('success');
+      mutation.destroy();
+      expect(mutation.result.status).toBe('success');
+    });
+  });
+
   describe('result type checks', () => {
     const createMutation = (
       cfg?: Partial<MutationConfig>,
@@ -358,7 +448,7 @@ describe('Mutation', () => {
       );
 
       expect(mutation.mergedFeatures.lazyDelay).toBe(5151);
-      mutation.dispose();
+      mutation.destroy();
     });
 
     it('mutation lazyDelay overrides QueryClient defaultOptions.mutations', () => {
@@ -382,7 +472,7 @@ describe('Mutation', () => {
       );
 
       expect(mutation.mergedFeatures.lazyDelay).toBe(3);
-      mutation.dispose();
+      mutation.destroy();
     });
   });
 });

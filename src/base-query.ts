@@ -119,11 +119,7 @@ export abstract class BaseQuery<
       enableOnDemand: config.enableOnDemand ?? qf?.enableOnDemand,
       lazy: config.lazy ?? qf?.lazy,
       lazyDelay: config.lazyDelay ?? qf?.lazyDelay,
-      resetOnDestroy:
-        config.resetOnDestroy ??
-        config.resetOnDispose ??
-        qf?.resetOnDestroy ??
-        qf?.resetOnDispose,
+      resetOnDestroy: config.resetOnDestroy ?? qf?.resetOnDestroy,
       removeOnDestroy: config.removeOnDestroy ?? qf?.removeOnDestroy,
       transformError: config.transformError ?? qf?.transformError,
       dynamicOptionsUpdateDelay:
@@ -391,6 +387,9 @@ export abstract class BaseQuery<
         this.suppressNextDoneNotification = true;
       }
       this.update({} as TUpdateOptions);
+    }
+    if (this.abortController.signal.aborted && this._result) {
+      return this.queryObserver.getOptimisticResult(this.options);
     }
     return this._result || this.queryObserver.getCurrentResult();
   }

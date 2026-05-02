@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 6.16.1
+
+### Patch Changes
+
+- [`89fda3f`](https://github.com/js2me/mobx-tanstack-query/commit/89fda3f49e4cf5aa8737ff49a88a10f43a88d5bf) Thanks [@js2me](https://github.com/js2me)! - [internal] update deps (dev) to latest
+
 ## 6.16.0
 
 ### Minor Changes

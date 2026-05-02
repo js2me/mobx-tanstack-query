@@ -59,7 +59,7 @@ class QueryMock<
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
     update: vi.fn(),
-    dispose: vi.fn(),
+    destroy: vi.fn(),
     refetch: vi.fn(),
     invalidate: vi.fn(),
     onDone: vi.fn(),
@@ -126,9 +126,9 @@ class QueryMock<
     return result;
   }
 
-  dispose(): void {
+  destroy(): void {
     const result = super.destroy();
-    this.spies.dispose.mockReturnValue(result)();
+    this.spies.destroy.mockReturnValue(result)();
   }
 }
 
@@ -2099,31 +2099,31 @@ describe('Query', () => {
       await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
-        data: undefined,
-        dataUpdatedAt: 0,
+        data: 'bar',
+        dataUpdatedAt: query1.result.dataUpdatedAt,
         error: null,
         errorUpdateCount: 0,
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
-        isInitialLoading: true,
-        isLoading: true,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
         isLoadingError: false,
         isPaused: false,
-        isPending: true,
+        isPending: false,
         isPlaceholderData: false,
         isRefetchError: false,
         isRefetching: false,
         isStale: true,
-        isSuccess: false,
+        isSuccess: true,
         promise: query1.result.promise,
         refetch: query1.result.refetch,
-        status: 'pending',
+        status: 'success',
       });
       expect(query2.result).toStrictEqual({
         ...query2.result,
@@ -2156,31 +2156,31 @@ describe('Query', () => {
       await sleep(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
-        data: undefined,
-        dataUpdatedAt: 0,
+        data: 'bar',
+        dataUpdatedAt: query1.result.dataUpdatedAt,
         error: null,
         errorUpdateCount: 0,
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
-        isInitialLoading: true,
-        isLoading: true,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
         isLoadingError: false,
         isPaused: false,
-        isPending: true,
+        isPending: false,
         isPlaceholderData: false,
         isRefetchError: false,
         isRefetching: false,
         isStale: true,
-        isSuccess: false,
+        isSuccess: true,
         promise: query1.result.promise,
         refetch: query1.result.refetch,
-        status: 'pending',
+        status: 'success',
       });
     });
 
@@ -2216,13 +2216,13 @@ describe('Query', () => {
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
         isFetched: false,
         isFetchedAfterMount: false,
-        isFetching: true,
-        isInitialLoading: true,
-        isLoading: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
         isLoadingError: false,
         isPaused: false,
         isPending: true,
@@ -2273,13 +2273,13 @@ describe('Query', () => {
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
         isFetched: false,
         isFetchedAfterMount: false,
-        isFetching: true,
-        isInitialLoading: true,
-        isLoading: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
         isLoadingError: false,
         isPaused: false,
         isPending: true,
@@ -2330,13 +2330,13 @@ describe('Query', () => {
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
         isFetched: false,
         isFetchedAfterMount: false,
-        isFetching: true,
-        isInitialLoading: true,
-        isLoading: true,
+        isFetching: false,
+        isInitialLoading: false,
+        isLoading: false,
         isLoadingError: false,
         isPaused: false,
         isPending: true,
@@ -2373,6 +2373,7 @@ describe('Query', () => {
     });
 
     it('after abort signal for inprogress success work query create new instance with the same key and it should work', async () => {
+      vi.useFakeTimers();
       const abortController1 = new LinkedAbortController();
       const query = new QueryMock({
         queryFn: async () => {
@@ -2391,6 +2392,8 @@ describe('Query', () => {
         abortSignal: abortController1.signal,
         queryKey: ['test', 'key'] as const,
       });
+
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(query.result).toMatchObject({
         status: 'pending',
@@ -2420,26 +2423,34 @@ describe('Query', () => {
 
       abortController1.abort();
 
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(20);
 
       expect(query.result).toMatchObject({
-        status: 'pending',
-        fetchStatus: 'fetching',
-        isPending: true,
-        isSuccess: false,
+        status: 'success',
+        fetchStatus: 'idle',
+        isPending: false,
+        isSuccess: true,
         isError: false,
-        isInitialLoading: true,
-        isLoading: true,
-        data: undefined,
-        dataUpdatedAt: 0,
+        isInitialLoading: false,
+        isLoading: false,
+        data: {
+          foo: 1,
+          bar: 2,
+          kek: {
+            pek: {
+              tek: 1,
+            },
+          },
+        },
+        dataUpdatedAt: query.result.dataUpdatedAt,
         error: null,
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
         errorUpdateCount: 0,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
         isRefetching: false,
         isLoadingError: false,
         isPaused: false,
@@ -2456,33 +2467,41 @@ describe('Query', () => {
         queryKey: ['test', 'key'] as const,
       });
 
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(20);
 
       expect(query.result).toMatchObject({
-        status: 'pending',
-        fetchStatus: 'fetching',
-        isPending: true,
-        isSuccess: false,
+        status: 'success',
+        fetchStatus: 'idle',
+        isPending: false,
+        isSuccess: true,
         isError: false,
-        isInitialLoading: true,
-        isLoading: true,
-        data: undefined,
-        dataUpdatedAt: 0,
+        isInitialLoading: false,
+        isLoading: false,
+        data: {
+          foo: 1,
+          bar: 2,
+          kek: {
+            pek: {
+              tek: 1,
+            },
+          },
+        },
+        dataUpdatedAt: query.result.dataUpdatedAt,
         error: null,
         errorUpdatedAt: 0,
         failureCount: 0,
         failureReason: null,
         errorUpdateCount: 0,
-        isFetched: false,
-        isFetchedAfterMount: false,
-        isFetching: true,
+        isFetched: true,
+        isFetchedAfterMount: true,
+        isFetching: false,
         isRefetching: false,
         isLoadingError: false,
         isPaused: false,
         isPlaceholderData: false,
         isRefetchError: false,
         isStale: true,
-      } satisfies Partial<QueryObserverResult<string>>);
+      } satisfies Partial<QueryObserverResult<any>>);
 
       expect(query2.result).toMatchObject({
         status: 'success',
@@ -2504,6 +2523,11 @@ describe('Query', () => {
         isFetching: false,
         isRefetching: false,
       });
+
+      vi.useRealTimers();
+
+      query2.destroy();
+      query.destroy();
     });
 
     it('after aborted Query with failed queryFn - create new Query with the same key and it should has succeed execution', async () => {
@@ -2606,12 +2630,12 @@ describe('Query', () => {
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
-        errorUpdateCount: 1,
+        errorUpdateCount: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
-        isFetched: true,
+        isFetched: false,
         isStale: true,
         isSuccess: false,
         isPending: true,
@@ -2645,6 +2669,335 @@ describe('Query', () => {
         isSuccess: true,
         isPending: false,
       } satisfies Partial<QueryObserverResult<any, any>>);
+    });
+
+    it('should sync two queries to the same queryKey via options and keep shared data', async () => {
+      vi.useFakeTimers();
+
+      const queryClient = new QueryClient({});
+      queryClient.mount();
+
+      const firstKeyPart = observable.box('first');
+      const secondKeyPart = observable.box('second');
+
+      const firstQuery = new QueryMock(
+        {
+          queryFn: async () => {
+            await sleep(100);
+            return 'foo';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test', firstKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const secondQuery = new QueryMock(
+        {
+          queryFn: async () => {
+            await sleep(200);
+            return 'bar';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test', secondKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const firstObserverDisposer = reaction(
+        () => firstQuery.result.data,
+        () => {},
+        {
+          fireImmediately: true,
+        },
+      );
+      const secondObserverDisposer = reaction(
+        () => secondQuery.result.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('foo');
+      expect(secondQuery.result.data).toBe('bar');
+
+      runInAction(() => {
+        firstKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      runInAction(() => {
+        secondKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      // Первая query остается подписанной на общий ключ и получает итоговое значение "bar".
+      expect(firstQuery.result.data).toBe('bar');
+      // Вторая query активна и также получает итоговое значение по общему ключу.
+      expect(secondQuery.result.data).toBe('bar');
+      expect(firstQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+      expect(secondQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      firstObserverDisposer();
+      secondObserverDisposer();
+      firstQuery.destroy();
+      secondQuery.destroy();
+      queryClient.unmount();
+    });
+
+    it('should sync two queries to the same queryKey and destroy second query before its queryFn completion', async () => {
+      vi.useFakeTimers();
+
+      const queryClient = new QueryClient({});
+      queryClient.mount();
+
+      const firstKeyPart = observable.box('first');
+      const secondKeyPart = observable.box('second');
+
+      const firstQuery = new QueryMock(
+        {
+          queryFn: async () => {
+            await sleep(100);
+            return 'foo';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test-destroy', firstKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const secondQuery = new QueryMock(
+        {
+          queryFn: async () => {
+            await sleep(200);
+            return 'bar';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test-destroy', secondKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const firstObserverDisposer = reaction(
+        () => firstQuery.result.data,
+        () => {},
+        {
+          fireImmediately: true,
+        },
+      );
+      const secondObserverDisposer = reaction(
+        () => secondQuery.result.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('foo');
+      expect(secondQuery.result.data).toBe('bar');
+
+      runInAction(() => {
+        firstKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      runInAction(() => {
+        secondKeyPart.set('merged');
+      });
+      await vi.advanceTimersByTimeAsync(100);
+
+      secondQuery.destroy();
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('bar');
+      // После destroy() подписка отключена, но при чтении result берется optimistic snapshot по последнему queryKey.
+      expect(secondQuery.result.data).toBe('bar');
+      expect(firstQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+      expect(secondQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      firstObserverDisposer();
+      secondObserverDisposer();
+      firstQuery.destroy();
+      queryClient.unmount();
+    });
+
+    it('should sync two lazy queries to the same queryKey via options and keep shared data', async () => {
+      vi.useFakeTimers();
+      const queryClient = new QueryClient({});
+      queryClient.mount();
+
+      const firstKeyPart = observable.box('first');
+      const secondKeyPart = observable.box('second');
+
+      const firstQuery = new QueryMock(
+        {
+          lazy: true,
+          queryFn: async () => {
+            await sleep(100);
+            return 'foo';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test-lazy', firstKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const secondQuery = new QueryMock(
+        {
+          lazy: true,
+          queryFn: async () => {
+            await sleep(200);
+            return 'bar';
+          },
+          options: () => ({
+            queryKey: ['shared-key-test-lazy', secondKeyPart.get()] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const firstObserverDisposer = reaction(
+        () => firstQuery.result.data,
+        () => {},
+        {
+          fireImmediately: true,
+        },
+      );
+      const secondObserverDisposer = reaction(
+        () => secondQuery.result.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('foo');
+      expect(secondQuery.result.data).toBe('bar');
+
+      runInAction(() => {
+        firstKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      runInAction(() => {
+        secondKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('bar');
+      expect(secondQuery.result.data).toBe('bar');
+      expect(firstQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+      expect(secondQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      firstObserverDisposer();
+      secondObserverDisposer();
+      firstQuery.destroy();
+      secondQuery.destroy();
+      queryClient.unmount();
+
+      vi.useRealTimers();
+    });
+
+    it('should sync two lazy queries to the same queryKey and destroy second query before its queryFn completion', async () => {
+      vi.useFakeTimers();
+      const queryClient = new QueryClient({});
+      queryClient.mount();
+
+      const firstKeyPart = observable.box('first');
+      const secondKeyPart = observable.box('second');
+
+      const firstQuery = new QueryMock(
+        {
+          lazy: true,
+          queryFn: async () => {
+            await sleep(100);
+            return 'foo';
+          },
+          options: () => ({
+            queryKey: [
+              'shared-key-test-lazy-destroy',
+              firstKeyPart.get(),
+            ] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const secondQuery = new QueryMock(
+        {
+          lazy: true,
+          queryFn: async () => {
+            await sleep(200);
+            return 'bar';
+          },
+          options: () => ({
+            queryKey: [
+              'shared-key-test-lazy-destroy',
+              secondKeyPart.get(),
+            ] as const,
+            enabled: true,
+          }),
+        },
+        queryClient,
+      );
+
+      const firstObserverDisposer = reaction(
+        () => firstQuery.result.data,
+        () => {},
+        {
+          fireImmediately: true,
+        },
+      );
+      const secondObserverDisposer = reaction(
+        () => secondQuery.result.data,
+        () => {},
+        { fireImmediately: true },
+      );
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('foo');
+      expect(secondQuery.result.data).toBe('bar');
+
+      runInAction(() => {
+        firstKeyPart.set('merged');
+      });
+      await vi.runAllTimersAsync();
+
+      runInAction(() => {
+        secondKeyPart.set('merged');
+      });
+      await vi.advanceTimersByTimeAsync(100);
+
+      secondQuery.destroy();
+
+      await vi.runAllTimersAsync();
+
+      expect(firstQuery.result.data).toBe('bar');
+      expect(secondQuery.result.data).toBe('bar');
+      expect(firstQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+      expect(secondQuery.spies.queryFn).toHaveBeenCalledTimes(2);
+
+      firstObserverDisposer();
+      secondObserverDisposer();
+      firstQuery.destroy();
+      queryClient.unmount();
+
+      vi.useRealTimers();
     });
 
     it('after aborted Query with failed queryFn - create new Query with the same key and it should has succeed execution (+ abort signal usage inside query fn)', async () => {
@@ -2748,12 +3101,12 @@ describe('Query', () => {
         data: undefined,
         dataUpdatedAt: 0,
         error: null,
-        errorUpdateCount: 1,
+        errorUpdateCount: 0,
         failureCount: 0,
         failureReason: null,
-        fetchStatus: 'fetching',
+        fetchStatus: 'idle',
         isError: false,
-        isFetched: true,
+        isFetched: false,
         isStale: true,
         isSuccess: false,
         isPending: true,
@@ -4437,6 +4790,177 @@ describe('Query', () => {
     } finally {
       firstQuery.destroy();
     }
+  });
+
+  describe('resetOnDestroy vs deprecated resetOnDispose (BaseQuery.mergeQueryFeatures)', () => {
+    /**
+     * Uses the same construction path as production: `new Query` → `BaseQuery.mergeQueryFeatures(config, queryClient)`.
+     * `resetOnDispose` is no longer read; only `config.resetOnDestroy ?? queryClient.queryFeatures?.resetOnDestroy`.
+     */
+    const makeRegressionQuery = (
+      queryClient: MobxQueryClient,
+      queryFn: () => Promise<number>,
+      featurePatch: Record<string, unknown>,
+    ) =>
+      new Query({
+        queryClient,
+        staleTime: Infinity,
+        queryKey: ['merge-features-reset-regression'],
+        queryFn,
+        ...featurePatch,
+      } as QueryConfig<number>);
+
+    it('honors config.resetOnDestroy: second instance refetches after destroy (cache reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+      });
+      await when(() => second.result.data === 2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+
+      second.destroy();
+    });
+
+    it('does not fall back to resetOnDispose alone: cache kept, second instance reuses data', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDispose: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDispose: true,
+      });
+      await when(() => second.result.data === 1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+
+      second.destroy();
+    });
+
+    it('when both keys exist, explicit resetOnDestroy: false wins over resetOnDispose (no cache reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: false,
+        resetOnDispose: true,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: false,
+        resetOnDispose: true,
+      });
+      await when(() => second.result.data === 1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+
+      second.destroy();
+    });
+
+    it('when both keys exist, resetOnDestroy: true is honored (resetOnDispose does not block reset)', async () => {
+      let counter = 0;
+      const queryFn = vi.fn(async () => ++counter);
+      const queryClient = new MobxQueryClient({});
+
+      const first = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+        resetOnDispose: false,
+      });
+      await when(() => first.result.data === 1);
+      first.destroy();
+
+      const second = makeRegressionQuery(queryClient, queryFn, {
+        resetOnDestroy: true,
+        resetOnDispose: false,
+      });
+      await when(() => second.result.data === 2);
+      expect(queryFn).toHaveBeenCalledTimes(2);
+
+      second.destroy();
+    });
+
+    describe('queryClient.queryFeatures fallback (config omits reset flags)', () => {
+      /**
+       * `Query` ctor calls `BaseQuery.mergeQueryFeatures(config, queryClient)`; when `config.resetOnDestroy`
+       * is omitted, `resetOnDestroy` comes from `queryClient.queryFeatures` (`MobxQueryClient`: `getDefaultOptions().queries`).
+       */
+      it('uses queryFeatures.resetOnDestroy true: cache reset on destroy (second Query refetches)', async () => {
+        let counter = 0;
+        const queryFn = vi.fn(async () => ++counter);
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            queries: { resetOnDestroy: true },
+          },
+        });
+
+        const first = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => first.result.data === 1);
+        first.destroy();
+
+        const second = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => second.result.data === 2);
+        expect(queryFn).toHaveBeenCalledTimes(2);
+
+        second.destroy();
+      });
+
+      it('uses queryFeatures.resetOnDestroy false: no cache reset (second Query reuses cache)', async () => {
+        let counter = 0;
+        const queryFn = vi.fn(async () => ++counter);
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            queries: { resetOnDestroy: false },
+          },
+        });
+
+        const first = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => first.result.data === 1);
+        first.destroy();
+
+        const second = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => second.result.data === 1);
+        expect(queryFn).toHaveBeenCalledTimes(1);
+
+        second.destroy();
+      });
+
+      it('ignores client-level resetOnDispose: mergeQueryFeatures does not read qf.resetOnDispose', async () => {
+        let counter = 0;
+        const queryFn = vi.fn(async () => ++counter);
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            queries: {
+              resetOnDispose: true,
+            } as MobxQueryClient['queryFeatures'],
+          },
+        });
+
+        const first = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => first.result.data === 1);
+        first.destroy();
+
+        const second = makeRegressionQuery(queryClient, queryFn, {});
+        await when(() => second.result.data === 1);
+        expect(queryFn).toHaveBeenCalledTimes(1);
+
+        second.destroy();
+      });
+    });
   });
 
   it('onDone should work after destroy with removeOnDestroy from query client', async () => {
