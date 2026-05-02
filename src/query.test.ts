@@ -1490,6 +1490,164 @@ describe('Query', () => {
 
       testClass.destroy();
     });
+
+    describe('reaction(() => query.data) after setData', () => {
+      it('fires once with correct prev/next when setData replaces data after fetch', async ({
+        task,
+      }) => {
+        const query = new QueryMock(
+          {
+            queryKey: [task.name, 'rx-data-1'] as const,
+            queryFn: () => ({ version: 0 }),
+          },
+          queryClient,
+        );
+
+        await when(() => !query.result.isLoading);
+
+        const spy = vi.fn();
+        const dispose = reaction(
+          () => query.data,
+          (curr, prev) => spy(curr, prev),
+        );
+
+        query.setData({ version: 1 });
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith({ version: 1 }, { version: 0 });
+
+        dispose();
+        query.destroy();
+      });
+
+      it('fires when setData uses a functional updater', async ({ task }) => {
+        const query = new QueryMock(
+          {
+            queryKey: [task.name, 'rx-data-2'] as const,
+            queryFn: () => ({ count: 1 }),
+          },
+          queryClient,
+        );
+
+        await when(() => !query.result.isLoading);
+
+        const spy = vi.fn();
+        const dispose = reaction(
+          () => query.data,
+          (curr, prev) => spy(curr, prev),
+        );
+
+        query.setData((prev) => ({ count: (prev?.count ?? 0) + 1 }));
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith({ count: 2 }, { count: 1 });
+
+        dispose();
+        query.destroy();
+      });
+
+      it('fires for each distinct setData (sequential updates)', async ({
+        task,
+      }) => {
+        const query = new QueryMock(
+          {
+            queryKey: [task.name, 'rx-data-3'] as const,
+            queryFn: () => 'a',
+          },
+          queryClient,
+        );
+
+        await when(() => !query.result.isLoading);
+
+        const spy = vi.fn();
+        const dispose = reaction(
+          () => query.data,
+          (curr, prev) => spy(curr, prev),
+        );
+
+        query.setData('b');
+        query.setData('c');
+
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenNthCalledWith(1, 'b', 'a');
+        expect(spy).toHaveBeenNthCalledWith(2, 'c', 'b');
+
+        dispose();
+        query.destroy();
+      });
+
+      it('fires when query uses select and setData updates the stored data', async ({
+        task,
+      }) => {
+        const query = new QueryMock(
+          {
+            queryKey: [task.name, 'rx-data-4'] as const,
+            queryFn: () => ({ x: 1, y: 2 }),
+            select: (d) => d.x,
+          },
+          queryClient,
+        );
+
+        await when(() => !query.result.isLoading);
+
+        const spy = vi.fn();
+        const dispose = reaction(
+          () => query.data,
+          (curr, prev) => spy(curr, prev),
+        );
+
+        query.setData({ x: 10, y: 2 });
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(10, 1);
+
+        dispose();
+        query.destroy();
+      });
+
+      it('fires when setData mutates prev in place and returns the same reference', async ({
+        task,
+      }) => {
+        const query = new QueryMock(
+          {
+            queryKey: [task.name, 'rx-data-mutate'] as const,
+            queryFn: () => ({ count: 1 }),
+          },
+          queryClient,
+        );
+
+        await when(() => !query.result.isLoading);
+
+        const identitySpy = vi.fn();
+        const disposeIdentity = reaction(
+          () => query.data,
+          () => identitySpy(),
+        );
+
+        const countSpy = vi.fn();
+        const disposeCount = reaction(
+          () => query.data?.count,
+          (curr, prev) => countSpy(curr, prev),
+        );
+
+        query.setData((prev) => {
+          if (prev) {
+            prev.count = 1000;
+          }
+          return prev;
+        });
+
+        expect(query.data).toEqual({ count: 1000 });
+        // Ссылка на `query.data` не меняется — `reaction(() => query.data)` молчит.
+        expect(identitySpy).toHaveBeenCalledTimes(0);
+        expect(countSpy).toHaveBeenCalledTimes(1);
+        expect(countSpy).toHaveBeenCalledWith(1000, 1);
+
+        disposeIdentity();
+        disposeCount();
+        query.destroy();
+      });
+    });
   });
 
   describe('"invalidate" method', () => {
