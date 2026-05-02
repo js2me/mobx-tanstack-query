@@ -110,7 +110,9 @@ const query = new Query(queryClient, () => ({
 console.log(query.data);
 ```
 
-With the default [`resultObservable`](#resultobservable-queryfeature) (`'ref'`), changing nested fields inside `data` in place does **not** notify MobX observers—only replacing the result does. For deep tracking, set `resultObservable: 'deep'` on the query or in [`QueryClient` defaults](/api/QueryClient#queryfeatures).
+::: tip Mutating `data` does not trigger MobX updates by default
+[`resultObservable`](#resultobservable-queryfeature) defaults to **`'ref'`**, so MobX reacts when **`data`** is replaced, not when you change fields on the same object. Use **`'deep'`** on the query or in [`QueryClient` defaults](/api/QueryClient#queryfeatures), or keep **`'ref'`** and update with [`setData`](#setdata-updater-options) returning `{ ...previous, ...updates }`.
+:::
 
 ### `dataUpdatedAt: number`
 

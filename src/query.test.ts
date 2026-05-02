@@ -1294,7 +1294,19 @@ describe('Query', () => {
         queryClient,
       );
 
-      const reactionSpy = vi.fn();
+      const reactionSnapshots: { curr: unknown; prev: unknown }[] = [];
+      const reactionSpy = vi.fn((curr: unknown, prev: unknown) => {
+        reactionSnapshots.push({
+          curr:
+            curr !== undefined && curr !== null && typeof curr === 'object'
+              ? structuredClone(curr as Record<string, unknown>)
+              : curr,
+          prev:
+            prev !== undefined && prev !== null && typeof prev === 'object'
+              ? structuredClone(prev as Record<string, unknown>)
+              : prev,
+        });
+      });
 
       reaction(
         () => query.result.data,
@@ -1311,9 +1323,8 @@ describe('Query', () => {
       });
 
       expect(reactionSpy).toHaveBeenCalledTimes(1);
-      expect(reactionSpy).toHaveBeenNthCalledWith(
-        1,
-        {
+      expect(reactionSnapshots[0]).toEqual({
+        curr: {
           a: {
             b: {
               c: {
@@ -1325,11 +1336,6 @@ describe('Query', () => {
                         name: 'John',
                         age: 20,
                       },
-                      {
-                        id: '2',
-                        name: 'Doe',
-                        age: 21,
-                      },
                     ],
                   },
                 },
@@ -1337,8 +1343,8 @@ describe('Query', () => {
             },
           },
         },
-        undefined,
-      );
+        prev: undefined,
+      });
 
       query.destroy();
     });
@@ -1461,7 +1467,19 @@ describe('Query', () => {
 
       const testClass = new TestClass();
 
-      const reactionFooSpy = vi.fn();
+      const reactionFooSnapshots: { curr: unknown; prev: unknown }[] = [];
+      const reactionFooSpy = vi.fn((curr: unknown, prev: unknown) => {
+        reactionFooSnapshots.push({
+          curr:
+            curr !== undefined && curr !== null && typeof curr === 'object'
+              ? structuredClone(curr as Record<string, unknown>)
+              : curr,
+          prev:
+            prev !== undefined && prev !== null && typeof prev === 'object'
+              ? structuredClone(prev as Record<string, unknown>)
+              : prev,
+        });
+      });
 
       reaction(
         () => testClass.foo,
@@ -1478,15 +1496,14 @@ describe('Query', () => {
       });
 
       expect(reactionFooSpy).toHaveBeenCalledTimes(1);
-      expect(reactionFooSpy).toHaveBeenNthCalledWith(
-        1,
-        {
+      expect(reactionFooSnapshots[0]).toEqual({
+        curr: {
           age: 20,
           id: '1',
-          name: 'Doe',
+          name: 'John',
         },
-        null,
-      );
+        prev: null,
+      });
 
       testClass.destroy();
     });
@@ -4860,7 +4877,7 @@ describe('Query', () => {
     }
   });
 
-  it('onError should keep listener args original and transform result.error', async () => {
+  it('onError receives transformed error (transformError) like result.error', async () => {
     vi.useRealTimers();
     const queryKeyPart = observable.box(1);
     const onError = vi.fn();

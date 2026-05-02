@@ -57,7 +57,9 @@ const mutation = new Mutation({
 mutation.data; // updated pet or undefined
 ```
 
-With the default [`resultObservable`](#resultobservable-mutationfeature) (`'ref'`), changing nested fields inside `data` in place does **not** notify MobX observers—only replacing the result does. For deep tracking, set `resultObservable: 'deep'` on the mutation or in [`QueryClient` defaults](/api/QueryClient#mutationfeatures).
+::: tip Mutating `data` does not trigger MobX updates by default
+[`resultObservable`](#resultobservable-mutationfeature) defaults to **`'ref'`**, so MobX reacts when **`data`** is replaced, not when you change fields on the same object. Use **`'deep'`** on the mutation or in [`QueryClient` defaults](/api/QueryClient#mutationfeatures), or keep **`'ref'`** and return `{ ...previous, ...updates }` instead of mutating the previous value.
+:::
 
 #### `error: TError | null`
 
