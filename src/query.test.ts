@@ -96,12 +96,14 @@ class QueryMock<
   refetch(
     options?: RefetchOptions | undefined,
   ): Promise<QueryObserverResult<TData, TError>> {
-    this.spies.refetch(options);
+    // `spies` is initialized after `super()`; dynamic-options reaction can call
+    // `update`/`refetch`-related paths synchronously during the base constructor.
+    this.spies?.refetch(options);
     return super.refetch(options);
   }
 
   invalidate(params?: QueryInvalidateParams | undefined): Promise<void> {
-    this.spies.invalidate(params);
+    this.spies?.invalidate(params);
     return super.invalidate(params);
   }
 
@@ -110,8 +112,8 @@ class QueryMock<
       | QueryUpdateOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
       | QueryDynamicOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   ): void {
-    const result = super.update(options);
-    this.spies.update.mockReturnValue(result)(options);
+    super.update(options);
+    this.spies?.update(options);
   }
 
   setData(
@@ -122,13 +124,13 @@ class QueryMock<
     options?: SetDataOptions,
   ): TQueryFnData | undefined {
     const result = super.setData(updater, options);
-    this.spies.setData.mockReturnValue(result)(updater, options);
+    this.spies?.setData(updater, options);
     return result;
   }
 
   destroy(): void {
-    const result = super.destroy();
-    this.spies.destroy.mockReturnValue(result)();
+    super.destroy();
+    this.spies?.destroy();
   }
 }
 
