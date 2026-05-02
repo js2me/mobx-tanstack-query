@@ -57,6 +57,8 @@ const mutation = new Mutation({
 mutation.data; // updated pet or undefined
 ```
 
+With the default [`resultObservable`](#resultobservable-mutationfeature) (`'ref'`), changing nested fields inside `data` in place does **not** notify MobX observers—only replacing the result does. For deep tracking, set `resultObservable: 'deep'` on the mutation or in [`QueryClient` defaults](/api/QueryClient#mutationfeatures).
+
 #### `error: TError | null`
 
 The error object for the mutation, if an error was encountered.

@@ -1605,12 +1605,12 @@ describe('Query', () => {
         query.destroy();
       });
 
-      it('fires when setData mutates prev in place and returns the same reference', async ({
+      it('in-place setData (same ref): cache updates but MobX reactions on data do not run', async ({
         task,
       }) => {
         const query = new QueryMock(
           {
-            queryKey: [task.name, 'rx-data-mutate'] as const,
+            queryKey: [task.fullTestName, 'rx-data-mutate'] as const,
             queryFn: () => ({ count: 1 }),
           },
           queryClient,
@@ -1618,16 +1618,16 @@ describe('Query', () => {
 
         await when(() => !query.result.isLoading);
 
-        const identitySpy = vi.fn();
-        const disposeIdentity = reaction(
+        const dataSpy = vi.fn();
+        const disposeData = reaction(
           () => query.data,
-          () => identitySpy(),
+          () => dataSpy(),
         );
 
         const countSpy = vi.fn();
         const disposeCount = reaction(
           () => query.data?.count,
-          (curr, prev) => countSpy(curr, prev),
+          () => countSpy(),
         );
 
         query.setData((prev) => {
@@ -1638,12 +1638,10 @@ describe('Query', () => {
         });
 
         expect(query.data).toEqual({ count: 1000 });
-        // Ссылка на `query.data` не меняется — `reaction(() => query.data)` молчит.
-        expect(identitySpy).toHaveBeenCalledTimes(0);
-        expect(countSpy).toHaveBeenCalledTimes(1);
-        expect(countSpy).toHaveBeenCalledWith(1000, 1);
+        expect(dataSpy).toHaveBeenCalledTimes(0);
+        expect(countSpy).toHaveBeenCalledTimes(0);
 
-        disposeIdentity();
+        disposeData();
         disposeCount();
         query.destroy();
       });

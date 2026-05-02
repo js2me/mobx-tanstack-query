@@ -110,6 +110,8 @@ const query = new Query(queryClient, () => ({
 console.log(query.data);
 ```
 
+With the default [`resultObservable`](#resultobservable-queryfeature) (`'ref'`), changing nested fields inside `data` in place does **not** notify MobX observers—only replacing the result does. For deep tracking, set `resultObservable: 'deep'` on the query or in [`QueryClient` defaults](/api/QueryClient#queryfeatures).
+
 ### `dataUpdatedAt: number`
 
 The timestamp for when the query most recently returned the `status` as `"success"`.
