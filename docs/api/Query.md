@@ -299,6 +299,12 @@ Query original result (The same as returns the [`useQuery` hook](https://tanstac
 The badge reflects the **default**: the internal `_result` field is decorated as deep observable. You can change the MobX flavour (`ref`, `shallow`, `struct`, `true`, or `false`) with the [`resultObservable`](#resultobservable-queryfeature) query feature.
 :::
 
+::: warning `result` after `destroy()` or abort
+After `destroy()` is called or the [`abortSignal`](#abortsignal-option) is aborted, reading `result` does **not** keep returning the last locally observed in-memory snapshot from before teardown. Instead, it is computed with `queryObserver.getOptimisticResult(this.options)`: you get the **current cache snapshot** for the last `queryKey`, and subscriptions are **not** restored.
+
+If you relied on a fixed “last seen” result after destroy (for example in tests or cleanup code), snapshot the fields you need before `destroy()` / abort, or avoid reading `result` after teardown.
+:::
+
 ### `setData(updater, options)`
 
 Set data for current query (Uses [queryClient.setQueryData](https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientsetquerydata))
@@ -509,6 +515,8 @@ const query = new Query(queryClient, () => ({
 // Clean up the query
 query.destroy();
 ```
+
+See also: [`result`](#result-queryobserverresult) after `destroy()` or abort.
 
 ## Built-in Features
 
