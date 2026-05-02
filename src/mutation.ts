@@ -167,10 +167,7 @@ export class Mutation<
       lazy: config.lazy ?? qc.mutationFeatures?.lazy,
       lazyDelay: config.lazyDelay ?? qc.mutationFeatures?.lazyDelay,
       resetOnDestroy:
-        config.resetOnDestroy ??
-        config.resetOnDispose ??
-        qc.mutationFeatures?.resetOnDestroy ??
-        qc.mutationFeatures?.resetOnDispose,
+        config.resetOnDestroy ?? qc.mutationFeatures?.resetOnDestroy,
       transformError:
         config.transformError ?? qc.mutationFeatures?.transformError,
       resultObservable:
@@ -398,19 +395,10 @@ export class Mutation<
 
     if (this.features.resetOnDestroy) {
       this.reset();
+      this.updateResult(this.mutationObserver.getCurrentResult());
     }
 
     delete this._observerSubscription;
     this.hooks?.onMutationDestroy?.(this);
   }
 }
-
-/**
- * @deprecated ⚠️ use `Mutation`. This export will be removed in next major release
- */
-export class MobxMutation<
-  TData = unknown,
-  TVariables = void,
-  TError = DefaultError,
-  TOnMutateResult = unknown,
-> extends Mutation<TData, TVariables, TError, TOnMutateResult> {}
