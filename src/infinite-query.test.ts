@@ -33,7 +33,7 @@ class InfiniteQueryMock<
     queryFn: null as unknown as ReturnType<typeof vi.fn>,
     setData: vi.fn(),
     update: vi.fn(),
-    dispose: vi.fn(),
+    destroy: vi.fn(),
     refetch: vi.fn(),
     invalidate: vi.fn(),
     onDone: vi.fn(),
@@ -110,9 +110,9 @@ class InfiniteQueryMock<
     return result;
   }
 
-  dispose(): void {
-    const result = super.dispose();
-    this.spies.dispose.mockReturnValue(result)();
+  destroy(): void {
+    const result = super.destroy();
+    this.spies.destroy.mockReturnValue(result)();
   }
 }
 
@@ -133,7 +133,7 @@ describe('InfiniteQuery', () => {
       queryKey: ['test'],
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   it('should call queryFn with initialPageParam', async () => {
@@ -153,7 +153,7 @@ describe('InfiniteQuery', () => {
       queryKey: ['test'],
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   it('should use initialPageParam from dynamic options without top-level initialPageParam', async () => {
@@ -298,7 +298,7 @@ describe('InfiniteQuery', () => {
       queryKey: ['test'],
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   it('should call queryFn with getNextPageParam returning null', async () => {
@@ -355,7 +355,7 @@ describe('InfiniteQuery', () => {
       status: 'success',
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   it('should call queryFn after fetchNextPage call', async () => {
@@ -441,7 +441,7 @@ describe('InfiniteQuery', () => {
       status: 'success',
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   it('should call queryFn after fetchNextPage call (x3 times)', async () => {
@@ -539,7 +539,7 @@ describe('InfiniteQuery', () => {
       status: 'success',
     });
 
-    query.dispose();
+    query.destroy();
   });
 
   describe('"enabled" reactive parameter', () => {
@@ -559,7 +559,7 @@ describe('InfiniteQuery', () => {
       expect(query.spies.queryFn).toBeCalledTimes(1);
       expect(query.spies.queryFn).nthReturnedWith(1, 100);
 
-      query.dispose();
+      query.destroy();
     });
   });
 
