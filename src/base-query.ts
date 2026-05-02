@@ -129,7 +129,7 @@ export abstract class BaseQuery<
       autoRemovePreviousQuery:
         config.autoRemovePreviousQuery ?? qf?.autoRemovePreviousQuery,
       resultObservable:
-        config.resultObservable ?? qf?.resultObservable ?? 'deep',
+        config.resultObservable ?? qf?.resultObservable ?? 'ref',
     };
   }
 

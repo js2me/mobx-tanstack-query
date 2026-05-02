@@ -144,13 +144,13 @@ export interface QueryFeatures {
    * `annotation.observable()` from `yummies/mobx`. Public fields (`data`, `status`, `isLoading`, …) read from
    * this object, so the option controls how deeply updates to the query result propagate to observers.
    *
-   * - `'deep'` — default when omitted; deep observability for plain objects and arrays.
+   * - `'ref'` — default when omitted; tracks only the result reference.
+   * - `'deep'` — deep observability for plain objects and arrays.
    * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
-   * - `'ref'` — track only the result reference (useful when the whole result object is replaced each update).
    * - `true` — base `observable` (same as omitting the option).
    * - `false` — skip decorating `_result` (no automatic MobX tracking for the result; advanced use only).
    *
-   * @default 'deep'
+   * @default 'ref'
    *
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#resultobservable-queryfeature)
    */

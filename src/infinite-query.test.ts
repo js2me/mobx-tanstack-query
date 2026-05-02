@@ -1217,7 +1217,7 @@ describe('InfiniteQuery', () => {
 
     it('basic', () => {
       const query = createInfiniteQuery();
-      expect(types.isProxy(query.getInternalResult())).toBe(true);
+      expect(types.isProxy(query.getInternalResult())).toBe(false);
     });
 
     it('(query: resultObservable: false)', () => {

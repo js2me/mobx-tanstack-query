@@ -57,6 +57,10 @@ const mutation = new Mutation({
 mutation.data; // updated pet or undefined
 ```
 
+::: tip Mutating `data` does not trigger MobX updates by default
+[`resultObservable`](#resultobservable-mutationfeature) defaults to **`'ref'`**, so MobX reacts when **`data`** is replaced, not when you change fields on the same object. Use **`'deep'`** on the mutation or in [`QueryClient` defaults](/api/QueryClient#mutationfeatures), or keep **`'ref'`** and return `{ ...previous, ...updates }` instead of mutating the previous value.
+:::
+
 #### `error: TError | null`
 
 The error object for the mutation, if an error was encountered.
@@ -179,8 +183,9 @@ const mutation = new Mutation({
 
 Chooses how MobX observes the mutation **`result`** property (the `MutationObserverResult`). The library applies `annotation.observable()` from [`yummies/mobx`](https://github.com/js2me/yummies). [`Query`](https://js2me.github.io/mobx-tanstack-query/api/Query.html#resultobservable-queryfeature) stores the payload on a private `_result` and exposes TanStack fields via getters; **`Mutation` decorates the public `result` field directly** — there is no `_result`.
 
-- **Default** — when omitted, behaviour matches **`'deep'`** (deep observability for plain objects and arrays in the result).
+- **Default** — when omitted, behaviour matches **`'ref'`** (only the result object reference is tracked).
 - **`'ref'`** — only the reference to the result object is tracked; reactions run when the whole result is replaced, not when nested fields change in place.
+- **`'deep'`** — deep observability for plain objects and arrays in the result.
 - **`'shallow'`** / **`'struct'`** — shallow or structural comparison for nested properties.
 - **`false`** — do not decorate `result` (rare; you lose automatic MobX tracking for the result blob).
 
@@ -216,10 +221,10 @@ Subscribe when mutation has been finished with failure
 
 Reset current mutation
 
-### property `result` <Badge type="info" text="observable.deep" />
+### property `result` <Badge type="info" text="observable.ref" />
 
 Mutation result (The same as returns the [`useMutation` hook](https://tanstack.com/query/latest/docs/framework/react/reference/useMutation))
 
-::: info `observable.deep` is configurable
-The badge reflects the **default**: the public `result` property is decorated as deep observable (unlike `Query`, which uses a private `_result` behind getters). Change the MobX flavour with [`resultObservable`](#resultobservable-mutationfeature) (`ref`, `shallow`, `struct`, `true`, or `false`).
+::: info `observable.ref` is configurable
+The badge reflects the **default**: the public `result` property is decorated as `observable.ref` (unlike `Query`, which uses a private `_result` behind getters). Change the MobX flavour with [`resultObservable`](#resultobservable-mutationfeature) (`deep`, `shallow`, `struct`, `true`, or `false`).
 :::
