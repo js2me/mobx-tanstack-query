@@ -1,0 +1,61 @@
+<script setup lang="ts">
+import type { DefaultTheme } from "vitepress/theme";
+import { computed } from "vue";
+import { useData } from "vitepress";
+import VPFlyout from "vitepress/dist/client/theme-default/components/VPFlyout.vue";
+import VPNavScreenMenuGroup from "vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue";
+import { isActive } from "vitepress/dist/client/shared";
+
+const props = defineProps<{
+  /** Мобильное меню (fullscreen nav) */
+  screenMenu?: boolean;
+  packageVersion: string;
+}>();
+
+const { page } = useData();
+
+const latestVersionLabel = computed(() =>
+  props.packageVersion.startsWith("v")
+    ? props.packageVersion
+    : `v${props.packageVersion}`,
+);
+
+const items = computed<DefaultTheme.NavItemWithLink[]>(() => [
+  {
+    text: `${latestVersionLabel.value} (latest)`,
+    link: "/introduction/getting-started",
+  },
+  { text: "v6.x.x", link: "/v6/introduction/getting-started" },
+]);
+
+const buttonLabel = computed(() => {
+  const rel = page.value.relativePath;
+  if (rel.startsWith("v6/")) return "v6.x.x";
+  return latestVersionLabel.value;
+});
+
+const childrenActive = computed(() =>
+  items.value.some((navItem) =>
+    isActive(page.value.relativePath, navItem.link, false),
+  ),
+);
+</script>
+
+<template>
+  <VPNavScreenMenuGroup
+    v-if="screenMenu"
+    :text="buttonLabel"
+    :items="items"
+  />
+  <VPFlyout
+    v-else
+    class="nav-versions-flyout"
+    :class="{
+      VPNavBarMenuGroup: true,
+      active: childrenActive,
+    }"
+    :button="buttonLabel"
+    :label="`${buttonLabel}, select version`"
+    :items="items"
+  />
+</template>

@@ -7,6 +7,10 @@
     "vitepress": "^1.6.4"
   },
   "scripts": {
+    "changelog:stub": "node scripts/sync-changelog-stub.mjs",
+    "predev": "pnpm changelog:stub",
+    "prebuild": "pnpm changelog:stub",
+    "prepreview": "pnpm changelog:stub",
     "dev": "vitepress dev",
     "build": "vitepress build",
     "preview": "vitepress preview"

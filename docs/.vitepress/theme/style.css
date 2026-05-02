@@ -12,6 +12,40 @@
   --custom-brand-3: #ffbbcf;
 }
 
+/* Версионный переключатель в шапке (NavVersionsFlyout / VPFlyout) */
+.nav-versions-flyout.VPFlyout {
+  display: flex;
+  align-items: center;
+}
+
+.nav-versions-flyout.VPFlyout .button {
+  height: auto;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    var(--custom-brand-1),
+    var(--custom-brand-2)
+  );
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.nav-versions-flyout.VPFlyout .button .text {
+  line-height: 1;
+  font-weight: 600;
+}
+
+.nav-versions-flyout.VPFlyout:hover .text,
+.nav-versions-flyout.VPFlyout.active .text,
+.nav-versions-flyout.VPFlyout.active:hover .text {
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.nav-versions-flyout.VPFlyout:hover .text-icon {
+  opacity: 0.95;
+}
+
 html.dark {
   --vp-c-brand-1: #ff5381;
   --vp-c-brand-2: #f54c5c;
