@@ -6,26 +6,36 @@ import VPFlyout from "vitepress/dist/client/theme-default/components/VPFlyout.vu
 import VPNavScreenMenuGroup from "vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue";
 import { isActive } from "vitepress/dist/client/shared";
 
-defineProps<{
+const props = defineProps<{
   /** Мобильное меню (fullscreen nav) */
   screenMenu?: boolean;
+  packageVersion: string;
 }>();
 
 const { page } = useData();
 
-const items: DefaultTheme.NavItemWithLink[] = [
-  { text: "v7 (latest)", link: "/introduction/getting-started" },
-  { text: "v6", link: "/v6/introduction/getting-started" },
-];
+const latestVersionLabel = computed(() =>
+  props.packageVersion.startsWith("v")
+    ? props.packageVersion
+    : `v${props.packageVersion}`,
+);
+
+const items = computed<DefaultTheme.NavItemWithLink[]>(() => [
+  {
+    text: `${latestVersionLabel.value} (latest)`,
+    link: "/introduction/getting-started",
+  },
+  { text: "v6.x.x", link: "/v6/introduction/getting-started" },
+]);
 
 const buttonLabel = computed(() => {
   const rel = page.value.relativePath;
-  if (rel.startsWith("v6/")) return "v6";
-  return "v7";
+  if (rel.startsWith("v6/")) return "v6.x.x";
+  return latestVersionLabel.value;
 });
 
 const childrenActive = computed(() =>
-  items.some((navItem) =>
+  items.value.some((navItem) =>
     isActive(page.value.relativePath, navItem.link, false),
   ),
 );

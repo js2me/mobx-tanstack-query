@@ -8,13 +8,17 @@ export default defineDocsVitepressConfig(configs, {
   createdYear: "2024",
   themeConfig: {
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Introduction', link: '/introduction/getting-started' },
+			{
+				text: 'CHANGELOG',
+				link: '/changelog',
+			},
       {
         component: "NavVersionsFlyout",
+        props: {
+          packageVersion: String(configs.package.version),
+        },
       },
     ],
-    /** Пустой сайдбар на v6; остальные маршруты (v7 / latest) — полная навигация. Ключ «/v6/» длиннее «/», поэтому перекрывает для путей под v6. */
     sidebar: {
       "/v6/": v6Sidebar as any,
       "/": [
