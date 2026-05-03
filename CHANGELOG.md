@@ -1,5 +1,27 @@
 # mobx-tanstack-query
 
+## 7.0.0
+
+### Major Changes
+
+- [#80](https://github.com/js2me/mobx-tanstack-query/pull/80) [`1e9cb4e`](https://github.com/js2me/mobx-tanstack-query/commit/1e9cb4efc23417fc5aa05105e0537b9e8b06c99f) Thanks [@js2me](https://github.com/js2me)! - Changed the `result` behavior after `destroy()` / abort.
+
+  Previously, a destroyed query instance kept returning its last locally observed `_result`.
+  Now, when `result` is read after destroy/abort, it is computed via `queryObserver.getOptimisticResult(this.options)`, so it reflects the latest cache snapshot for the last `queryKey` without restoring subscriptions.
+
+  This is a breaking change for consumers and tests that relied on the old "frozen result after destroy" behavior.
+
+- [#79](https://github.com/js2me/mobx-tanstack-query/pull/79) [`a2dac5c`](https://github.com/js2me/mobx-tanstack-query/commit/a2dac5c0bee219b39c3928dc334b1b95bde7653b) Thanks [@js2me](https://github.com/js2me)! - Changed the global default for `resultObservable` from `'deep'` to `'ref'` for both `Query` and `Mutation`.
+
+  If your app relies on deep MobX tracking of nested fields inside query or mutation results, set `resultObservable: 'deep'` explicitly (locally or via `QueryClient` defaults).
+
+- [#74](https://github.com/js2me/mobx-tanstack-query/pull/74) [`ed887bd`](https://github.com/js2me/mobx-tanstack-query/commit/ed887bd84405e6618948c4335b68cf7ad0e842df) Thanks [@js2me](https://github.com/js2me)! - ### Breaking changes
+
+  - Removed deprecated `Destroyable.dispose()` — use `destroy()` or `Symbol.dispose` / `using` where supported.
+  - Removed `Mobx*` type aliases and `MobxQuery` / `MobxMutation` / `MobxInfiniteQuery` class aliases; import the canonical names (`Query`, `Mutation`, `InfiniteQuery`, `QueryOptions`, `DefaultOptions`, etc.).
+  - Removed deprecated query client aliases: `IQueryClient`, `QueryClientInterface`, `MobxDefaultOptions`, `MobxQueryClientHooks`, `MobxQueryClientConfig`.
+  - Removed `resetOnDispose` from query features and mutation options / defaults — use `resetOnDestroy` only.
+
 ## 6.16.1
 
 ### Patch Changes
