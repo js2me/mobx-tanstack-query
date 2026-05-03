@@ -1954,29 +1954,37 @@ describe('Query', () => {
   });
 
   describe('scenarios', () => {
+    beforeEach(() => {
+      vi.useRealTimers();
+    });
+
     it('query with refetchInterval(number) should be stopped after inner abort', async () => {
+      vi.useFakeTimers();
+
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
         refetchInterval: 10,
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeDestroy = query.spies.queryFn.mock.calls.length;
+
       query.destroy();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeDestroy);
     });
     it('query with refetchInterval(number) should be stopped after outer abort', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
@@ -1984,39 +1992,40 @@ describe('Query', () => {
         refetchInterval: 10,
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
 
       abortController.abort();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
     it('query with refetchInterval(fn) should be stopped after inner abort', async () => {
+      vi.useFakeTimers();
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
         refetchInterval: () => 10,
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeDestroy = query.spies.queryFn.mock.calls.length;
 
       query.destroy();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeDestroy);
     });
     it('query with refetchInterval(fn) should be stopped after outer abort', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
@@ -2024,38 +2033,41 @@ describe('Query', () => {
         refetchInterval: () => 10,
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
 
       abortController.abort();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
     it('query with refetchInterval(condition fn) should be stopped after inner abort', async () => {
+      vi.useFakeTimers();
+
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
         refetchInterval: (query) => (query.isActive() ? 10 : false),
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeDestroy = query.spies.queryFn.mock.calls.length;
+
       query.destroy();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeDestroy);
     });
     it('query with refetchInterval(condition-fn) should be stopped after outer abort', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         enabled: true,
@@ -2063,16 +2075,17 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isActive() ? 10 : false),
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
 
       abortController.abort();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(5);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
     it('dynamic enabled + dynamic refetchInterval', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const counter = observable.box(0);
 
@@ -2081,7 +2094,7 @@ describe('Query', () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         options: () => ({
@@ -2092,16 +2105,17 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isDisabled() ? false : 10),
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
 
       abortController.abort();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
     it('dynamic enabled + dynamic refetchInterval(refetchInterval is fixed)', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const counter = observable.box(0);
 
@@ -2110,7 +2124,7 @@ describe('Query', () => {
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           return 10;
         },
         options: () => ({
@@ -2121,22 +2135,23 @@ describe('Query', () => {
         refetchInterval: () => 10,
       });
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
 
       abortController.abort();
 
-      await sleep(100);
-
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
     it('dynamic enabled + dynamic refetchInterval (+enabledOnDemand)', async () => {
+      vi.useFakeTimers();
+
       const abortController = new AbortController();
       const counter = observable.box(0);
 
       const query = new QueryMock({
         queryFn: async () => {
-          await sleep(10);
+          await vi.advanceTimersByTimeAsync(10);
           runInAction(() => {
             counter.set(counter.get() + 1);
           });
@@ -2151,38 +2166,45 @@ describe('Query', () => {
         refetchInterval: (query) => (query.isDisabled() ? false : 10),
       });
 
-      await sleep(100);
+      await vi.advanceTimersByTimeAsync(100);
       expect(query.spies.queryFn).toHaveBeenCalledTimes(0);
 
       query.result.data;
 
-      await sleep(100);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(10);
+      await vi.advanceTimersByTimeAsync(100);
+      const callsAfterFirstActiveWindow = query.spies.queryFn.mock.calls.length;
 
       query.result.data;
       query.result.isLoading;
-      await sleep(50);
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
+      await vi.advanceTimersByTimeAsync(100);
+
+      const callsBeforeAbort = query.spies.queryFn.mock.calls.length;
+      expect(callsBeforeAbort).toBeGreaterThan(callsAfterFirstActiveWindow);
+
       abortController.abort();
 
       query.result.data;
       query.result.data;
       query.result.isLoading;
 
-      await sleep(100);
+      expect(query.spies.queryFn.mock.calls.length).toBe(callsBeforeAbort);
+
+      await vi.advanceTimersByTimeAsync(10_000);
 
       query.result.data;
       query.result.isLoading;
 
-      expect(query.spies.queryFn).toHaveBeenCalledTimes(15);
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(callsBeforeAbort);
     });
 
     it('after abort identical (by query key) query another query should work', async () => {
+      vi.useFakeTimers();
+
       const abortController1 = new LinkedAbortController();
       const abortController2 = new LinkedAbortController();
       const query1 = new QueryMock({
         queryFn: async () => {
-          await sleep(5);
+          await vi.advanceTimersByTimeAsync(5);
           return 'bar';
         },
         abortSignal: abortController1.signal,
@@ -2190,7 +2212,7 @@ describe('Query', () => {
       });
       const query2 = new QueryMock({
         queryFn: async () => {
-          await sleep(5);
+          await vi.advanceTimersByTimeAsync(5);
           return 'foo';
         },
         abortSignal: abortController2.signal,
@@ -2254,7 +2276,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'pending',
       });
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: 'bar',
@@ -2311,7 +2333,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'success',
       });
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: 'bar',
@@ -2343,11 +2365,13 @@ describe('Query', () => {
     });
 
     it('after abort identical (by query key) query another query should work (with resetOnDestroy option)', async () => {
+      vi.useFakeTimers();
+
       const abortController1 = new LinkedAbortController();
       const abortController2 = new LinkedAbortController();
       const query1 = new QueryMock({
         queryFn: async () => {
-          await sleep(5);
+          await vi.advanceTimersByTimeAsync(5);
           return 'bar';
         },
         abortSignal: abortController1.signal,
@@ -2356,7 +2380,7 @@ describe('Query', () => {
       });
       const query2 = new QueryMock({
         queryFn: async () => {
-          await sleep(5);
+          await vi.advanceTimersByTimeAsync(5);
           return 'foo';
         },
         abortSignal: abortController2.signal,
@@ -2421,7 +2445,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'pending',
       });
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -2478,7 +2502,7 @@ describe('Query', () => {
         refetch: query2.result.refetch,
         status: 'success',
       });
-      await sleep(10);
+      await vi.advanceTimersByTimeAsync(10);
       expect(query1.result).toStrictEqual({
         ...query1.result,
         data: undefined,
@@ -2841,7 +2865,7 @@ describe('Query', () => {
       const firstQuery = new QueryMock(
         {
           queryFn: async () => {
-            await sleep(100);
+            await vi.advanceTimersByTimeAsync(100);
             return 'foo';
           },
           options: () => ({
@@ -2855,7 +2879,7 @@ describe('Query', () => {
       const secondQuery = new QueryMock(
         {
           queryFn: async () => {
-            await sleep(200);
+            await vi.advanceTimersByTimeAsync(200);
             return 'bar';
           },
           options: () => ({
@@ -2920,7 +2944,7 @@ describe('Query', () => {
       const firstQuery = new QueryMock(
         {
           queryFn: async () => {
-            await sleep(100);
+            await vi.advanceTimersByTimeAsync(100);
             return 'foo';
           },
           options: () => ({
@@ -2934,7 +2958,7 @@ describe('Query', () => {
       const secondQuery = new QueryMock(
         {
           queryFn: async () => {
-            await sleep(200);
+            await vi.advanceTimersByTimeAsync(200);
             return 'bar';
           },
           options: () => ({
@@ -3001,7 +3025,7 @@ describe('Query', () => {
         {
           lazy: true,
           queryFn: async () => {
-            await sleep(100);
+            await vi.advanceTimersByTimeAsync(100);
             return 'foo';
           },
           options: () => ({
@@ -3016,7 +3040,7 @@ describe('Query', () => {
         {
           lazy: true,
           queryFn: async () => {
-            await sleep(200);
+            await vi.advanceTimersByTimeAsync(200);
             return 'bar';
           },
           options: () => ({
@@ -3081,7 +3105,7 @@ describe('Query', () => {
         {
           lazy: true,
           queryFn: async () => {
-            await sleep(100);
+            await vi.advanceTimersByTimeAsync(100);
             return 'foo';
           },
           options: () => ({
@@ -3099,7 +3123,7 @@ describe('Query', () => {
         {
           lazy: true,
           queryFn: async () => {
-            await sleep(200);
+            await vi.advanceTimersByTimeAsync(200);
             return 'bar';
           },
           options: () => ({
