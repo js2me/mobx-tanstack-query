@@ -354,7 +354,8 @@ export class Query<
     this.hooks?.onQueryInit?.(this);
   }
 
-  protected handleDestroy() {
+  destroy(): void {
+    super.destroy();
     this.cleanup();
     this.hooks?.onQueryDestroy?.(this);
   }
