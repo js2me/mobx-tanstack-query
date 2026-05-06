@@ -34,6 +34,7 @@
 .nav-versions-flyout.VPFlyout .button .text {
   line-height: 1;
   font-weight: 600;
+  color: inherit;
 }
 
 .nav-versions-flyout.VPFlyout:hover .text,
