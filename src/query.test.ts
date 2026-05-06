@@ -5948,4 +5948,26 @@ describe('Query', () => {
       query.destroy();
     });
   });
+
+  it.skip('no function reactivity test', async () => {
+    vi.useFakeTimers();
+
+    const observableParams = makeAutoObservable<Partial<QueryConfig>>({
+      enabled: false,
+      queryKey: ['foo', 'bar'],
+      queryFn: () => 'hello!',
+    });
+    const q = new QueryMock(observableParams);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(q.status).toBe('pending');
+    expect(q.data).toBe(undefined);
+
+    observableParams.enabled = true;
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(q.data).toBe('hello!');
+  });
 });
