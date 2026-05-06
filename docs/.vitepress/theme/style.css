@@ -23,6 +23,7 @@
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
+  box-shadow: 0 0 5px var(--custom-brand-2);
   background: linear-gradient(
     135deg,
     var(--custom-brand-1),
