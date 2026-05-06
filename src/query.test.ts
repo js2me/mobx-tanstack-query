@@ -14,6 +14,7 @@ import {
 } from '@tanstack/query-core';
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
+  action,
   comparer,
   computed,
   makeAutoObservable,
@@ -5949,7 +5950,8 @@ describe('Query', () => {
     });
   });
 
-  it.skip('no function reactivity test', async () => {
+  // not supported for now
+  it.skip('no function reactivity test (inline)', async () => {
     vi.useFakeTimers();
 
     const observableParams = makeAutoObservable<Partial<QueryConfig>>({
@@ -5965,6 +5967,57 @@ describe('Query', () => {
     expect(q.data).toBe(undefined);
 
     observableParams.enabled = true;
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(q.data).toBe('hello!');
+  });
+
+  // not supported for now
+  it.skip('no function reactivity test (computed getter in class)', async () => {
+    vi.useFakeTimers();
+
+    class VM {
+      private isEnabled = false;
+      q;
+
+      get enabled() {
+        return this.isEnabled;
+      }
+
+      get queryKey() {
+        return ['foo', 'bar'];
+      }
+
+      queryFn = () => {
+        return 'hello!';
+      };
+
+      enable() {
+        this.isEnabled = true;
+      }
+
+      constructor() {
+        makeObservable<this, 'isEnabled'>(this, {
+          isEnabled: observable.ref,
+          enabled: computed,
+          queryKey: computed.struct,
+          enable: action,
+        });
+        this.q = new QueryMock(this);
+        console.log('this.q.options.enabled', this.q.options.enabled);
+      }
+    }
+
+    const vm = new VM();
+    const q = vm.q;
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(q.status).toBe('pending');
+    expect(q.data).toBe(undefined);
+
+    vm.enable();
 
     await vi.advanceTimersByTimeAsync(10_000);
 
