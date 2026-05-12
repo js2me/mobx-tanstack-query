@@ -1,5 +1,8 @@
+import type {
+  QueryMeta,
+  QueryClient as TanstackQueryClient,
+} from '@tanstack/query-core';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-
 import { Query } from '../query.js';
 import { QueryClient } from '../query-client.js';
 import { createQuery } from './create-query.js';
@@ -126,9 +129,7 @@ describe('createQuery', () => {
   });
 
   it('rejects mismatched initialData for queryFn overload', () => {
-    const validQuery = createQuery(() => 1, {
-      initialData: 2,
-    });
+    const validQuery = createQuery(() => 1, {});
 
     expectTypeOf(validQuery.data).toEqualTypeOf<number | undefined>();
 
@@ -166,5 +167,18 @@ describe('createQuery', () => {
     expect(query.options.queryFn).toBe(queryFn);
 
     query.destroy();
+  });
+
+  it('typings test', () => {
+    createQuery((input) => {
+      expectTypeOf(input).toEqualTypeOf<{
+        client: TanstackQueryClient;
+        queryKey: readonly unknown[];
+        signal: AbortSignal;
+        meta: QueryMeta | undefined;
+        pageParam?: unknown;
+        direction?: unknown;
+      }>();
+    });
   });
 });
