@@ -28,7 +28,7 @@ export function createQuery<
   TQueryKey extends QueryKey = QueryKey,
 >(
   queryClient: AnyQueryClient,
-  options?:
+  options:
     | Omit<
         Partial<
           CreateQueryFnConfig<
@@ -101,15 +101,15 @@ export function createQuery(...args: [any, any?]) {
         args[0]?.onInit?.(query);
       },
     });
-  } else if (args.length === 2) {
+  }
+
+  if (args.length === 2) {
     return new Query(
       args[0],
       typeof args[1] === 'function' ? args[1] : () => args[1],
     );
   }
 
-  return new Query(
-    queryClient,
-    typeof args[0] === 'function' ? args[0] : () => args[0],
-  );
+  const options = args[0];
+  return new Query(options?.queryClient ?? queryClient, () => options);
 }

@@ -6,6 +6,10 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { Query } from '../query.js';
 import { QueryClient } from '../query-client.js';
 import { createQuery } from './create-query.js';
+import { queryClient as presetModuleQueryClient } from './query-client.js';
+
+const getQueryClientFromQuery = (query: unknown): QueryClient =>
+  (query as { queryClient: QueryClient }).queryClient;
 
 describe('createQuery', () => {
   it('preserves typings for overloads', () => {
@@ -169,16 +173,136 @@ describe('createQuery', () => {
     query.destroy();
   });
 
-  it('typings test', () => {
+  it('creates query from queryClient and static options object (not a getter)', () => {
+    const queryFn = vi.fn(async () => 1);
+    const client = new QueryClient();
+
+    const query = createQuery(client, {
+      enabled: false,
+      queryKey: ['static-client-options'],
+      queryFn,
+    });
+
+    expect(getQueryClientFromQuery(query)).toBe(client);
+    expect(query.options.queryKey).toEqual(['static-client-options']);
+    expect(query.options.queryFn).toBe(queryFn);
+
+    query.destroy();
+  });
+
+  it('uses queryClient from options for queryFn overload', () => {
+    const customClient = new QueryClient();
+    const queryFn = vi.fn(async () => 1);
+
+    const query = createQuery(queryFn, {
+      enabled: false,
+      queryKey: ['fn-with-custom-client'],
+      queryClient: customClient,
+    });
+
+    expect(getQueryClientFromQuery(query)).toBe(customClient);
+    expect(getQueryClientFromQuery(query)).not.toBe(presetModuleQueryClient);
+
+    query.destroy();
+  });
+
+  it('uses explicit queryClient in single options overload', () => {
+    const customClient = new QueryClient();
+    const queryFn = vi.fn(async () => 42);
+
+    const query = createQuery({
+      queryClient: customClient,
+      enabled: false,
+      queryKey: ['single-options-with-client'],
+      queryFn,
+    });
+
+    expect(getQueryClientFromQuery(query)).toBe(customClient);
+    expect(getQueryClientFromQuery(query)).not.toBe(presetModuleQueryClient);
+    expect(query.options.queryKey).toEqual(['single-options-with-client']);
+
+    query.destroy();
+  });
+
+  it('input typings test', () => {
+    type CtxWide = {
+      client: TanstackQueryClient;
+      queryKey: readonly unknown[];
+      signal: AbortSignal;
+      meta: QueryMeta | undefined;
+      pageParam?: unknown;
+      direction?: unknown;
+    };
+
+    type CtxFioBar = {
+      client: TanstackQueryClient;
+      queryKey: readonly ['fio', 'bar'];
+      signal: AbortSignal;
+      meta: QueryMeta | undefined;
+      pageParam?: unknown;
+      direction?: unknown;
+    };
+
+    const client = new QueryClient();
+
     createQuery((input) => {
-      expectTypeOf(input).toEqualTypeOf<{
-        client: TanstackQueryClient;
-        queryKey: readonly unknown[];
-        signal: AbortSignal;
-        meta: QueryMeta | undefined;
-        pageParam?: unknown;
-        direction?: unknown;
-      }>();
+      expectTypeOf(input).toEqualTypeOf<CtxWide>();
+    });
+
+    createQuery(
+      (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      {
+        queryKey: ['fio', 'bar'] as const,
+        enabled: true,
+      },
+    );
+
+    createQuery(
+      (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      {
+        options: () => ({
+          queryKey: ['fio', 'bar'] as const,
+          enabled: true,
+        }),
+      },
+    );
+
+    createQuery({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
+    });
+
+    createQuery({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      options: () => ({
+        queryKey: ['fio', 'bar'] as const,
+        enabled: true,
+      }),
+    });
+
+    createQuery(client, () => ({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
+    }));
+
+    createQuery(client, {
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
     });
   });
 });
