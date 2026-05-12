@@ -550,6 +550,20 @@ This is alternative for `destroy` method
 ::: tip this option is optional if you are using `lazy` option
 :::
 
+### `onInit` (constructor)
+
+Optional. Runs once when the query is ready; receives the instance.
+
+If you use [`QueryClient`](/api/QueryClient) hooks, `onQueryInit` runs after `onInit`.
+
+### `onDone` (constructor)
+
+Optional. Same as registering [`onDone(...)`](#ondone-listener) on the instance right away; you can still add more listeners later.
+
+### `onError` (constructor)
+
+Optional. Same as registering [`onError(...)`](#onerror-listener) on the instance right away; you can still add more listeners later.
+
 ### `enableOnDemand` option <Badge type="tip">QueryFeature</Badge>
 
 [_Can be specified using `QueryClient`_](https://js2me.github.io/mobx-tanstack-query/api/QueryClient.html#queryfeatures)
