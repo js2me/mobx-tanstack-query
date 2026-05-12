@@ -4,7 +4,12 @@ import type {
   QueryKey,
 } from '@tanstack/query-core';
 
-import { Query, type QueryConfig } from 'mobx-tanstack-query';
+import {
+  type AnyQueryClient,
+  Query,
+  type QueryConfig,
+} from 'mobx-tanstack-query';
+import type { PartialKeys } from 'yummies/types';
 import { queryClient } from './query-client.js';
 
 export interface CreateQueryFnConfig<
@@ -22,10 +27,51 @@ export function createQuery<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 >(
+  queryClient: AnyQueryClient,
+  options?:
+    | Omit<
+        Partial<
+          CreateQueryFnConfig<
+            TQueryFnData,
+            TError,
+            TData,
+            TQueryData,
+            TQueryKey
+          >
+        >,
+        'queryClient'
+      >
+    | (() => Omit<
+        Partial<
+          CreateQueryFnConfig<
+            TQueryFnData,
+            TError,
+            TData,
+            TQueryData,
+            TQueryKey
+          >
+        >,
+        'queryClient'
+      >),
+): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
+
+export function createQuery<
+  TQueryFnData,
+  TError = DefaultError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
   queryFn: QueryFunction<TQueryFnData, TQueryKey>,
   options?: Omit<
     Partial<
-      CreateQueryFnConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+      CreateQueryFnConfig<
+        NoInfer<TQueryFnData>,
+        TError,
+        TData,
+        NoInfer<TQueryData>,
+        TQueryKey
+      >
     >,
     'queryFn'
   >,
@@ -38,12 +84,9 @@ export function createQuery<
   TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 >(
-  options: CreateQueryFnConfig<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
+  options: PartialKeys<
+    CreateQueryFnConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    'queryClient'
   >,
 ): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
