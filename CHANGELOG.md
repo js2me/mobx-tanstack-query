@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.0.1
+
+### Patch Changes
+
+- [`6559a28`](https://github.com/js2me/mobx-tanstack-query/commit/6559a284f19bb6d604827f95e1749a79d5768883) Thanks [@js2me](https://github.com/js2me)! - fixed typings for createQuery overloads
+
 ## 7.0.0
 
 ### Major Changes
