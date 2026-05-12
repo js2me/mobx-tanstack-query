@@ -3,9 +3,11 @@ import type {
   QueryFunction,
   QueryKey,
 } from '@tanstack/query-core';
-
 import {
+  type AnyQuery,
   type AnyQueryClient,
+  getQueryClient,
+  mountQueryClientOnce,
   Query,
   type QueryConfig,
 } from 'mobx-tanstack-query';
@@ -91,25 +93,25 @@ export function createQuery<
 ): Query<TQueryFnData, TError, TData, TQueryData, TQueryKey>;
 
 export function createQuery(...args: [any, any?]) {
+  let query: AnyQuery;
+
   if (typeof args[0] === 'function') {
-    return new Query({
+    query = new Query({
       ...args[1],
       queryClient: args[1]?.queryClient ?? queryClient,
       queryFn: args[0],
-      onInit: (query) => {
-        queryClient.mount();
-        args[0]?.onInit?.(query);
-      },
     });
-  }
-
-  if (args.length === 2) {
-    return new Query(
+  } else if (args.length === 2) {
+    query = new Query(
       args[0],
       typeof args[1] === 'function' ? args[1] : () => args[1],
     );
+  } else {
+    const options = args[0];
+    query = new Query(options?.queryClient ?? queryClient, () => options);
   }
 
-  const options = args[0];
-  return new Query(options?.queryClient ?? queryClient, () => options);
+  mountQueryClientOnce(getQueryClient(query));
+
+  return query;
 }

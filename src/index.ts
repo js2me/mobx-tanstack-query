@@ -7,3 +7,5 @@ export * from './query.types.js';
 export * from './query-client.js';
 export * from './query-client.types.js';
 export * from './query-options.js';
+export * from './utils/get-query-client.js';
+export * from './utils/mount-query-client-once.js';

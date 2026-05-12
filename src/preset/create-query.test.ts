@@ -5,11 +5,9 @@ import type {
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { Query } from '../query.js';
 import { QueryClient } from '../query-client.js';
+import { getQueryClient } from '../utils/get-query-client.js';
 import { createQuery } from './create-query.js';
 import { queryClient as presetModuleQueryClient } from './query-client.js';
-
-const getQueryClientFromQuery = (query: unknown): QueryClient =>
-  (query as { queryClient: QueryClient }).queryClient;
 
 describe('createQuery', () => {
   it('preserves typings for overloads', () => {
@@ -183,7 +181,7 @@ describe('createQuery', () => {
       queryFn,
     });
 
-    expect(getQueryClientFromQuery(query)).toBe(client);
+    expect(getQueryClient(query)).toBe(client);
     expect(query.options.queryKey).toEqual(['static-client-options']);
     expect(query.options.queryFn).toBe(queryFn);
 
@@ -200,8 +198,8 @@ describe('createQuery', () => {
       queryClient: customClient,
     });
 
-    expect(getQueryClientFromQuery(query)).toBe(customClient);
-    expect(getQueryClientFromQuery(query)).not.toBe(presetModuleQueryClient);
+    expect(getQueryClient(query)).toBe(customClient);
+    expect(getQueryClient(query)).not.toBe(presetModuleQueryClient);
 
     query.destroy();
   });
@@ -217,8 +215,8 @@ describe('createQuery', () => {
       queryFn,
     });
 
-    expect(getQueryClientFromQuery(query)).toBe(customClient);
-    expect(getQueryClientFromQuery(query)).not.toBe(presetModuleQueryClient);
+    expect(getQueryClient(query)).toBe(customClient);
+    expect(getQueryClient(query)).not.toBe(presetModuleQueryClient);
     expect(query.options.queryKey).toEqual(['single-options-with-client']);
 
     query.destroy();
