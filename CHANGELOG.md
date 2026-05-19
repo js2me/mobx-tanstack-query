@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.1.0
+
+### Minor Changes
+
+- [#84](https://github.com/js2me/mobx-tanstack-query/pull/84) [`3a8bcea`](https://github.com/js2me/mobx-tanstack-query/commit/3a8bcea840e1558faf1f06d4101f8c4179a02385) Thanks [@y0na24](https://github.com/y0na24)! - add mutationOptions helper
+
 ## 7.0.1
 
 ### Patch Changes
