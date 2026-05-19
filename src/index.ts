@@ -2,6 +2,7 @@ export * from './inifinite-query.js';
 export * from './inifinite-query.types.js';
 export * from './mutation.js';
 export * from './mutation.types.js';
+export * from './mutation-options.js';
 export * from './query.js';
 export * from './query.types.js';
 export * from './query-client.js';
