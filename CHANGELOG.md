@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.1.1
+
+### Patch Changes
+
+- [`3b5d49e`](https://github.com/js2me/mobx-tanstack-query/commit/3b5d49e4726fa821c89e0b35f984dc3efb167cfa) Thanks [@js2me](https://github.com/js2me)! - fixed problem with not working throwOnError during original tanstack query
+
 ## 7.1.0
 
 ### Minor Changes
