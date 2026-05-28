@@ -6,6 +6,7 @@ import {
   type MutationObserverOptions,
   type MutationObserverResult,
   type MutationStatus,
+  shouldThrowError,
 } from '@tanstack/query-core';
 import { action, makeObservable } from 'mobx';
 import { annotation, lazyObserve } from 'yummies/mobx';
@@ -301,23 +302,28 @@ export class Mutation<
     variables: TVariables,
     options?: MutateOptions<TData, TError, TVariables, TOnMutateResult>,
   ) {
-    if (this.features.lazy) {
-      let error: any;
+    let caughtError: unknown;
 
-      try {
-        await this.mutationObserver.mutate(variables, options);
-      } catch (error_) {
-        error = error_;
-      }
+    try {
+      await this.mutationObserver.mutate(variables, options);
+    } catch (_error) {
+      caughtError = _error;
+    }
 
-      const result = this.mutationObserver.getCurrentResult();
-      this.updateResult(result);
+    const result = this.mutationObserver.getCurrentResult();
+    this.updateResult(result);
 
-      if (error && this.mutationOptions.throwOnError) {
+    const error = this.result.error ?? caughtError;
+
+    if (error) {
+      const { throwOnError } = this.mutationOptions;
+
+      if (
+        throwOnError !== false &&
+        shouldThrowError(throwOnError ?? true, [error as TError])
+      ) {
         throw error;
       }
-    } else {
-      await this.mutationObserver.mutate(variables, options);
     }
 
     return this.result;

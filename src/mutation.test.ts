@@ -475,4 +475,202 @@ describe('Mutation', () => {
       mutation.destroy();
     });
   });
+
+  describe('throwOnError', () => {
+    type CreateTaskVariables = {
+      completed: boolean;
+      title: string;
+      userId: number;
+    };
+
+    type MutateCatchResult = 'mutate-resolved' | 'catched-error' | undefined;
+
+    const title = 'Buy milk';
+
+    const failingMutationFn = async () => {
+      throw new Error('network');
+    };
+
+    const mutateWithCatch = async (
+      mutation: Mutation<void, CreateTaskVariables>,
+    ): Promise<MutateCatchResult> => {
+      try {
+        await mutation.mutate({
+          completed: false,
+          title,
+          userId: 1,
+        });
+
+        return 'mutate-resolved';
+      } catch {
+        return 'catched-error';
+      }
+    };
+
+    describe('via QueryClient defaultOptions', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: false,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via mutation options', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          throwOnError: false,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          throwOnError: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via QueryClient defaultOptions (lazy: true)', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: false,
+              lazy: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: true,
+              lazy: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via mutation options (lazy: true)', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          throwOnError: false,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          throwOnError: true,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+  });
 });
