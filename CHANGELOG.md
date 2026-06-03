@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 7.2.0
+
+### Minor Changes
+
+- [`c7713ea`](https://github.com/js2me/mobx-tanstack-query/commit/c7713eac98247a6b1b42c831719591857c7409be) Thanks [@js2me](https://github.com/js2me)! - Expose `promise` property on Query and InfiniteQuery for Suspense integration ([#28](https://github.com/js2me/mobx-tanstack-query/issues/28))
+
+  The `promise` property is already provided by TanStack Query's `QueryObserverResult` but was not proxied by the library. It can be used to wait for the query to complete, or with `React.use(query.promise)` for Suspense integration when `experimental_prefetchInRender: true` is enabled.
+
 ## 7.1.1
 
 ### Patch Changes
