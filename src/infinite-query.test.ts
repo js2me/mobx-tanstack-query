@@ -47,10 +47,11 @@ class InfiniteQueryMock<
       InfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
       'queryClient'
     >,
+    queryClient?: QueryClient,
   ) {
     super({
       ...options,
-      queryClient: new QueryClient({}),
+      queryClient: queryClient ?? new QueryClient({}),
       queryFn: vi.fn((...args: any[]) => {
         // @ts-expect-error
         const result = options.queryFn?.(...args);
@@ -115,6 +116,52 @@ class InfiniteQueryMock<
     this.spies.destroy.mockReturnValue(result)();
   }
 }
+
+describe('InfiniteQuery promise', () => {
+  it('should expose promise property on InfiniteQuery', async () => {
+    const query = new InfiniteQueryMock({
+      queryKey: ['promise-test'],
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      queryFn: () => 'hello',
+    });
+
+    await when(() => !query._rawResult.isLoading);
+
+    expect(query.promise).toBeDefined();
+    expect(typeof query.promise.then).toBe('function');
+    expect(query.result.promise).toBe(query.promise);
+
+    query.destroy();
+  });
+
+  it('promise should resolve with data when experimental_prefetchInRender is enabled', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          experimental_prefetchInRender: true,
+        },
+      },
+    });
+
+    const query = new InfiniteQueryMock(
+      {
+        queryKey: ['promise-resolve-test'],
+        initialPageParam: 0,
+        getNextPageParam: () => undefined,
+        queryFn: () => ({ items: ['a', 'b'] }),
+      },
+      queryClient,
+    );
+
+    await when(() => !query._rawResult.isLoading);
+
+    const data = await query.promise;
+    expect(data).toEqual({ pages: [{ items: ['a', 'b'] }], pageParams: [0] });
+
+    query.destroy();
+  });
+});
 
 describe('InfiniteQuery', () => {
   it('should call queryFn without infinite query params', async () => {

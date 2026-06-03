@@ -184,6 +184,105 @@ const createMockFetch = () => {
   );
 };
 
+describe('Query promise', () => {
+  it('should expose promise property on Query', async () => {
+    const query = new QueryMock({
+      queryKey: ['promise-test'],
+      queryFn: () => 'hello',
+    });
+
+    await when(() => !query._rawResult.isLoading);
+
+    expect(query.promise).toBeDefined();
+    expect(typeof query.promise.then).toBe('function');
+    expect(query.result.promise).toBe(query.promise);
+
+    query.destroy();
+  });
+
+  it('promise should resolve with data when experimental_prefetchInRender is enabled', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          experimental_prefetchInRender: true,
+        },
+      },
+    });
+
+    const query = new QueryMock(
+      {
+        queryKey: ['promise-resolve-test'],
+        queryFn: () => 'hello',
+      },
+      queryClient,
+    );
+
+    await when(() => !query._rawResult.isLoading);
+
+    const data = await query.promise;
+    expect(data).toBe('hello');
+
+    query.destroy();
+  });
+
+  it('promise should be reactive and update with result', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          experimental_prefetchInRender: true,
+        },
+      },
+    });
+
+    let counter = 0;
+    const query = new QueryMock(
+      {
+        queryKey: ['promise-reactive-test'],
+        queryFn: () => ++counter,
+      },
+      queryClient,
+    );
+
+    await when(() => !query._rawResult.isLoading);
+
+    const firstPromise = query.promise;
+    expect(firstPromise).toBeDefined();
+
+    await query.refetch();
+
+    expect(query.promise).toBeDefined();
+
+    query.destroy();
+  });
+
+  it('promise should reject on error when experimental_prefetchInRender is enabled', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          experimental_prefetchInRender: true,
+          retry: false,
+        },
+      },
+    });
+
+    const query = new QueryMock(
+      {
+        queryKey: ['promise-reject-test'],
+        queryFn: () => {
+          throw new Error('test error');
+        },
+      },
+      queryClient,
+    );
+
+    await when(() => query._rawResult.isError);
+
+    await expect(query.promise).rejects.toThrow('test error');
+
+    query.destroy();
+  });
+});
+
 describe('Query', () => {
   it('should be fetched on start', async () => {
     const query = new QueryMock({

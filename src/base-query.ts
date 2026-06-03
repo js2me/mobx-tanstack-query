@@ -60,6 +60,7 @@ type BaseResult<TData, TError> = {
   isSuccess: boolean;
   fetchStatus: FetchStatus;
   isFetching: boolean;
+  promise: Promise<TData>;
 };
 
 export abstract class BaseQuery<

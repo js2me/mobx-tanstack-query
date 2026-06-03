@@ -208,6 +208,12 @@ export class InfiniteQuery<
    * Will be `true` while fetching the previous page with `fetchPreviousPage`.
    */
   isFetchingPreviousPage!: boolean;
+  /**
+   * A stable promise that will be resolved with the data of the query.
+   * Requires the `experimental_prefetchInRender` feature flag to be enabled.
+   * Can be used to wait for the query to complete, or with `React.use(query.promise)` for Suspense integration.
+   */
+  promise!: Promise<TData>;
 
   constructor(
     config: InfiniteQueryConfig<

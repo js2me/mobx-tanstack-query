@@ -42,6 +42,7 @@ export const originalQueryProperties = [
   'isSuccess',
   'status',
   'fetchStatus',
+  'promise',
 ] as const satisfies (keyof QueryObserverBaseResult)[];
 
 export class Query<
@@ -229,6 +230,14 @@ export class Query<
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#fetchstatus-fetchstatus)
    */
   fetchStatus!: FetchStatus;
+  /**
+   * A stable promise that will be resolved with the data of the query.
+   * Requires the `experimental_prefetchInRender` feature flag to be enabled.
+   * Can be used to wait for the query to complete, or with `React.use(query.promise)` for Suspense integration.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#promise-promisetdata)
+   */
+  promise!: Promise<TData>;
 
   constructor(
     config: QueryConfig<TQueryFnData, TError, TData, TQueryData, TQueryKey>,

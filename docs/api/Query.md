@@ -269,6 +269,55 @@ Explanation of difference between `fetchStatus` and `status`:
 - `fetchStatus` indicates the current fetching state of the query: "fetching", "paused", or "idle"
 - A query can be in "fetching" state while still having a "pending" status, or it can be in "idle" state while having an "error" or "success" status
 
+### `promise: Promise<TData>`
+
+A stable promise that will be resolved with the data of the query.
+Requires the `experimental_prefetchInRender` feature flag to be enabled.
+Can be used with `React.use(query.promise)` for Suspense integration.
+
+::: warning
+Without `experimental_prefetchInRender: true`, the promise will never resolve. Enable it either per-query or via `QueryClient` defaults.
+:::
+
+Example:
+
+```ts
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      experimental_prefetchInRender: true,
+    },
+  },
+});
+
+const query = new Query({
+  queryClient,
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+});
+```
+
+Usage with React Suspense:
+
+```tsx
+function PetList({ query }) {
+  const data = React.use(query.promise);
+
+  return (
+    <ul>
+      {data.map((pet) => (
+        <li key={pet.id}>{pet.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+// In your component tree:
+<React.Suspense fallback={<div>Loading...</div>}>
+  <PetList query={query} />
+</React.Suspense>
+```
+
 ### `options: QueryOptions`
 
 The options used to configure the query.   
