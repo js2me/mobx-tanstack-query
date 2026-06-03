@@ -11,9 +11,6 @@ importers:
       '@tanstack/query-core':
         specifier: ^5.90.2
         version: 5.100.7
-      linked-abort-controller:
-        specifier: ^1.1.1
-        version: 1.1.1
       mobx:
         specifier: ^6.12.4
         version: 6.15.0
@@ -60,6 +57,9 @@ importers:
       lefthook:
         specifier: ^1.13.6
         version: 1.13.6
+      linked-abort-controller:
+        specifier: ^1.1.1
+        version: 1.1.1
       nodemon:
         specifier: ^3.1.14
         version: 3.1.14

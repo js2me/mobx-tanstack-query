@@ -318,7 +318,7 @@ export abstract class BaseQuery<
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#update-options)
    */
   update(optionsUpdate: TUpdateOptions): void {
-    if (this.abortController.signal.aborted) {
+    if (this._destroyed) {
       return;
     }
 
@@ -389,7 +389,7 @@ export abstract class BaseQuery<
       }
       this.update({} as TUpdateOptions);
     }
-    if (this.abortController.signal.aborted && this._result) {
+    if (this._destroyed && this._result) {
       return this.queryObserver.getOptimisticResult(this.options);
     }
     return this._result || this.queryObserver.getCurrentResult();
@@ -588,7 +588,7 @@ export abstract class BaseQuery<
 
     if (this.result.isFetching) {
       await when(() => !this.result.isFetching, {
-        signal: this.abortController.signal,
+        signal: this._abortSignal,
       });
       const throwableError = this.getCurrentThrowableError();
       if (throwableError) {

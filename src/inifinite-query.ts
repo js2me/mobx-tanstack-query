@@ -363,7 +363,8 @@ export class InfiniteQuery<
     return this._result.fetchPreviousPage(options);
   }
 
-  protected handleDestroy() {
+  destroy(): void {
+    super.destroy();
     this.cleanup();
     this.hooks?.onInfiniteQueryDestroy?.(this);
   }
