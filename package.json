@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "7.2.0",
+  "version": "7.2.1",
   "scripts": {
     "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
