@@ -121,10 +121,10 @@ export function createInfiniteQuery(...args: [any, any?]) {
     );
   } else {
     const options = args[0];
-    query = new InfiniteQuery(
-      options?.queryClient ?? queryClient,
-      () => options,
-    );
+    query = new InfiniteQuery({
+      ...options,
+      queryClient: options.queryClient ?? queryClient,
+    });
   }
 
   mountQueryClientOnce(getQueryClient(query));

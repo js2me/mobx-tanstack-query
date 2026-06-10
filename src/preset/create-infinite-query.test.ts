@@ -4,6 +4,7 @@ import type {
   QueryMeta,
   QueryClient as TanstackQueryClient,
 } from '@tanstack/query-core';
+import { observable, runInAction, when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { InfiniteQuery } from '../inifinite-query.js';
 import { QueryClient } from '../query-client.js';
@@ -429,5 +430,87 @@ describe('createInfiniteQuery', () => {
       getNextPageParam: () => undefined,
       enabled: true,
     });
+  });
+
+  it('options-only overload: reactive "options.enabled" should enable infinite query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => [1, 2, 3]);
+
+    const query = createInfiniteQuery({
+      queryKey: ['options-reactive-enabled'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data?.pages).toEqual([[1, 2, 3]]);
+
+    query.destroy();
+  });
+
+  it('queryClient + dynamic options overload: reactive "enabled" should enable infinite query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => [4, 5, 6]);
+    const client = new QueryClient();
+
+    const query = createInfiniteQuery(client, () => ({
+      queryKey: ['client-dynamic-enabled'],
+      queryFn,
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      enabled: enabled.get(),
+    }));
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data?.pages).toEqual([[4, 5, 6]]);
+
+    query.destroy();
+  });
+
+  it('queryFn overload: reactive "options.enabled" should enable infinite query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => [7, 8, 9]);
+
+    const query = createInfiniteQuery(queryFn, {
+      queryKey: ['fn-dynamic-enabled'],
+      initialPageParam: 0,
+      getNextPageParam: () => undefined,
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data?.pages).toEqual([[7, 8, 9]]);
+
+    query.destroy();
   });
 });
