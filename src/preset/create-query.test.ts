@@ -2,6 +2,7 @@ import type {
   QueryMeta,
   QueryClient as TanstackQueryClient,
 } from '@tanstack/query-core';
+import { observable, runInAction, when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { Query } from '../query.js';
 import { QueryClient } from '../query-client.js';
@@ -302,5 +303,81 @@ describe('createQuery', () => {
       queryKey: ['fio', 'bar'] as const,
       enabled: true,
     });
+  });
+
+  it('options-only overload: reactive "options.enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 42);
+
+    const query = createQuery({
+      queryKey: ['options-reactive-enabled'],
+      queryFn,
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(42);
+
+    query.destroy();
+  });
+
+  it('queryClient + dynamic options overload: reactive "enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 99);
+    const client = new QueryClient();
+
+    const query = createQuery(client, () => ({
+      queryKey: ['client-dynamic-enabled'],
+      queryFn,
+      enabled: enabled.get(),
+    }));
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(99);
+
+    query.destroy();
+  });
+
+  it('queryFn overload: reactive "options.enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 77);
+
+    const query = createQuery(queryFn, {
+      queryKey: ['fn-dynamic-enabled'],
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(77);
+
+    query.destroy();
   });
 });

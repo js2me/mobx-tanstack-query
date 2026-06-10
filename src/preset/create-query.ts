@@ -108,7 +108,10 @@ export function createQuery(...args: [any, any?]) {
     );
   } else {
     const options = args[0];
-    query = new Query(options?.queryClient ?? queryClient, () => options);
+    query = new Query({
+      ...options,
+      queryClient: options.queryClient ?? queryClient,
+    });
   }
 
   mountQueryClientOnce(getQueryClient(query));
