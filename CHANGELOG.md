@@ -1,5 +1,13 @@
 # mobx-tanstack-query
 
+## 7.2.1
+
+### Patch Changes
+
+- [`00fdb0a`](https://github.com/js2me/mobx-tanstack-query/commit/00fdb0aee47e838be368066fb32c4e7d755f4778) Thanks [@js2me](https://github.com/js2me)! - better overloads work for `createInfiniteQuery` `/preset` function
+
+- [`ab908fd`](https://github.com/js2me/mobx-tanstack-query/commit/ab908fd411f7e9a57e27bc51063c7295a9f75c18) Thanks [@js2me](https://github.com/js2me)! - better overloads work for `createQuery` `/preset` function
+
 ## 7.2.0
 
 ### Minor Changes
