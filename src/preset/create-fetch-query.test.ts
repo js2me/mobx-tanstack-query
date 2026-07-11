@@ -105,4 +105,87 @@ describe('createFetchQuery', () => {
 
     query.destroy();
   });
+
+  it('accepts params as a plain object in options-only overload', () => {
+    const query = createFetchQuery({
+      params: { path: '/users/1' },
+    });
+
+    expect(query).toBeInstanceOf(FetchQuery);
+
+    query.destroy();
+  });
+
+  it('accepts params as a plain object with explicit queryClient', () => {
+    const customClient = new QueryClient();
+
+    const query = createFetchQuery({
+      queryClient: customClient,
+      params: { path: '/users/1' },
+    });
+
+    expect(query).toBeInstanceOf(FetchQuery);
+
+    query.destroy();
+  });
+
+  it('accepts params as a plain object in queryClient + options overload', () => {
+    const client = new QueryClient();
+    const query = createFetchQuery(client, {
+      params: { path: '/users/1' },
+    });
+
+    expect(query).toBeInstanceOf(FetchQuery);
+
+    query.destroy();
+  });
+
+  it('accepts params as a plain object with select in options-only overload', () => {
+    type User = { id: string; email: string };
+
+    const query = createFetchQuery<string, User>({
+      params: { path: '/users/1' },
+      select: (user) => user.email,
+    });
+
+    expect(query).toBeInstanceOf(FetchQuery);
+
+    query.destroy();
+  });
+
+  it('preserves typings when params is a plain object', () => {
+    type User = {
+      id: string;
+      email: string;
+    };
+
+    // options-only overload with plain params object
+    const queryFromOptions = createFetchQuery<User>({
+      params: { path: '/users/1' },
+    });
+
+    expectTypeOf(queryFromOptions.data).toEqualTypeOf<User | undefined>();
+
+    // options-only overload with plain params object and select
+    const queryFromOptionsWithSelect = createFetchQuery<string, User>({
+      params: { path: '/users/1' },
+      select: (user) => user.email,
+    });
+
+    expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
+      string | undefined
+    >();
+
+    // queryClient + static options overload with plain params object
+    const queryFromClientAndStaticOptions = createFetchQuery<User>(
+      new QueryClient(),
+      {
+        params: { path: '/users/1' },
+      },
+    );
+
+    expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
+      User | undefined
+    >();
+  });
 });

@@ -1,16 +1,33 @@
 # FetchQuery
 
-Class wrapper for HTTP fetch-based queries with **MobX** reactivity, extending [`Query`](/api/Query)
+A [`Query`](/api/Query) that makes HTTP requests for you — no need to write `queryFn` or `queryKey` manually.
 
-[_See docs for Query_](/api/Query)
+Instead of describing **how** to fetch data, you describe **what** to fetch using `params`:
 
-**All documentation about properties and methods of fetch query can be found in the [`Query`](/api/Query) documentation**
+```ts
+// Query — you write the fetch logic yourself
+new Query({
+  queryClient,
+  queryKey: ['/pets'],
+  queryFn: () => fetch('/pets').then(r => r.json()),
+})
+
+// FetchQuery — just describe the request
+new FetchQuery({
+  queryClient,
+  params: { path: '/pets' },
+})
+```
+
+`FetchQuery` auto-generates `queryKey` from your `params`, so the cache stays consistent automatically.
+
+**All properties and methods** (`data`, `isLoading`, `error`, `refetch`, etc.) are inherited from [`Query`](/api/Query).
 
 [Reference to source code](/src/fetch-query.ts)
 
 ## Usage
 
-Create an instance of `FetchQuery` with `params` parameter instead of `queryFn` and `queryKey`
+### Basic GET request
 
 ```ts
 const petsQuery = new FetchQuery({
@@ -20,15 +37,12 @@ const petsQuery = new FetchQuery({
   },
 });
 
-...
-
-console.log(
-  petsQuery.data,
-  petsQuery.isLoading
-)
+console.log(petsQuery.data, petsQuery.isLoading);
 ```
 
-`params` can be a function for dynamic queries. When `params` returns a falsy value, the query is automatically disabled.
+### Dynamic params
+
+`params` can be a function — when MobX observables inside it change, the query automatically refetches with new parameters. Return a falsy value to disable the query.
 
 ```ts
 const petId = observable.box<string>();
@@ -37,7 +51,7 @@ const petQuery = new FetchQuery({
   queryClient,
   params: () => petId.get()
     ? { path: `/pets/${petId.get()}` }
-    : null,
+    : null, // query is disabled while petId is empty
 });
 ```
 
@@ -85,18 +99,28 @@ const petQuery = new FetchQuery({
 - `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`
 - `meta?: QueryMeta` — Metadata attached to the query
 
-## How the request is made
+## Manual control with `start()`
 
-`FetchQuery` uses `makeFetchRequest` under the hood which:
+Create a `FetchQuery` without `params` (disabled by default), then fetch manually:
 
-1. Reads global defaults from [`QueryClient.fetchQueries`](/api/QueryClient#fetchqueries) (`baseUrl`, `headers`, `throwOnError`, `transformResponse`, `credentials`, `mode`, `customFetch`, `timeout`)
-2. Merges per-request `params` with global defaults
-3. Serializes query params and builds the full URL
-4. Handles body serialization (JSON for objects, passthrough for native `BodyInit`)
-5. Supports request timeout via `AbortSignal.timeout()` (merged with the query's own abort signal)
-6. Returns `null` on 404 when `notFoundAsNull` is set
-7. Throws the raw `Response` on non-ok responses when `throwOnError` is `true` (default)
-8. Applies `transformResponse` if provided, otherwise reads the response using `responseType`
+```ts
+const petQuery = new FetchQuery({
+  queryClient,
+  // no params — query is disabled
+});
+
+const result = await petQuery.start({
+  params: { path: '/pets/123' },
+});
+
+console.log(result.data);
+```
+
+## Request behavior
+
+- Per-request `params` are **merged** with global defaults from [`QueryClient.fetchQueries`](/api/QueryClient#fetchqueries) (per-request values take precedence)
+- The full URL is built as `baseUrl + path` with `query` params serialized and appended
+- `queryKey` is auto-generated from `params` — you never set it manually
 
 ## Recommendations
 

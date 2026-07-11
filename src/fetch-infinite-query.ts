@@ -1,4 +1,8 @@
-import type { DefaultError, InfiniteData } from '@tanstack/query-core';
+import type {
+  DefaultError,
+  InfiniteData,
+  InfiniteQueryObserverResult,
+} from '@tanstack/query-core';
 import { callFunction } from 'yummies/common';
 import type { Dict, MaybeFalsy, MaybeFn } from 'yummies/types';
 
@@ -9,7 +13,11 @@ import type {
 } from './fetch-query.js';
 import { serializeFetchQuery } from './fetch-query.js';
 import { InfiniteQuery } from './inifinite-query.js';
-import type { InfiniteQueryConfig } from './inifinite-query.types.js';
+import type {
+  InfiniteQueryConfig,
+  InfiniteQueryStartParams,
+} from './inifinite-query.types.js';
+import type { QueryClient } from './query-client.js';
 import type { AnyQueryClient } from './query-client.types.js';
 import { makeFetchRequest } from './utils/make-fetch-request.js';
 
@@ -32,6 +40,13 @@ export type FetchInfiniteQueryKey = readonly (
   | FetchInfiniteQueryKeyMeta
   | null
 )[];
+
+export interface FetchInfiniteQueryStartParams<
+  TOutputData = any,
+  TPageParam = unknown,
+> {
+  params: Omit<FetchInfiniteQueryParams<TOutputData, TPageParam>, 'pageParam'>;
+}
 
 export interface FetchInfiniteQueryConfig<
   TQueryFnData = unknown,
@@ -64,7 +79,7 @@ export interface FetchInfiniteQueryConfig<
     firstPageParam: TPageParam,
     allPageParams: TPageParam[],
   ) => TPageParam | undefined | null;
-  params: MaybeFn<
+  params?: MaybeFn<
     MaybeFalsy<FetchInfiniteQueryParams<TOutputData, TPageParam>>
   >;
   select?: (data: InfiniteData<TQueryFnData, TPageParam>) => TData;
@@ -86,7 +101,7 @@ export interface FetchInfiniteQueryPositionalConfig<
     | 'getNextPageParam'
     | 'getPreviousPageParam'
   > {
-  params: MaybeFn<
+  params?: MaybeFn<
     MaybeFalsy<FetchInfiniteQueryParams<TOutputData, TPageParam>>
   >;
   select?: (data: InfiniteData<TQueryFnData, TPageParam>) => TData;
@@ -151,6 +166,13 @@ export class FetchInfiniteQuery<
   TData = InfiniteData<TQueryFnData, TPageParam>,
   TOutputData = any,
 > extends InfiniteQuery<TQueryFnData, TError, TPageParam, TData, any> {
+  private _holders!: {
+    params: MaybeFn<
+      MaybeFalsy<FetchInfiniteQueryParams<TOutputData, TPageParam>>
+    >;
+    transformResponse: undefined | TransformResponseFn<TOutputData>;
+  };
+
   constructor(
     config: FetchInfiniteQueryConfig<
       TQueryFnData,
@@ -227,16 +249,23 @@ export class FetchInfiniteQuery<
       >;
     }
 
-    let transformResponse: undefined | TransformResponseFn<TOutputData>;
+    const holders: {
+      params: MaybeFn<
+        MaybeFalsy<FetchInfiniteQueryParams<TOutputData, TPageParam>>
+      >;
+      transformResponse: undefined | TransformResponseFn<TOutputData>;
+    } = {
+      params: queryFullConfig.params,
+      transformResponse: undefined,
+    };
 
     super({
       ...(queryFullConfig as any),
       options: () => {
-        const fetchParams = callFunction(queryFullConfig.params) || null;
-        const qc =
-          queryFullConfig.queryClient as import('./query-client.js').QueryClient;
+        const fetchParams = callFunction(holders.params) || null;
+        const qc = queryFullConfig.queryClient as QueryClient;
 
-        transformResponse = fetchParams?.transformResponse;
+        holders.transformResponse = fetchParams?.transformResponse;
 
         return {
           enabled: !!fetchParams,
@@ -270,11 +299,41 @@ export class FetchInfiniteQuery<
 
         return makeFetchRequest<TOutputData>({
           fetchParams,
-          transformResponse,
+          transformResponse: holders.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });
       },
     });
+
+    this._holders = holders;
+  }
+
+  start(
+    startParams: FetchInfiniteQueryStartParams<TOutputData, TPageParam>,
+  ): Promise<InfiniteQueryObserverResult<TData, TError>>;
+  start(
+    startParams?: InfiniteQueryStartParams<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      any
+    >,
+  ): Promise<InfiniteQueryObserverResult<TData, TError>>;
+  start(startParams: any): Promise<InfiniteQueryObserverResult<TData, TError>> {
+    if (startParams?.params) {
+      const fetchParams: FetchInfiniteQueryParams<TOutputData, TPageParam> =
+        startParams.params;
+      this._holders.params = fetchParams;
+      this._holders.transformResponse = fetchParams.transformResponse;
+
+      return super.start({
+        queryKey: buildFetchInfiniteQueryKey(fetchParams),
+        enabled: true,
+      } as any);
+    }
+
+    return super.start(startParams);
   }
 }

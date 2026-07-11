@@ -1,16 +1,14 @@
 # FetchInfiniteQuery
 
-Class wrapper for HTTP fetch-based infinite queries with **MobX** reactivity, extending [`InfiniteQuery`](/api/InfiniteQuery)
+A [`FetchQuery`](/api/FetchQuery) for paginated data — same declarative `params` API, but with built-in page navigation.
 
-[_See docs for Query_](/api/Query)
+Like [`FetchQuery`](/api/FetchQuery), it auto-generates `queryKey` from `params` and handles the HTTP request for you. The difference is that `params` receives a `pageParam` argument, and you control pagination via `getNextPageParam`.
 
-**All documentation about properties and methods of infinite fetch query can be found in the original documentation [here](https://tanstack.com/query/latest/docs/framework/react/reference/useInfiniteQuery)**
+**All properties and methods** (`data`, `isLoading`, `error`, `fetchNextPage`, `hasNextPage`, etc.) are inherited from [`InfiniteQuery`](/api/InfiniteQuery).
 
 [Reference to source code](/src/fetch-infinite-query.ts)
 
 ## Usage
-
-Create an instance of `FetchInfiniteQuery` with `params` parameter instead of `queryFn` and `queryKey`
 
 ```ts
 const starsQuery = new FetchInfiniteQuery({
@@ -26,5 +24,44 @@ const starsQuery = new FetchInfiniteQuery({
   getNextPageParam: (lastPage, _, lastPageParam) => {
     return lastPage.length ? lastPageParam + 1 : null;
   },
+});
+```
+
+### Manual control with `start()`
+
+Create a `FetchInfiniteQuery` without `params` (disabled by default), then fetch manually:
+
+```ts
+const starsQuery = new FetchInfiniteQuery({
+  queryClient,
+  initialPageParam: 1,
+  getNextPageParam: (lastPage, _, lastPageParam) => {
+    return lastPage.length ? lastPageParam + 1 : null;
+  },
+});
+
+const result = await starsQuery.start({
+  params: { path: '/stars', query: { count: 20 } },
+});
+```
+
+### How it works
+
+1. `params` is a function that receives `{ pageParam }` — the current page parameter (starts at `initialPageParam`)
+2. Each page request uses the same `params` logic with a different `pageParam`
+3. After each page loads, `getNextPageParam` determines the next page parameter — return `null` to indicate no more pages
+4. `data` is an array of all fetched pages, and `fetchNextPage()` triggers the next request
+
+### Example: cursor-based pagination
+
+```ts
+const commentsQuery = new FetchInfiniteQuery({
+  queryClient,
+  params: ({ pageParam }) => ({
+    path: '/comments',
+    query: { cursor: pageParam },
+  }),
+  initialPageParam: undefined as string | undefined,
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
 });
 ```

@@ -1,8 +1,12 @@
-import type { DefaultError, QueryMeta } from '@tanstack/query-core';
+import type {
+  DefaultError,
+  QueryMeta,
+  QueryObserverResult,
+} from '@tanstack/query-core';
 import { callFunction } from 'yummies/common';
 import type { Dict, MaybeFalsy, MaybeFn, PickByValue } from 'yummies/types';
 import { Query } from './query.js';
-import type { QueryConfig } from './query.types.js';
+import type { QueryConfig, QueryStartParams } from './query.types.js';
 import type { QueryClient } from './query-client.js';
 import type { AnyQueryClient } from './query-client.types.js';
 import { makeFetchRequest } from './utils/make-fetch-request.js';
@@ -52,6 +56,9 @@ export type FetchQueryKey = readonly (
   | FetchQueryKeyMeta
   | null
 )[];
+export interface FetchQueryStartParams<TOutputData = any> {
+  params: FetchQueryParams<TOutputData>;
+}
 
 export interface FetchQueryConfig<TData = unknown, TOutputData = any>
   extends Omit<
@@ -59,7 +66,7 @@ export interface FetchQueryConfig<TData = unknown, TOutputData = any>
     'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
   > {
   queryClient: AnyQueryClient;
-  params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
+  params?: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
   select?: (data: TOutputData) => TData;
 }
 
@@ -68,7 +75,7 @@ export interface FetchQueryPositionalConfig<TData = unknown, TOutputData = any>
     Partial<QueryConfig<unknown, DefaultError, TData>>,
     'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
   > {
-  params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
+  params?: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
   select?: (data: TOutputData) => TData;
 }
 
@@ -171,6 +178,11 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
   DefaultError,
   TData
 > {
+  private _holders!: {
+    params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
+    transformResponse: undefined | TransformResponseFn<TOutputData>;
+  };
+
   constructor(config: FetchQueryConfig<TData, TOutputData>);
   constructor(
     queryClient: AnyQueryClient,
@@ -198,15 +210,21 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
       } as FetchQueryConfig<TData, TOutputData>;
     }
 
-    let transformResponse: undefined | TransformResponseFn;
+    const holders: {
+      params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
+      transformResponse: undefined | TransformResponseFn<TOutputData>;
+    } = {
+      params: queryFullConfig.params,
+      transformResponse: undefined,
+    };
 
     super({
       ...(queryFullConfig as any),
       options: () => {
-        const fetchParams = callFunction(queryFullConfig.params) || null;
+        const fetchParams = callFunction(holders.params) || null;
         const qc = queryFullConfig.queryClient as QueryClient;
 
-        transformResponse = fetchParams?.transformResponse;
+        holders.transformResponse = fetchParams?.transformResponse;
 
         return {
           enabled: !!fetchParams,
@@ -233,11 +251,34 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
 
         return makeFetchRequest<TOutputData>({
           fetchParams,
-          transformResponse,
+          transformResponse: holders.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });
       },
     });
+
+    this._holders = holders;
+  }
+
+  start(
+    startParams: FetchQueryStartParams<TOutputData>,
+  ): Promise<QueryObserverResult<TData, DefaultError>>;
+  start(
+    startParams?: QueryStartParams<unknown, DefaultError, TData>,
+  ): Promise<QueryObserverResult<TData, DefaultError>>;
+  start(startParams: any): Promise<QueryObserverResult<TData, DefaultError>> {
+    if (startParams?.params) {
+      const fetchParams: FetchQueryParams<TOutputData> = startParams.params;
+      this._holders.params = fetchParams;
+      this._holders.transformResponse = fetchParams.transformResponse;
+
+      return super.start({
+        queryKey: buildFetchQueryKey(fetchParams),
+        enabled: true,
+      } as any);
+    }
+
+    return super.start(startParams);
   }
 }
