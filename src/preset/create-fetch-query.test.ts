@@ -169,7 +169,11 @@ describe('createFetchQuery', () => {
     // options-only overload with plain params object and select
     const queryFromOptionsWithSelect = createFetchQuery<string, User>({
       params: { path: '/users/1' },
-      select: (user) => user.email,
+      select: (user) => {
+        expectTypeOf(user).toEqualTypeOf<User>();
+        expectTypeOf(user.email).toEqualTypeOf<string>();
+        return user.email;
+      },
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<

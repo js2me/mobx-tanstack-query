@@ -8,8 +8,10 @@ import {
 import type { PartialKeys } from 'yummies/types';
 import { queryClient } from './query-client.js';
 
-export interface CreateFetchQueryFnConfig<TData = unknown, TOutputData = any>
-  extends FetchQueryConfig<TData, TOutputData> {}
+export type CreateFetchQueryFnConfig<
+  TData = unknown,
+  TOutputData = any,
+> = FetchQueryConfig<TData, TOutputData>;
 
 export function createFetchQuery<TData = unknown, TOutputData = any>(
   queryClient: AnyQueryClient,
