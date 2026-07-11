@@ -1,6 +1,6 @@
 # Other
 
-## `InferQuery`, `InferMutation`, `InferInfiniteQuery` types
+## `InferQuery`, `InferMutation`, `InferInfiniteQuery`, `InferFetchQuery`, `InferFetchInfiniteQuery` types
 
 This types are needed to infer some other types from mutations\configs.
 
@@ -8,9 +8,11 @@ This types are needed to infer some other types from mutations\configs.
 type MyData = InferMutation<typeof myMutation, "data">;
 type MyVariables = InferMutation<typeof myMutation, "variables">;
 type MyConfig = InferMutation<typeof myMutation, "config">;
+type MyFetchData = InferFetchQuery<typeof myFetchQuery, "data">;
+type MyFetchConfig = InferFetchQuery<typeof myFetchQuery, "config">;
 ```
 
-## `QueryConfigFromFn`, `MutationConfigFromFn`, `InfiniteQueryConfigFromFn`
+## `QueryConfigFromFn`, `MutationConfigFromFn`, `InfiniteQueryConfigFromFn`, `FetchQueryConfigFromFn`, `FetchInfiniteQueryConfigFromFn`
 
 This types are needed to create configuration types from your functions of your http client
 
@@ -24,7 +26,7 @@ type Config = MutationConfigFromFn<typeof myApi.createApple>
 
 ## `using` keyword
 
-`Query`, `InfiniteQuery`, `Mutation` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).
+`Query`, `InfiniteQuery`, `Mutation`, `FetchQuery`, `FetchInfiniteQuery` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).
 
 In your project you need to install babel plugin [`@babel/plugin-proposal-explicit-resource-management`](https://www.npmjs.com/package/@babel/plugin-proposal-explicit-resource-management) to add this support.
 

@@ -28,6 +28,7 @@ interface QueryClientConfig {
     mutations: MobxMutatonFeatures;
   };
   hooks?: QueryClientHooks;
+  fetchQueries?: FetchQueriesOptions;
 }
 ```
 
@@ -91,6 +92,38 @@ Entity lifecycle events. Available hooks:
 | onQueryDestroy         | Triggered when a [`Query`](/api/Query) is destroyed                 |
 | onInfiniteQueryDestroy | Triggered when a [`InfiniteQuery`](/api/InfiniteQuery) is destroyed |
 | onMutationDestroy      | Triggered when a [`Mutation`](/api/Mutation) is destroyed           |
+
+### `fetchQueries`
+
+Global configuration for [`FetchQuery`](/api/FetchQuery) and [`FetchInfiniteQuery`](/api/FetchInfiniteQuery). These defaults are merged with per-request `params` in every fetch query.
+
+- `baseUrl?: string` — Base URL prepended to every `path`
+- `headers?: Record<string>` — Default headers merged with per-request headers
+- `customFetch?: typeof globalThis.fetch` — Custom fetch implementation (useful for testing or non-browser environments)
+- `transformResponse?: TransformResponseFn` — Global response transformation function
+- `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`
+- `timeout?: number` — Request timeout in milliseconds
+- `credentials?: RequestCredentials` — Credentials mode for requests (e.g. `"include"`, `"same-origin"`)
+- `mode?: RequestMode` — Request mode (e.g. `"cors"`, `"no-cors"`)
+- `meta?: QueryMeta` — Default metadata attached to fetch queries
+
+Example:
+
+```ts
+import { QueryClient } from "mobx-tanstack-query";
+
+const queryClient = new QueryClient({
+  fetchQueries: {
+    baseUrl: "https://api.example.com",
+    headers: {
+      Authorization: "Bearer __TOKEN__",
+    },
+    throwOnError: true,
+    timeout: 30_000,
+    credentials: "include",
+  },
+});
+```
 
 ## Inheritance
 
