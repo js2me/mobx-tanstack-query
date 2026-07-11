@@ -8,9 +8,6 @@ import type {
   RefetchOptions,
   ThrowOnError,
 } from '@tanstack/query-core';
-
-export type { InfiniteQueryObserverResult };
-
 import type { InfiniteQuery } from './inifinite-query.js';
 import type {
   QueryFeatures,
@@ -19,6 +16,19 @@ import type {
   QueryResetParams,
 } from './query.types.js';
 import type { AnyQueryClient } from './query-client.types.js';
+
+export type InfiniteQueryLike<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TQueryKey extends QueryKey = QueryKey,
+> = Omit<
+  InfiniteQuery<TQueryFnData, TError, TPageParam, TData, TQueryKey>,
+  'start' | 'update'
+>;
+
+export type { InfiniteQueryObserverResult };
 
 export type InfiniteQueryErrorListener<TError = DefaultError> = (
   error: TError,

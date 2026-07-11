@@ -11,6 +11,7 @@
     "build:watch": "pnpm build && nodemon --watch src --ext ts,tsx --exec \"pnpm build\"",
     "build": "vite build",
     "pub": "pnpm build && sborshik publish --useDistDir",
+    "changeset:version": "bash scripts/changeset-version.sh",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
     "pub:major": "PUBLISH_VERSION=major pnpm pub",
@@ -41,7 +42,7 @@
   "homepage": "https://js2me.github.io/mobx-tanstack-query/",
   "repository": {
     "type": "git",
-    "url": "git://github.com/js2me/mobx-tanstack-query"
+    "url": "https://github.com/js2me/mobx-tanstack-query"
   },
   "type": "module",
   "peerDependencies": {
@@ -50,10 +51,10 @@
   },
   "dependencies": {
     "linked-abort-controller": "^1.1.1",
-    "yummies": "^7.19.4"
+    "yummies": "^7.20.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.5.3",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.31.0",
     "@testing-library/react": "^16.3.2",

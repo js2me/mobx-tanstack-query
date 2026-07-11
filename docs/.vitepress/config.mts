@@ -51,6 +51,14 @@ export default defineDocsVitepressConfig(configs, {
 					],
 				},
 				{
+					text: "Errors 🚨",
+					link: "/errors/1",
+					items: [
+						{ text: "#1: Fetch query is not configured", link: "/errors/1" },
+						{ text: "#2: Fetch infinite query is not configured", link: "/errors/2" },
+					],
+				},
+				{
 					text: "Other",
 					items: [
 						{ text: "Project examples", link: "/other/project-examples" },
