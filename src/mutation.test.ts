@@ -673,4 +673,122 @@ describe('Mutation', () => {
       });
     });
   });
+
+  describe('listener deduplication', () => {
+    it('onDone fires only once per mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-done'],
+        mutationFn: async () => 'OK',
+      });
+
+      await mutation.mutate();
+
+      expect(mutation.spies.onDone).toHaveBeenCalledTimes(1);
+      expect(mutation.spies.onDone).toHaveBeenCalledWith(
+        'OK',
+        undefined,
+        undefined,
+      );
+      mutation.destroy();
+    });
+
+    it('onError fires only once per mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-error'],
+        mutationFn: async () => {
+          throw new Error('FAIL');
+        },
+      });
+
+      try {
+        await mutation.mutate();
+      } catch {}
+
+      expect(mutation.spies.onError).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('onDone fires for each separate mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-multi'],
+        mutationFn: async (x: number) => x,
+      });
+
+      await mutation.mutate(1);
+      await mutation.mutate(2);
+
+      expect(mutation.spies.onDone).toHaveBeenCalledTimes(2);
+      mutation.destroy();
+    });
+
+    it('invalidateQueries fires only once per mutation attempt', async () => {
+      const queryClient = new MobxQueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['dedup-invalidate'],
+        mutationFn: async () => 'OK',
+        invalidateQueries: { queryKey: ['documents'] },
+      });
+
+      await mutation.mutate();
+
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['documents'] });
+      mutation.destroy();
+    });
+
+    it('onSettled fires only once per mutation attempt', async () => {
+      const onSettled = vi.fn();
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-settled'],
+        mutationFn: async () => 'OK',
+      });
+      mutation.onSettled(onSettled);
+
+      await mutation.mutate();
+
+      expect(onSettled).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('onSettled fires only once on error', async () => {
+      const onSettled = vi.fn();
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-settled-error'],
+        mutationFn: async () => {
+          throw new Error('FAIL');
+        },
+      });
+      mutation.onSettled(onSettled);
+
+      try {
+        await mutation.mutate();
+      } catch {}
+
+      expect(onSettled).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('invalidateByKey fires only once per mutation attempt', async () => {
+      const queryClient = new MobxQueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['documents'],
+        mutationFn: async () => 'OK',
+        invalidateByKey: true,
+      });
+
+      await mutation.mutate();
+
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['documents'],
+      });
+      mutation.destroy();
+    });
+  });
 });
