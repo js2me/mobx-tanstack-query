@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.2.2
+
+### Patch Changes
+
+- [`f67b672`](https://github.com/js2me/mobx-tanstack-query/commit/f67b6722ec2af521aee43ce776fde3aa33c09349) Thanks [@js2me](https://github.com/js2me)! - fixed bug with listener duplicate calls in Mutation
+
 ## 7.2.1
 
 ### Patch Changes
