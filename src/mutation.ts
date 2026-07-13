@@ -91,6 +91,10 @@ export class Mutation<
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
 
+  private _notifiedResult:
+    | MutationObserverResult<TData, TError, TVariables, TOnMutateResult>
+    | undefined;
+
   /**
    * The last successfully resolved data for the mutation.
    */
@@ -348,6 +352,12 @@ export class Mutation<
       this.result.error = this.features.transformError(this.result.error);
     }
 
+    if (result === this._notifiedResult) {
+      return;
+    }
+
+    this._notifiedResult = result;
+
     if (result.isSuccess && !result.error) {
       this.doneListeners.forEach((fn) => {
         fn(result.data!, result.variables!, result.context);
@@ -398,6 +408,8 @@ export class Mutation<
     this.doneListeners = [];
     this.errorListeners = [];
     this.settledListeners = [];
+
+    this._notifiedResult = undefined;
 
     if (this.features.resetOnDestroy) {
       this.reset();
