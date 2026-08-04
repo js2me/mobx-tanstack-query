@@ -52,6 +52,23 @@ const result = await starsQuery.start({
 3. After each page loads, `getNextPageParam` determines the next page parameter — return `null` to indicate no more pages
 4. `data` is an array of all fetched pages, and `fetchNextPage()` triggers the next request
 
+### Config as a function
+
+Like [`FetchQuery`](/api/FetchQuery), the whole config object can be a function. MobX observables read inside it are tracked, so the query reacts to their changes.
+
+```ts
+const starsQuery = new FetchInfiniteQuery(() => ({
+  queryClient,
+  params: ({ pageParam }) => ({
+    path: '/stars',
+    query: { count: 20, page: pageParam },
+  }),
+  initialPageParam: 1,
+  getNextPageParam: (lastPage, _, lastPageParam) =>
+    lastPage.length ? lastPageParam + 1 : null,
+}));
+```
+
 ### Example: cursor-based pagination
 
 ```ts

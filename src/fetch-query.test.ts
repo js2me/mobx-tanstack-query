@@ -529,6 +529,72 @@ describe('FetchQuery', () => {
     query.destroy();
   });
 
+  it('accepts a function returning the full config', async () => {
+    fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+    const query = new FetchQuery(() => ({
+      queryClient,
+      params: { path: '/users/1' },
+    }));
+
+    await when(() => !query.isLoading);
+
+    expect(fetchSpy).toHaveBeenCalledWith('/users/1', {
+      signal: expect.any(AbortSignal),
+    });
+    expect(query.data).toEqual({ id: 1 });
+
+    query.destroy();
+  });
+
+  it('refetches when observable values inside the config function change', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(okJson({ id: 1 }))
+      .mockResolvedValueOnce(okJson({ id: 2 }));
+
+    const state = observable({ id: 1 });
+    const query = new FetchQuery(() => ({
+      queryClient,
+      params: { path: `/users/${state.id}` },
+    }));
+
+    await when(() => !query.isLoading);
+    expect(query.data).toEqual({ id: 1 });
+
+    runInAction(() => {
+      state.id = 2;
+    });
+
+    await when(() => (query.data as any)?.id === 2);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    query.destroy();
+  });
+
+  it('supports a nested params function inside the config function', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(okJson({ id: 1 }))
+      .mockResolvedValueOnce(okJson({ id: 2 }));
+
+    const state = observable({ id: 1 });
+    const query = new FetchQuery(() => ({
+      queryClient,
+      params: () => ({ path: `/users/${state.id}` }),
+    }));
+
+    await when(() => !query.isLoading);
+    expect(query.data).toEqual({ id: 1 });
+
+    runInAction(() => {
+      state.id = 2;
+    });
+
+    await when(() => (query.data as any)?.id === 2);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    query.destroy();
+  });
+
   describe('client-level headers from fetchQueries', () => {
     let clientWithHeaders: MobxQueryClient;
 

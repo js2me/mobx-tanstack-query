@@ -55,6 +55,19 @@ const petQuery = new FetchQuery({
 });
 ```
 
+### Config as a function
+
+The whole config object can also be a function. MobX observables read inside it are tracked, so the query refetches when they change — handy when `queryClient` or `params` depend on reactive state.
+
+```ts
+const petQuery = new FetchQuery(() => ({
+  queryClient,
+  params: { path: `/pets/${activePetId.get()}` },
+}));
+```
+
+This is equivalent to passing the object form, but the function is re-evaluated reactively. `params` can still be a function on top of it for finer-grained reactivity.
+
 ### POST request with body
 
 ```ts

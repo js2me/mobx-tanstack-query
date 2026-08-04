@@ -183,19 +183,29 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
     transformResponse: undefined | TransformResponseFn<TOutputData>;
   };
 
-  constructor(config: FetchQueryConfig<TData, TOutputData>);
+  constructor(config: MaybeFn<FetchQueryConfig<TData, TOutputData>>);
   constructor(
     queryClient: AnyQueryClient,
     config: FetchQueryPositionalConfig<TData, TOutputData>,
   );
 
   constructor(
-    queryClientOrConfig: AnyQueryClient | FetchQueryConfig<TData, TOutputData>,
+    queryClientOrConfig:
+      | AnyQueryClient
+      | FetchQueryConfig<TData, TOutputData>
+      | (() => FetchQueryConfig<TData, TOutputData>),
     positionalConfig?: FetchQueryPositionalConfig<TData, TOutputData>,
   ) {
     let queryFullConfig: FetchQueryConfig<TData, TOutputData>;
+    let getConfig: (() => FetchQueryConfig<TData, TOutputData>) | undefined;
 
-    if (
+    if (typeof queryClientOrConfig === 'function') {
+      getConfig = queryClientOrConfig as () => FetchQueryConfig<
+        TData,
+        TOutputData
+      >;
+      queryFullConfig = getConfig();
+    } else if (
       'queryClient' in
       (queryClientOrConfig as FetchQueryConfig<TData, TOutputData>)
     ) {
@@ -214,7 +224,9 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
       params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
       transformResponse: undefined | TransformResponseFn<TOutputData>;
     } = {
-      params: queryFullConfig.params,
+      params: getConfig
+        ? () => callFunction(getConfig!().params)
+        : queryFullConfig.params,
       transformResponse: undefined,
     };
 

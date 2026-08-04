@@ -174,12 +174,14 @@ export class FetchInfiniteQuery<
   };
 
   constructor(
-    config: FetchInfiniteQueryConfig<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TOutputData
+    config: MaybeFn<
+      FetchInfiniteQueryConfig<
+        TQueryFnData,
+        TError,
+        TPageParam,
+        TData,
+        TOutputData
+      >
     >,
   );
   constructor(
@@ -202,7 +204,14 @@ export class FetchInfiniteQuery<
           TPageParam,
           TData,
           TOutputData
-        >,
+        >
+      | (() => FetchInfiniteQueryConfig<
+          TQueryFnData,
+          TError,
+          TPageParam,
+          TData,
+          TOutputData
+        >),
     positionalConfig?: FetchInfiniteQueryPositionalConfig<
       TQueryFnData,
       TError,
@@ -218,8 +227,26 @@ export class FetchInfiniteQuery<
       TData,
       TOutputData
     >;
+    let getConfig:
+      | (() => FetchInfiniteQueryConfig<
+          TQueryFnData,
+          TError,
+          TPageParam,
+          TData,
+          TOutputData
+        >)
+      | undefined;
 
-    if (
+    if (typeof queryClientOrConfig === 'function') {
+      getConfig = queryClientOrConfig as () => FetchInfiniteQueryConfig<
+        TQueryFnData,
+        TError,
+        TPageParam,
+        TData,
+        TOutputData
+      >;
+      queryFullConfig = getConfig();
+    } else if (
       'queryClient' in
       (queryClientOrConfig as FetchInfiniteQueryConfig<
         TQueryFnData,
@@ -255,7 +282,9 @@ export class FetchInfiniteQuery<
       >;
       transformResponse: undefined | TransformResponseFn<TOutputData>;
     } = {
-      params: queryFullConfig.params,
+      params: getConfig
+        ? () => callFunction(getConfig!().params)
+        : queryFullConfig.params,
       transformResponse: undefined,
     };
 
