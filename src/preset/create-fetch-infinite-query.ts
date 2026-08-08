@@ -65,6 +65,25 @@ export function createFetchInfiniteQuery<
   TData = InfiniteData<TQueryFnData, TPageParam>,
   TOutputData = any,
 >(
+  options: () => PartialKeys<
+    CreateFetchInfiniteQueryFnConfig<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TOutputData
+    >,
+    'queryClient'
+  >,
+): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
+
+export function createFetchInfiniteQuery<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TPageParam = unknown,
+  TData = InfiniteData<TQueryFnData, TPageParam>,
+  TOutputData = any,
+>(
   options: PartialKeys<
     CreateFetchInfiniteQueryFnConfig<
       TQueryFnData,
@@ -81,10 +100,24 @@ export function createFetchInfiniteQuery(...args: [any, any?]) {
   let fetchInfiniteQuery: FetchInfiniteQuery;
 
   if (args.length === 2) {
-    fetchInfiniteQuery = new FetchInfiniteQuery(
-      args[0],
-      typeof args[1] === 'function' ? args[1] : () => args[1],
-    );
+    if (typeof args[1] === 'function') {
+      const getOptions = args[1];
+      fetchInfiniteQuery = new FetchInfiniteQuery(() => ({
+        ...getOptions(),
+        queryClient: args[0],
+      }));
+    } else {
+      fetchInfiniteQuery = new FetchInfiniteQuery(args[0], args[1]);
+    }
+  } else if (typeof args[0] === 'function') {
+    const getOptions = args[0];
+    fetchInfiniteQuery = new FetchInfiniteQuery(() => {
+      const options = getOptions();
+      return {
+        ...options,
+        queryClient: options.queryClient ?? queryClient,
+      };
+    });
   } else {
     const options = args[0];
     fetchInfiniteQuery = new FetchInfiniteQuery({

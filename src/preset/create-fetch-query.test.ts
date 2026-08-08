@@ -1,5 +1,14 @@
+import { observable, runInAction, when } from 'mobx';
 import { FetchQuery, QueryClient } from 'mobx-tanstack-query';
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
 import { createFetchQuery } from './create-fetch-query.js';
 
 describe('createFetchQuery', () => {
@@ -58,6 +67,23 @@ describe('createFetchQuery', () => {
 
     expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
       User | undefined
+    >();
+
+    // 1-arg function overload — queryClient defaults to preset
+    const queryFromFunction = createFetchQuery<User>(() => ({
+      params: () => ({ path: '/users/1' }),
+    }));
+
+    expectTypeOf(queryFromFunction.data).toEqualTypeOf<User | undefined>();
+
+    // 1-arg function overload with select
+    const queryFromFunctionWithSelect = createFetchQuery<string, User>(() => ({
+      params: () => ({ path: '/users/1' }),
+      select: (user) => user.email,
+    }));
+
+    expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<
+      string | undefined
     >();
   });
 
@@ -191,5 +217,107 @@ describe('createFetchQuery', () => {
     expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
       User | undefined
     >();
+  });
+
+  describe('fetching', () => {
+    let fetchSpy: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const okJson = (data: unknown) =>
+      new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    it('fetches from the queryClient + object options overload', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+      const query = createFetchQuery(new QueryClient(), {
+        params: { path: '/users/1' },
+      });
+
+      await when(() => !query.isLoading);
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/1', expect.any(Object));
+      expect(query.data).toEqual({ id: 1 });
+
+      query.destroy();
+    });
+
+    it('fetches from the queryClient + function options overload', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 2 }));
+
+      const query = createFetchQuery(new QueryClient(), () => ({
+        params: { path: '/users/2' },
+      }));
+
+      await when(() => !query.isLoading);
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/2', expect.any(Object));
+      expect(query.data).toEqual({ id: 2 });
+
+      query.destroy();
+    });
+
+    it('fetches from the function config overload with explicit queryClient', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 3 }));
+
+      const query = createFetchQuery(() => ({
+        queryClient: new QueryClient(),
+        params: { path: '/users/3' },
+      }));
+
+      await when(() => !query.isLoading);
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/3', expect.any(Object));
+      expect(query.data).toEqual({ id: 3 });
+
+      query.destroy();
+    });
+
+    it('uses the preset queryClient in the function config overload', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 4 }));
+
+      const query = createFetchQuery(() => ({ params: { path: '/users/4' } }));
+
+      await when(() => !query.isLoading);
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/4', expect.any(Object));
+      expect(query.data).toEqual({ id: 4 });
+
+      query.destroy();
+    });
+
+    it('refetches when observables inside the function config change', async () => {
+      fetchSpy
+        .mockResolvedValueOnce(okJson({ id: 1 }))
+        .mockResolvedValueOnce(okJson({ id: 2 }));
+
+      const state = observable({ id: 1 });
+      const query = createFetchQuery(() => ({
+        queryClient: new QueryClient(),
+        params: { path: `/users/${state.id}` },
+      }));
+
+      await when(() => !query.isLoading);
+      expect(query.data).toEqual({ id: 1 });
+
+      runInAction(() => {
+        state.id = 2;
+      });
+
+      await when(() => (query.data as any)?.id === 2);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+      query.destroy();
+    });
   });
 });

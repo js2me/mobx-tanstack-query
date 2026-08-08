@@ -6,7 +6,9 @@ This is alternative for [`new FetchInfiniteQuery()`](/api/FetchInfiniteQuery#usa
 
 ```ts
 createFetchInfiniteQuery(queryClient, options)
+createFetchInfiniteQuery(queryClient, () => options)
 createFetchInfiniteQuery(options)
+createFetchInfiniteQuery(() => options)
 ```
 
 ## Usage
@@ -24,6 +26,22 @@ const query = createFetchInfiniteQuery({
     return lastPage.length ? lastPageParam + 1 : null;
   },
 });
+```
+
+### Config as a function
+
+The whole `options` object can also be a function — MobX observables read inside it are tracked, so the query reacts to their changes, just like [`new FetchInfiniteQuery(() => ({ ... }))`](/api/FetchInfiniteQuery#config-as-a-function). The `queryClient` is optional and defaults to the preset [`queryClient`](/preset/queryClient).
+
+```ts
+const query = createFetchInfiniteQuery(() => ({
+  params: ({ pageParam }) => ({
+    path: "/pets",
+    query: { page: pageParam ?? 1 },
+  }),
+  initialPageParam: 1,
+  getNextPageParam: (lastPage, _, lastPageParam) =>
+    lastPage.length ? lastPageParam + 1 : null,
+}));
 ```
 
 ## QueryClient `mount()`

@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { QueryClient } from '@tanstack/query-core';
 import { observable, runInAction, when } from 'mobx';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {
   buildFetchQueryKey,
   buildFetchQueryUrl,
@@ -545,6 +545,29 @@ describe('FetchQuery', () => {
     expect(query.data).toEqual({ id: 1 });
 
     query.destroy();
+  });
+
+  it('preserves typings for the function config overload', () => {
+    type User = { id: number; name: string };
+
+    // params returns falsy so the query stays disabled (no fetch) during this type check
+    const query = new FetchQuery<User>(() => ({
+      queryClient,
+      params: () => null,
+    }));
+
+    expectTypeOf(query.data).toEqualTypeOf<User | undefined>();
+
+    const queryWithSelect = new FetchQuery<string, User>(() => ({
+      queryClient,
+      params: () => null,
+      select: (user) => user.name,
+    }));
+
+    expectTypeOf(queryWithSelect.data).toEqualTypeOf<string | undefined>();
+
+    query.destroy();
+    queryWithSelect.destroy();
   });
 
   it('refetches when observable values inside the config function change', async () => {

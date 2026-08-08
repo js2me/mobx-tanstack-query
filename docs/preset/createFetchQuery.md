@@ -6,7 +6,9 @@ This is alternative for [`new FetchQuery()`](/api/FetchQuery#usage).
 
 ```ts
 createFetchQuery(queryClient, options)
+createFetchQuery(queryClient, () => options)
 createFetchQuery(options)
+createFetchQuery(() => options)
 ```
 
 ## Usage
@@ -19,6 +21,16 @@ const query = createFetchQuery({
     path: "/pets",
   },
 });
+```
+
+### Config as a function
+
+The whole `options` object can also be a function. MobX observables read inside it are tracked, so the query refetches when they change — just like [`new FetchQuery(() => ({ ... }))`](/api/FetchQuery#config-as-a-function). The `queryClient` is optional and defaults to the preset [`queryClient`](/preset/queryClient).
+
+```ts
+const query = createFetchQuery(() => ({
+  params: { path: `/pets/${activePetId.get()}` },
+}));
 ```
 
 ## QueryClient `mount()`

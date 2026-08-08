@@ -24,6 +24,13 @@ export function createFetchQuery<TData = unknown, TOutputData = any>(
 ): FetchQuery<TData, TOutputData>;
 
 export function createFetchQuery<TData = unknown, TOutputData = any>(
+  options: () => PartialKeys<
+    CreateFetchQueryFnConfig<TData, TOutputData>,
+    'queryClient'
+  >,
+): FetchQuery<TData, TOutputData>;
+
+export function createFetchQuery<TData = unknown, TOutputData = any>(
   options: PartialKeys<
     CreateFetchQueryFnConfig<TData, TOutputData>,
     'queryClient'
@@ -34,10 +41,24 @@ export function createFetchQuery(...args: [any, any?]) {
   let fetchQuery: FetchQuery;
 
   if (args.length === 2) {
-    fetchQuery = new FetchQuery(
-      args[0],
-      typeof args[1] === 'function' ? args[1] : () => args[1],
-    );
+    if (typeof args[1] === 'function') {
+      const getOptions = args[1];
+      fetchQuery = new FetchQuery(() => ({
+        ...getOptions(),
+        queryClient: args[0],
+      }));
+    } else {
+      fetchQuery = new FetchQuery(args[0], args[1]);
+    }
+  } else if (typeof args[0] === 'function') {
+    const getOptions = args[0];
+    fetchQuery = new FetchQuery(() => {
+      const options = getOptions();
+      return {
+        ...options,
+        queryClient: options.queryClient ?? queryClient,
+      };
+    });
   } else {
     const options = args[0];
     fetchQuery = new FetchQuery({
