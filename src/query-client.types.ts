@@ -3,8 +3,10 @@ import type {
   DefaultError,
   QueryClient as QueryClientCore,
   QueryClientConfig as QueryClientCoreConfig,
+  QueryMeta,
 } from '@tanstack/query-core';
-
+import type { Dict } from 'yummies/types';
+import type { TransformResponseFn } from './fetch-query.js';
 import type { InfiniteQuery } from './inifinite-query.js';
 import type { Mutation } from './mutation.js';
 import type { MutationFeatures } from './mutation.types.js';
@@ -34,8 +36,21 @@ export interface QueryClientHooks {
   onMutationDestroy?: (query: Mutation<any, any, any, any>) => void;
 }
 
+export interface FetchQueriesOptions<TOutputData = any> {
+  baseUrl?: string;
+  headers?: Dict<string>;
+  customFetch?: typeof globalThis.fetch;
+  transformResponse?: TransformResponseFn<TOutputData>;
+  throwOnError?: boolean;
+  timeout?: number;
+  credentials?: RequestCredentials;
+  mode?: RequestMode;
+  meta?: QueryMeta;
+}
+
 export interface QueryClientConfig
   extends Omit<QueryClientCoreConfig, 'defaultOptions'> {
   defaultOptions?: DefaultOptions;
   hooks?: QueryClientHooks;
+  fetchQueries?: FetchQueriesOptions;
 }

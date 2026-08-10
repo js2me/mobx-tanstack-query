@@ -21,12 +21,15 @@ jobs:
     steps:
       - name: Checkout tree
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set-up Node.js
         uses: actions/setup-node@v4
         with:
           check-latest: true
           node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
 
       - run: corepack enable
       - run: pnpm i
@@ -43,6 +46,8 @@ jobs:
             echo "last_tag=$tag" >> $GITHUB_OUTPUT
           fi
 
+      - run: npm install -g npm@latest
+
       - name: Create Release Pull Request
         uses: changesets/action@v1
         continue-on-error: false
@@ -50,8 +55,7 @@ jobs:
         with:
           version: pnpm changeset version
           publish: pnpm pub
+          createGithubReleases: false
         env:
           CI: true
           GITHUB_TOKEN: ${{ github.token }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

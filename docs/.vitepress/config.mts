@@ -33,8 +33,10 @@ export default defineDocsVitepressConfig(configs, {
 					link: "/api/Query",
 					items: [
 						{ text: "Query", link: "/api/Query" },
+						{ text: "FetchQuery", link: "/api/FetchQuery" },
 						{ text: "Mutation", link: "/api/Mutation" },
 						{ text: "InfiniteQuery", link: "/api/InfiniteQuery" },
+						{ text: "FetchInfiniteQuery", link: "/api/FetchInfiniteQuery" },
 						{ text: "QueryClient", link: "/api/QueryClient" },
 						{ text: "Other", link: "/api/other" },
 					],
@@ -45,9 +47,19 @@ export default defineDocsVitepressConfig(configs, {
 					items: [
 						{ text: "Overview", link: "/preset" },
 						{ text: "createQuery", link: "/preset/createQuery" },
+						{ text: "createFetchQuery", link: "/preset/createFetchQuery" },
 						{ text: "createMutation", link: "/preset/createMutation" },
 						{ text: "createInfiniteQuery", link: "/preset/createInfiniteQuery" },
+						{ text: "createFetchInfiniteQuery", link: "/preset/createFetchInfiniteQuery" },
 						{ text: "queryClient", link: "/preset/queryClient" },
+					],
+				},
+				{
+					text: "Errors 🚨",
+					link: "/errors/1",
+					items: [
+						{ text: "#1: Fetch query is not configured", link: "/errors/1" },
+						{ text: "#2: Fetch infinite query is not configured", link: "/errors/2" },
 					],
 				},
 				{

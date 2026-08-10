@@ -2,7 +2,7 @@
   "compilerOptions": {
     "types": ["vitest", "node"],
     "target": "ESNext",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
@@ -28,7 +28,8 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*.test.ts"
+    "src/**/*.test.ts",
+    "scripts/**/*.ts"
   ],
   "exclude": [
     "node_modules"
