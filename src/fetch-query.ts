@@ -48,6 +48,7 @@ export type FetchQueryKeyMeta = Pick<
   | 'notFoundAsNull'
   | 'responseType'
   | 'request'
+  | 'throwOnError'
 >;
 
 export type FetchQueryKey = readonly (
@@ -56,7 +57,8 @@ export type FetchQueryKey = readonly (
   | FetchQueryKeyMeta
   | null
 )[];
-export interface FetchQueryStartParams<TOutputData = any> {
+export interface FetchQueryStartParams<TOutputData = any>
+  extends QueryStartParams<unknown, DefaultError, any> {
   params: FetchQueryParams<TOutputData>;
 }
 
@@ -143,6 +145,7 @@ export const buildFetchQueryKey = (
       notFoundAsNull: fetchParams.notFoundAsNull,
       responseType: fetchParams.responseType,
       request: fetchParams.request,
+      throwOnError: fetchParams.throwOnError,
     } satisfies FetchQueryKeyMeta,
   ];
 };
@@ -170,6 +173,7 @@ export const parseFetchQueryKey = (
     notFoundAsNull: meta.notFoundAsNull,
     responseType: meta.responseType,
     request: meta.request,
+    throwOnError: meta.throwOnError,
   };
 };
 
@@ -281,13 +285,18 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
   ): Promise<QueryObserverResult<TData, DefaultError>>;
   start(startParams: any): Promise<QueryObserverResult<TData, DefaultError>> {
     if (startParams?.params) {
-      const fetchParams: FetchQueryParams<TOutputData> = startParams.params;
+      const { params, ...restStartParams } = startParams;
+      const fetchParams: FetchQueryParams<TOutputData> = params;
       this._holders.params = fetchParams;
       this._holders.transformResponse = fetchParams.transformResponse;
 
       return super.start({
+        ...restStartParams,
         queryKey: buildFetchQueryKey(fetchParams),
         enabled: true,
+        meta:
+          fetchParams.meta ??
+          (this.queryClient as QueryClient).fetchQueries?.meta,
       } as any);
     }
 

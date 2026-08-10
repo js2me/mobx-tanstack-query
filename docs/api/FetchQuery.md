@@ -103,7 +103,7 @@ const petQuery = new FetchQuery({
 - `baseUrl?: string` — Base URL prepended to `path`. Can also be set globally via [`QueryClient.fetchQueries`](/api/QueryClient#fetchqueries)
 - `query?: Record<string, string | number | boolean | null | undefined>` — Query parameters to be serialized and appended to the URL
 - `method?: string` — HTTP method. Defaults to `"GET"` (or `"POST"` when `body` is provided)
-- `headers?: Record<string>` — Request headers. Merged with global headers from `QueryClient.fetchQueries`
+- `headers?: Record<string, string>` — Request headers. Merged with global headers from `QueryClient.fetchQueries`
 - `body?: BodyInit | Record<string, unknown>` — Request body. Objects are JSON-serialized with `Content-Type: application/json`; native `BodyInit` (Blob, FormData, etc.) is passed through as-is
 - `request?: Partial<RequestInit>` — Additional `RequestInit` options (except `signal`, `method`, `headers`, `body`)
 - `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing

@@ -1,6 +1,10 @@
 import type { InfiniteData } from '@tanstack/query-core';
 import { observable, runInAction, when } from 'mobx';
-import { FetchInfiniteQuery, QueryClient } from 'mobx-tanstack-query';
+import {
+  FetchInfiniteQuery,
+  getQueryClient,
+  QueryClient,
+} from 'mobx-tanstack-query';
 import {
   afterEach,
   beforeEach,
@@ -11,6 +15,7 @@ import {
   vi,
 } from 'vitest';
 import { createFetchInfiniteQuery } from './create-fetch-infinite-query.js';
+import { queryClient as presetQueryClient } from './query-client.js';
 
 describe('createFetchInfiniteQuery', () => {
   it('preserves typings for overloads', () => {
@@ -162,7 +167,7 @@ describe('createFetchInfiniteQuery', () => {
       getNextPageParam: () => undefined,
     });
 
-    expect(query).toBeInstanceOf(FetchInfiniteQuery);
+    expect(getQueryClient(query)).toBe(presetQueryClient);
 
     query.destroy();
   });

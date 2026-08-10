@@ -1,7 +1,15 @@
 /// <reference types="node" />
 import { QueryClient } from '@tanstack/query-core';
 import { observable, runInAction, when } from 'mobx';
-import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
 import {
   buildFetchQueryKey,
   buildFetchQueryUrl,
@@ -91,6 +99,7 @@ describe('buildFetchQueryKey / parseFetchQueryKey', () => {
       notFoundAsNull: true,
       responseType: 'json' as const,
       request: { cache: 'no-cache' as RequestCache },
+      throwOnError: false,
     };
     const key = buildFetchQueryKey(params);
     const parsed = parseFetchQueryKey(key);
@@ -104,6 +113,7 @@ describe('buildFetchQueryKey / parseFetchQueryKey', () => {
       notFoundAsNull: true,
       responseType: 'json',
       request: { cache: 'no-cache' },
+      throwOnError: false,
     });
   });
 
@@ -272,6 +282,27 @@ describe('FetchQuery', () => {
     await when(() => query.isError);
     expect(query.error).toBeInstanceOf(Response);
     expect((query.error as unknown as Response).status).toBe(404);
+
+    query.destroy();
+  });
+
+  it('honors throwOnError: false from params (query key round-trip)', async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'oops' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    const query = new FetchQuery(queryClient, {
+      params: () => ({ path: '/oops', throwOnError: false }),
+      retry: false,
+    });
+
+    await when(() => !query.isLoading);
+
+    expect(query.isSuccess).toBe(true);
+    expect(query.data).toEqual({ message: 'oops' });
 
     query.destroy();
   });
@@ -1100,6 +1131,72 @@ describe('FetchQuery', () => {
 
       expect(query.options.meta).toEqual({ source: 'b' });
       expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      query.destroy();
+    });
+  });
+
+  describe('start()', () => {
+    it('fetches using the params passed to start', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+      const query = new FetchQuery({ queryClient });
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      await query.start({
+        params: { path: '/users/1' },
+      });
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/1', expect.any(Object));
+      expect(query.data).toEqual({ id: 1 });
+
+      query.destroy();
+    });
+
+    it('applies meta from start params', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+      const query = new FetchQuery({ queryClient });
+
+      await query.start({
+        params: { path: '/users/1', meta: { source: 'start' } },
+      });
+
+      expect(query.options.meta).toEqual({ source: 'start' });
+
+      query.destroy();
+    });
+
+    it('preserves additional start options', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+      const query = new FetchQuery({ queryClient });
+
+      await query.start({
+        params: { path: '/users/1' },
+        staleTime: 5000,
+      });
+
+      expect(query.options.staleTime).toBe(5000);
+
+      query.destroy();
+    });
+
+    it('falls back to client-level meta when start params have no meta', async () => {
+      fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
+
+      const clientWithMeta = new MobxQueryClient({
+        fetchQueries: { meta: { source: 'client' } },
+      });
+
+      const query = new FetchQuery({ queryClient: clientWithMeta });
+
+      await query.start({
+        params: { path: '/users/1' },
+      });
+
+      expect(query.options.meta).toEqual({ source: 'client' });
 
       query.destroy();
     });

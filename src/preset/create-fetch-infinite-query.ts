@@ -3,11 +3,9 @@ import {
   type AnyQueryClient,
   FetchInfiniteQuery,
   type FetchInfiniteQueryConfig,
-  getQueryClient,
-  mountQueryClientOnce,
 } from 'mobx-tanstack-query';
 import type { PartialKeys } from 'yummies/types';
-import { queryClient } from './query-client.js';
+import { createFetchQueryInstance } from './create-query-instance.js';
 
 export interface CreateFetchInfiniteQueryFnConfig<
   TQueryFnData = unknown,
@@ -97,36 +95,5 @@ export function createFetchInfiniteQuery<
 ): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
 
 export function createFetchInfiniteQuery(...args: [any, any?]) {
-  let fetchInfiniteQuery: FetchInfiniteQuery;
-
-  if (args.length === 2) {
-    if (typeof args[1] === 'function') {
-      const getOptions = args[1];
-      fetchInfiniteQuery = new FetchInfiniteQuery(() => ({
-        ...getOptions(),
-        queryClient: args[0],
-      }));
-    } else {
-      fetchInfiniteQuery = new FetchInfiniteQuery(args[0], args[1]);
-    }
-  } else if (typeof args[0] === 'function') {
-    const getOptions = args[0];
-    fetchInfiniteQuery = new FetchInfiniteQuery(() => {
-      const options = getOptions();
-      return {
-        ...options,
-        queryClient: options.queryClient ?? queryClient,
-      };
-    });
-  } else {
-    const options = args[0];
-    fetchInfiniteQuery = new FetchInfiniteQuery({
-      ...options,
-      queryClient: options.queryClient ?? queryClient,
-    });
-  }
-
-  mountQueryClientOnce(getQueryClient(fetchInfiniteQuery));
-
-  return fetchInfiniteQuery;
+  return createFetchQueryInstance(FetchInfiniteQuery, args);
 }

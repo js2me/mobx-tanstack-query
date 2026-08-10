@@ -98,7 +98,7 @@ Entity lifecycle events. Available hooks:
 Global configuration for [`FetchQuery`](/api/FetchQuery) and [`FetchInfiniteQuery`](/api/FetchInfiniteQuery). These defaults are merged with per-request `params` in every fetch query.
 
 - `baseUrl?: string` — Base URL prepended to every `path`
-- `headers?: Record<string>` — Default headers merged with per-request headers
+- `headers?: Record<string, string>` — Default headers merged with per-request headers
 - `customFetch?: typeof globalThis.fetch` — Custom fetch implementation (useful for testing or non-browser environments)
 - `transformResponse?: TransformResponseFn` — Global response transformation function
 - `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`

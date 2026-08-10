@@ -41,7 +41,10 @@ const starsQuery = new FetchInfiniteQuery({
 });
 
 const result = await starsQuery.start({
-  params: { path: '/stars', query: { count: 20 } },
+  params: ({ pageParam }) => ({
+    path: '/stars',
+    query: { count: 20, page: pageParam },
+  }),
 });
 ```
 

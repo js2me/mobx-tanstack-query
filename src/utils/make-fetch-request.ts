@@ -61,7 +61,11 @@ export async function makeFetchRequest<TOutputData = any>(
     const abortControllerWithTimeout = new AbortController();
     const abortHandler = () => abortControllerWithTimeout.abort();
 
-    signal.addEventListener('abort', abortHandler, { once: true });
+    if (signal.aborted) {
+      abortHandler();
+    } else {
+      signal.addEventListener('abort', abortHandler, { once: true });
+    }
 
     const timeoutSignal = AbortSignal.timeout(clientFetchQueries.timeout);
     timeoutSignal.addEventListener('abort', abortHandler, { once: true });

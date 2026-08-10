@@ -1,5 +1,5 @@
 import { observable, runInAction, when } from 'mobx';
-import { FetchQuery, QueryClient } from 'mobx-tanstack-query';
+import { FetchQuery, getQueryClient, QueryClient } from 'mobx-tanstack-query';
 import {
   afterEach,
   beforeEach,
@@ -10,6 +10,7 @@ import {
   vi,
 } from 'vitest';
 import { createFetchQuery } from './create-fetch-query.js';
+import { queryClient as presetQueryClient } from './query-client.js';
 
 describe('createFetchQuery', () => {
   it('preserves typings for overloads', () => {
@@ -113,8 +114,7 @@ describe('createFetchQuery', () => {
       params: () => ({ path: '/test' }),
     });
 
-    // The preset queryClient should be used
-    expect(query).toBeInstanceOf(FetchQuery);
+    expect(getQueryClient(query)).toBe(presetQueryClient);
 
     query.destroy();
   });
