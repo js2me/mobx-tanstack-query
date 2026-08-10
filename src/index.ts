@@ -1,3 +1,4 @@
+export * from './group-queries.js';
 export * from './inifinite-query.js';
 export * from './inifinite-query.types.js';
 export * from './mutation.js';
