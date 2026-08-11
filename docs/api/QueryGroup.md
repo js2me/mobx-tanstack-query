@@ -9,6 +9,7 @@ Reactive aggregation over multiple [`Query`](/api/Query) and [`InfiniteQuery`](/
 Use the `groupQueries` utility to create a `QueryGroup`:
 
 ```ts
+import { autorun } from "mobx";
 import { groupQueries } from "mobx-tanstack-query";
 
 const petsGroup = groupQueries([catsQuery, dogsQuery]);

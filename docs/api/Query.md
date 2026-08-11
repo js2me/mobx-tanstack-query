@@ -183,7 +183,7 @@ Is `true` whenever the first fetch for a query is in-flight.
 
 ### `isPending: boolean`
 
-Will be `pending` if there's no cached data and no query attempt was finished yet.
+Will be `true` if there's no cached data and no query attempt was finished yet.
 
 ### `isLoadingError: boolean`
 
