@@ -264,6 +264,8 @@ export interface InfiniteQueryFlattenConfig<
   queryKey?: TQueryKey;
 }
 
+export type AnyInfiniteQuery = InfiniteQuery<any, any, any, any, any>;
+
 export type InferInfiniteQuery<
   T extends
     | InfiniteQueryConfig<any, any, any, any, any>
