@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.3.0
+
+### Minor Changes
+
+- [#92](https://github.com/js2me/mobx-tanstack-query/pull/92) [`6accbe0`](https://github.com/js2me/mobx-tanstack-query/commit/6accbe0696dba65ba00b00235a45fd5a918218c6) Thanks [@js2me](https://github.com/js2me)! - added `groupQueries` utility (`QueryGroup`) that aggregates multiple queries into a single reactive view (`data`, `errors`, `status`, `isFetching`, `isSuccess`, etc.)
+
 ## 7.2.2
 
 ### Patch Changes
