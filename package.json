@@ -49,10 +49,10 @@
     "mobx": "^6.12.4"
   },
   "dependencies": {
-    "linked-abort-controller": "^1.1.1",
     "yummies": "^7.19.4"
   },
   "devDependencies": {
+    "linked-abort-controller": "^1.1.1",
     "@biomejs/biome": "^2.4.14",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.31.0",

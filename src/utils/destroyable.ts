@@ -1,25 +1,23 @@
-import { LinkedAbortController } from 'linked-abort-controller';
-import { action, makeObservable } from 'mobx';
-
 export abstract class Destroyable implements Disposable {
-  protected abortController: LinkedAbortController;
+  protected _abortSignal?: AbortSignal;
+  protected _destroyed: boolean;
 
   constructor(abortSignal?: AbortSignal) {
-    this.abortController = new LinkedAbortController(abortSignal);
+    this._abortSignal = abortSignal;
+    this._destroyed = false;
 
-    action(this, 'handleDestroy');
-    makeObservable(this);
-
-    this.abortController.signal.addEventListener('abort', () => {
-      this.handleDestroy();
-    });
+    this._abortSignal?.addEventListener(
+      'abort',
+      () => {
+        this.destroy();
+      },
+      { once: true },
+    );
   }
 
   destroy() {
-    this.abortController?.abort();
+    this._destroyed = true;
   }
-
-  protected abstract handleDestroy(): void;
 
   [Symbol.dispose](): void {
     this.destroy();

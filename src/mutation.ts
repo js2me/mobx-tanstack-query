@@ -144,6 +144,9 @@ export class Mutation<
   isPaused!: boolean;
   submittedAt!: number;
 
+  /** */
+  protected tempAc?: AbortController;
+
   constructor(
     protected config: MutationConfig<
       TData,
@@ -198,10 +201,14 @@ export class Mutation<
       // @ts-expect-error
     >(queryClient, {
       ...this.mutationOptions,
+      onSettled: (...args) => {
+        this.abortTempAc();
+        return this.mutationOptions.onSettled?.(...args);
+      },
       mutationFn: (variables, context) =>
         mutationFn?.(variables, {
           ...context,
-          signal: this.abortController.signal,
+          signal: this._abortSignal ?? this.recreateTempAc().signal,
         } satisfies MutationFunctionContext),
     });
 
@@ -402,7 +409,22 @@ export class Mutation<
     this.mutationObserver.reset();
   }
 
-  protected handleDestroy() {
+  protected abortTempAc() {
+    this.tempAc?.abort();
+    this.tempAc = undefined;
+  }
+
+  protected recreateTempAc() {
+    this.abortTempAc();
+    this.tempAc = new AbortController();
+    return this.tempAc;
+  }
+
+  destroy() {
+    super.destroy();
+
+    this.abortTempAc();
+
     this._observerSubscription?.();
 
     this.doneListeners = [];
