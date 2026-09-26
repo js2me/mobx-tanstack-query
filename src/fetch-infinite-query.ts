@@ -334,11 +334,23 @@ export class FetchInfiniteQuery<
           queryKey as FetchInfiniteQueryKey,
         );
 
-        if (!baseFetchParams) {
+        const isParamsCallback = typeof holders.params === 'function';
+        const freshParams = isParamsCallback
+          ? callFunction(holders.params, {
+              pageParam: pageParam as TPageParam,
+            })
+          : undefined;
+
+        const resolvedParams =
+          isParamsCallback && baseFetchParams
+            ? freshParams || null
+            : baseFetchParams;
+
+        if (!resolvedParams) {
           if (process.env.NODE_ENV !== 'production') {
             throw new Error(
               'Error #2: Fetch infinite query is not configured.\n' +
-                'This happened because the "params" option for FetchInfiniteQuery returned a falsy value and the query key could not be parsed.\n' +
+                'This happened because the "params" option for FetchInfiniteQuery returned a falsy value or the query key could not be parsed.\n' +
                 'Please ensure that "params" returns a valid FetchInfiniteQueryParams object with at least a "path" property.\n' +
                 'More info: https://js2me.github.io/mobx-tanstack-query/errors/2',
             );
@@ -348,15 +360,8 @@ export class FetchInfiniteQuery<
           );
         }
 
-        const freshParams =
-          typeof holders.params === 'function'
-            ? callFunction(holders.params, {
-                pageParam: pageParam as TPageParam,
-              })
-            : undefined;
-
         const fetchParams: FetchInfiniteQueryParams<TOutputData, TPageParam> = {
-          ...(freshParams || baseFetchParams),
+          ...resolvedParams,
           pageParam: pageParam as TPageParam,
         };
 

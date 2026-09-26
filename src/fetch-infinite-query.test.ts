@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/query-core';
-import { when } from 'mobx';
+import { observable, runInAction, when } from 'mobx';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FetchInfiniteQuery } from './fetch-infinite-query.js';
 
@@ -114,6 +114,54 @@ describe('FetchInfiniteQuery', () => {
       '/stars?count=20&page=1',
       expect.any(Object),
     );
+
+    query.destroy();
+  });
+
+  it('does not request another page when reactive params become falsy', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(okJson({ url })),
+    );
+
+    const state = observable({ path: '/stars' as string | null });
+    const query = new FetchInfiniteQuery({
+      queryClient,
+      params: ({ pageParam }) =>
+        state.path ? { path: state.path, query: { page: pageParam } } : null,
+      initialPageParam: 1,
+      getNextPageParam: () => 2,
+      retry: false,
+      dynamicOptionsUpdateDelay: 100_000,
+    });
+
+    await when(() => !query.isLoading);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    runInAction(() => {
+      state.path = null;
+    });
+
+    // The observer still has the old key while the options reaction is delayed.
+    const result = await query.fetchNextPage();
+
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error?.message).toContain('Error #2');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    query.destroy();
+  });
+
+  it('does not invoke the fetcher when disabled without params', async () => {
+    const query = new FetchInfiniteQuery({
+      queryClient,
+      params: null,
+      initialPageParam: 1,
+      getNextPageParam: () => null,
+      retry: false,
+    });
+
+    expect(query.options.enabled).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
 
     query.destroy();
   });
