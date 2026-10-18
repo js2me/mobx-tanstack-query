@@ -46,7 +46,7 @@ jobs:
             echo "last_tag=$tag" >> $GITHUB_OUTPUT
           fi
 
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@11
 
       - name: Create Release Pull Request
         uses: changesets/action@v1

@@ -1,7 +1,8 @@
-import type {
-  DefaultError,
-  InfiniteData,
-  InfiniteQueryObserverResult,
+import {
+  type DefaultError,
+  hashKey,
+  type InfiniteData,
+  type InfiniteQueryObserverResult,
 } from '@tanstack/query-core';
 import { callFunction } from 'yummies/common';
 import type { Dict, MaybeFalsy, MaybeFn } from 'yummies/types';
@@ -50,7 +51,9 @@ export type FetchInfiniteQueryParamsComputed<
   [FetchInfiniteQueryParamsContext<TPageParam>]
 >;
 
-export type FetchInfiniteQueryKeyMeta = FetchQueryKeyMeta;
+export type FetchInfiniteQueryKeyMeta = FetchQueryKeyMeta & {
+  initialPageParam?: unknown;
+};
 
 export type FetchInfiniteQueryKey = readonly (
   | string
@@ -141,6 +144,7 @@ export interface FetchInfiniteQueryPositionalConfig<
 
 export const buildFetchInfiniteQueryKey = (
   fetchParams: FetchInfiniteQueryParams | null,
+  initialPageParam?: unknown,
 ): FetchInfiniteQueryKey => {
   if (!fetchParams) {
     return [null];
@@ -158,6 +162,7 @@ export const buildFetchInfiniteQueryKey = (
       responseType: fetchParams.responseType,
       request: fetchParams.request,
       throwOnError: fetchParams.throwOnError,
+      initialPageParam,
     } satisfies FetchInfiniteQueryKeyMeta,
   ];
 };
@@ -325,7 +330,10 @@ export class FetchInfiniteQuery<
 
         return {
           enabled: !!fetchParams,
-          queryKey: buildFetchInfiniteQueryKey(fetchParams),
+          queryKey: buildFetchInfiniteQueryKey(
+            fetchParams,
+            queryFullConfig.initialPageParam,
+          ),
           meta: fetchParams?.meta ?? qc.fetchQueries?.meta,
         };
       },
@@ -335,19 +343,34 @@ export class FetchInfiniteQuery<
         );
 
         const isParamsCallback = typeof holders.params === 'function';
-        const freshParams = isParamsCallback
-          ? callFunction(holders.params, {
-              pageParam: pageParam as TPageParam,
-            })
-          : undefined;
+        let resolvedParams = baseFetchParams;
 
-        const resolvedParams =
-          isParamsCallback && baseFetchParams
-            ? freshParams || null
-            : baseFetchParams;
+        if (isParamsCallback && baseFetchParams) {
+          // Reactive params may have moved to another key while the options
+          // update is delayed, so fresh page params must belong to this key.
+          const keyParams =
+            callFunction(holders.params, { pageParam: undefined }) || null;
+          const keyMeta = queryKey[
+            queryKey.length - 1
+          ] as FetchInfiniteQueryKeyMeta;
+          const isSameKey =
+            !!keyParams &&
+            hashKey(
+              buildFetchInfiniteQueryKey(keyParams, keyMeta.initialPageParam),
+            ) === hashKey(queryKey);
+
+          resolvedParams = isSameKey
+            ? callFunction(holders.params, {
+                pageParam: pageParam as TPageParam,
+              }) || null
+            : null;
+        }
 
         if (!resolvedParams) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (
+            typeof process === 'undefined' ||
+            process.env.NODE_ENV !== 'production'
+          ) {
             throw new Error(
               'Error #2: Fetch infinite query is not configured.\n' +
                 'This happened because the "params" option for FetchInfiniteQuery returned a falsy value or the query key could not be parsed.\n' +
@@ -367,8 +390,9 @@ export class FetchInfiniteQuery<
 
         return makeFetchRequest<TOutputData>({
           fetchParams,
-          transformResponse:
-            fetchParams.transformResponse ?? holders.transformResponse,
+          transformResponse: isParamsCallback
+            ? fetchParams.transformResponse
+            : holders.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });
@@ -391,7 +415,7 @@ export class FetchInfiniteQuery<
     >,
   ): Promise<InfiniteQueryObserverResult<TData, TError>>;
   start(startParams: any): Promise<InfiniteQueryObserverResult<TData, TError>> {
-    if (startParams?.params) {
+    if (startParams && 'params' in startParams) {
       const { params, ...restStartParams } = startParams;
       const fetchParams =
         callFunction(
@@ -405,7 +429,10 @@ export class FetchInfiniteQuery<
 
       return super.start({
         ...restStartParams,
-        queryKey: buildFetchInfiniteQueryKey(fetchParams),
+        queryKey: buildFetchInfiniteQueryKey(
+          fetchParams,
+          restStartParams.initialPageParam ?? this.options.initialPageParam,
+        ),
         enabled: !!fetchParams,
         meta:
           fetchParams?.meta ??

@@ -16,7 +16,9 @@ createFetchInfiniteQuery(() => options)
 ```ts
 import { createFetchInfiniteQuery } from "mobx-tanstack-query/preset";
 
-const query = createFetchInfiniteQuery({
+type Pet = { id: number; name: string };
+
+const query = createFetchInfiniteQuery<Pet[], Error, number>({
   params: ({ pageParam }) => ({
     path: "/pets",
     query: { page: pageParam ?? 1 },
@@ -33,7 +35,7 @@ const query = createFetchInfiniteQuery({
 The whole `options` object can also be a function — MobX observables read inside it are tracked, so the query reacts to their changes, just like [`new FetchInfiniteQuery(() => ({ ... }))`](/api/FetchInfiniteQuery#config-as-a-function). The `queryClient` is optional and defaults to the preset [`queryClient`](/preset/queryClient).
 
 ```ts
-const query = createFetchInfiniteQuery(() => ({
+const query = createFetchInfiniteQuery<Pet[], Error, number>(() => ({
   params: ({ pageParam }) => ({
     path: "/pets",
     query: { page: pageParam ?? 1 },

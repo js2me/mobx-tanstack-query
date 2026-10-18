@@ -18,6 +18,23 @@ import { createFetchInfiniteQuery } from './create-fetch-infinite-query.js';
 import { queryClient as presetQueryClient } from './query-client.js';
 
 describe('createFetchInfiniteQuery', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  const okJson = (data: unknown) =>
+    new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  beforeEach(() => {
+    fetchSpy = vi.fn().mockResolvedValue(okJson({}));
+    vi.stubGlobal('fetch', fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('preserves typings for overloads', () => {
     type User = {
       id: string;
@@ -133,6 +150,37 @@ describe('createFetchInfiniteQuery', () => {
     expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<
       string | undefined
     >();
+
+    for (const query of [
+      queryFromOptions,
+      queryFromOptionsWithGenerics,
+      queryFromOptionsWithSelect,
+      queryFromClientAndOptions,
+      queryFromClientAndStaticOptions,
+      queryWithPageParam,
+      queryFromFunction,
+      queryFromFunctionWithSelect,
+    ]) {
+      query.destroy();
+    }
+  });
+
+  it('requires pagination fields in both client overload variants', () => {
+    const client = new QueryClient();
+    const checkInvalidOptions = () => {
+      // @ts-expect-error initialPageParam is required
+      createFetchInfiniteQuery(client, { getNextPageParam: () => undefined });
+      // @ts-expect-error getNextPageParam is required
+      createFetchInfiniteQuery(client, { initialPageParam: 0 });
+      // @ts-expect-error initialPageParam is required in a callback too
+      createFetchInfiniteQuery(client, () => ({
+        getNextPageParam: () => undefined,
+      }));
+      // @ts-expect-error getNextPageParam is required in a callback too
+      createFetchInfiniteQuery(client, () => ({ initialPageParam: 0 }));
+    };
+
+    expectTypeOf(checkInvalidOptions).toBeFunction();
   });
 
   it('returns FetchInfiniteQuery instance from options overload', () => {
@@ -188,23 +236,6 @@ describe('createFetchInfiniteQuery', () => {
   });
 
   describe('fetching', () => {
-    let fetchSpy: ReturnType<typeof vi.fn>;
-
-    beforeEach(() => {
-      fetchSpy = vi.fn();
-      vi.stubGlobal('fetch', fetchSpy);
-    });
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    const okJson = (data: unknown) =>
-      new Response(JSON.stringify(data), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
     it('fetches from the queryClient + object options overload', async () => {
       fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
 
@@ -280,8 +311,9 @@ describe('createFetchInfiniteQuery', () => {
         .mockResolvedValueOnce(okJson({ id: 2 }));
 
       const state = observable({ id: 1 });
+      const client = new QueryClient();
       const query = createFetchInfiniteQuery(() => ({
-        queryClient: new QueryClient(),
+        queryClient: client,
         params: { path: `/users/${state.id}` },
         initialPageParam: 0,
         getNextPageParam: () => undefined,
@@ -296,6 +328,93 @@ describe('createFetchInfiniteQuery', () => {
 
       await when(() => (query.data?.pages[0] as any)?.id === 2);
       expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+      query.destroy();
+    });
+
+    it('reacts to observable object options with the preset client', async () => {
+      fetchSpy.mockImplementation((url: string) =>
+        Promise.resolve(okJson({ url })),
+      );
+      const options = observable({
+        params: { path: '/users/1' },
+        initialPageParam: 0,
+        getNextPageParam: () => undefined,
+      });
+      const query = createFetchInfiniteQuery<{ url: string }>(options);
+
+      await when(() => query.data?.pages[0]?.url === '/users/1');
+      runInAction(() => {
+        options.params = { path: '/users/2' };
+      });
+      await when(() => query.data?.pages[0]?.url === '/users/2');
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/2', expect.any(Object));
+      query.destroy();
+    });
+
+    it('reacts to observable object options with an explicit client', async () => {
+      fetchSpy.mockImplementation((url: string) =>
+        Promise.resolve(okJson({ url })),
+      );
+      const options = observable({
+        params: { path: '/users/1' },
+        initialPageParam: 0,
+        getNextPageParam: () => undefined,
+      });
+      const query = createFetchInfiniteQuery<{ url: string }>(
+        new QueryClient(),
+        options,
+      );
+
+      await when(() => query.data?.pages[0]?.url === '/users/1');
+      runInAction(() => {
+        options.params = { path: '/users/2' };
+      });
+      await when(() => query.data?.pages[0]?.url === '/users/2');
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/2', expect.any(Object));
+      query.destroy();
+    });
+
+    it('paginates through the preset factory with the current pageParam', async () => {
+      fetchSpy.mockImplementation((url: string) =>
+        Promise.resolve(okJson({ url })),
+      );
+      const query = createFetchInfiniteQuery<{ url: string }, Error, number>({
+        queryClient: new QueryClient(),
+        params: ({ pageParam }) => ({
+          path: '/users',
+          query: { page: pageParam },
+        }),
+        initialPageParam: 1,
+        getNextPageParam: (_page, _pages, lastPageParam) =>
+          lastPageParam < 2 ? lastPageParam + 1 : undefined,
+      });
+
+      await when(() => query.data?.pages.length === 1);
+      const queryHash = query.options.queryHash;
+      expect(query.hasNextPage).toBe(true);
+
+      await query.fetchNextPage();
+
+      expect(fetchSpy).toHaveBeenNthCalledWith(
+        1,
+        '/users?page=1',
+        expect.any(Object),
+      );
+      expect(fetchSpy).toHaveBeenNthCalledWith(
+        2,
+        '/users?page=2',
+        expect.any(Object),
+      );
+      expect(query.data?.pages).toEqual([
+        { url: '/users?page=1' },
+        { url: '/users?page=2' },
+      ]);
+      expect(query.data?.pageParams).toEqual([1, 2]);
+      expect(query.options.queryHash).toBe(queryHash);
+      expect(query.hasNextPage).toBe(false);
 
       query.destroy();
     });

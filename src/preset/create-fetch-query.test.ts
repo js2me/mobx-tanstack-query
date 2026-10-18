@@ -13,6 +13,23 @@ import { createFetchQuery } from './create-fetch-query.js';
 import { queryClient as presetQueryClient } from './query-client.js';
 
 describe('createFetchQuery', () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  const okJson = (data: unknown) =>
+    new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  beforeEach(() => {
+    fetchSpy = vi.fn().mockResolvedValue(okJson({}));
+    vi.stubGlobal('fetch', fetchSpy);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('preserves typings for overloads', () => {
     type User = {
       id: string;
@@ -86,6 +103,18 @@ describe('createFetchQuery', () => {
     expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<
       string | undefined
     >();
+
+    for (const query of [
+      queryFromOptions,
+      queryFromOptionsWithGenerics,
+      queryFromOptionsWithSelect,
+      queryFromClientAndOptions,
+      queryFromClientAndStaticOptions,
+      queryFromFunction,
+      queryFromFunctionWithSelect,
+    ]) {
+      query.destroy();
+    }
   });
 
   it('returns FetchQuery instance from options overload', () => {
@@ -217,26 +246,13 @@ describe('createFetchQuery', () => {
     expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
       User | undefined
     >();
+
+    queryFromOptions.destroy();
+    queryFromOptionsWithSelect.destroy();
+    queryFromClientAndStaticOptions.destroy();
   });
 
   describe('fetching', () => {
-    let fetchSpy: ReturnType<typeof vi.fn>;
-
-    beforeEach(() => {
-      fetchSpy = vi.fn();
-      vi.stubGlobal('fetch', fetchSpy);
-    });
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    const okJson = (data: unknown) =>
-      new Response(JSON.stringify(data), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
     it('fetches from the queryClient + object options overload', async () => {
       fetchSpy.mockResolvedValueOnce(okJson({ id: 1 }));
 
@@ -302,8 +318,9 @@ describe('createFetchQuery', () => {
         .mockResolvedValueOnce(okJson({ id: 2 }));
 
       const state = observable({ id: 1 });
+      const client = new QueryClient();
       const query = createFetchQuery(() => ({
-        queryClient: new QueryClient(),
+        queryClient: client,
         params: { path: `/users/${state.id}` },
       }));
 
@@ -317,6 +334,43 @@ describe('createFetchQuery', () => {
       await when(() => (query.data as any)?.id === 2);
       expect(fetchSpy).toHaveBeenCalledTimes(2);
 
+      query.destroy();
+    });
+
+    it('reacts to observable object options with the preset client', async () => {
+      fetchSpy.mockImplementation((url: string) =>
+        Promise.resolve(okJson({ url })),
+      );
+      const options = observable({ params: { path: '/users/1' } });
+      const query = createFetchQuery<{ url: string }>(options);
+
+      await when(() => query.data?.url === '/users/1');
+      runInAction(() => {
+        options.params = { path: '/users/2' };
+      });
+      await when(() => query.data?.url === '/users/2');
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/2', expect.any(Object));
+      query.destroy();
+    });
+
+    it('reacts to observable object options with an explicit client', async () => {
+      fetchSpy.mockImplementation((url: string) =>
+        Promise.resolve(okJson({ url })),
+      );
+      const options = observable({ params: { path: '/users/1' } });
+      const query = createFetchQuery<{ url: string }>(
+        new QueryClient(),
+        options,
+      );
+
+      await when(() => query.data?.url === '/users/1');
+      runInAction(() => {
+        options.params = { path: '/users/2' };
+      });
+      await when(() => query.data?.url === '/users/2');
+
+      expect(fetchSpy).toHaveBeenCalledWith('/users/2', expect.any(Object));
       query.destroy();
     });
   });

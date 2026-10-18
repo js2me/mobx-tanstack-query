@@ -57,7 +57,7 @@ const petQuery = new FetchQuery({
 
 ### Config as a function
 
-The whole config object can also be a function. MobX observables read inside it are tracked, so the query refetches when they change — handy when `queryClient` or `params` depend on reactive state.
+The whole config object can also be a function. MobX observables read inside it are tracked: changes to `params` update the request, and changes to observer options (such as `enabled` or `staleTime`) update the observer. The `queryClient` is chosen once during construction and cannot be changed reactively.
 
 ```ts
 const petQuery = new FetchQuery(() => ({
@@ -66,7 +66,7 @@ const petQuery = new FetchQuery(() => ({
 }));
 ```
 
-This is equivalent to passing the object form, but the function is re-evaluated reactively. `params` can still be a function on top of it for finer-grained reactivity.
+The function is re-evaluated reactively for request parameters and observer options. `params` can still be a function on top of it for finer-grained reactivity.
 
 ### POST request with body
 
@@ -106,7 +106,7 @@ const petQuery = new FetchQuery({
 - `headers?: Record<string, string>` — Request headers. Merged with global headers from `QueryClient.fetchQueries`
 - `body?: BodyInit | Record<string, unknown>` — Request body. Objects are JSON-serialized with `Content-Type: application/json`; native `BodyInit` (Blob, FormData, etc.) is passed through as-is
 - `request?: Partial<RequestInit>` — Additional `RequestInit` options (except `signal`, `method`, `headers`, `body`)
-- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing
+- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing. Include `null` in the data type (e.g. `new FetchQuery<User | null>(...)`) and handle it in `select`
 - `responseType?: ResponseType` — Method to read the response body (e.g. `"json"`, `"text"`, `"blob"`). Defaults to `"json"`
 - `transformResponse?: TransformResponseFn` — Custom function to transform the `Response` object before data is returned
 - `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`

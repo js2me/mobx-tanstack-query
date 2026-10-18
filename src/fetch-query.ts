@@ -49,7 +49,13 @@ export type FetchQueryKeyMeta = Pick<
   | 'responseType'
   | 'request'
   | 'throwOnError'
->;
+> & {
+  transformResponse?: TransformResponseFn;
+  transformResponseId?: number;
+};
+
+const transformResponseIds = new WeakMap<TransformResponseFn, number>();
+let nextTransformResponseId = 0;
 
 export type FetchQueryKey = readonly (
   | string
@@ -134,6 +140,11 @@ export const buildFetchQueryKey = (
     return [null];
   }
 
+  const transformResponse = fetchParams.transformResponse;
+  if (transformResponse && !transformResponseIds.has(transformResponse)) {
+    transformResponseIds.set(transformResponse, ++nextTransformResponseId);
+  }
+
   return [
     ...fetchParams.path.split('/'),
     serializeFetchQuery(fetchParams.query) as any,
@@ -146,6 +157,10 @@ export const buildFetchQueryKey = (
       responseType: fetchParams.responseType,
       request: fetchParams.request,
       throwOnError: fetchParams.throwOnError,
+      transformResponse,
+      transformResponseId: transformResponse
+        ? transformResponseIds.get(transformResponse)
+        : undefined,
     } satisfies FetchQueryKeyMeta,
   ];
 };
@@ -174,6 +189,7 @@ export const parseFetchQueryKey = (
     responseType: meta.responseType,
     request: meta.request,
     throwOnError: meta.throwOnError,
+    transformResponse: meta.transformResponse,
   };
 };
 
@@ -237,13 +253,17 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
     super({
       ...(queryFullConfig as any),
       options: () => {
-        const fetchParams = callFunction(holders.params) || null;
+        const currentConfig = getConfig?.() ?? queryFullConfig;
+        const fetchParams =
+          callFunction(getConfig ? currentConfig.params : holders.params) ||
+          null;
         const qc = queryFullConfig.queryClient as QueryClient;
 
         holders.transformResponse = fetchParams?.transformResponse;
 
         return {
-          enabled: !!fetchParams,
+          ...(getConfig ? currentConfig : {}),
+          enabled: !!fetchParams && currentConfig.enabled !== false,
           queryKey: buildFetchQueryKey(fetchParams),
           meta: fetchParams?.meta ?? qc.fetchQueries?.meta,
         };
@@ -252,7 +272,10 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
         const fetchParams = parseFetchQueryKey(queryKey as FetchQueryKey);
 
         if (!fetchParams) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (
+            typeof process === 'undefined' ||
+            process.env.NODE_ENV !== 'production'
+          ) {
             throw new Error(
               'Error #1: Fetch query is not configured.\n' +
                 'This happened because the "params" option for FetchQuery returned a falsy value and the query key could not be parsed.\n' +
@@ -267,7 +290,8 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
 
         return makeFetchRequest<TOutputData>({
           fetchParams,
-          transformResponse: holders.transformResponse,
+          transformResponse:
+            fetchParams.transformResponse ?? holders.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });

@@ -23,7 +23,11 @@ export const createFetchQueryInstance = <TQuery>(
         queryClient: args[0],
       }));
     } else {
-      query = new QueryClass(args[0], args[1]);
+      const options = args[1];
+      query = new QueryClass(() => ({
+        ...options,
+        queryClient: args[0],
+      }));
     }
   } else if (typeof args[0] === 'function') {
     const getOptions = args[0];
@@ -36,10 +40,10 @@ export const createFetchQueryInstance = <TQuery>(
     });
   } else {
     const options = args[0];
-    query = new QueryClass({
+    query = new QueryClass(() => ({
       ...options,
       queryClient: options.queryClient ?? presetQueryClient,
-    });
+    }));
   }
 
   mountQueryClientOnce(getQueryClient(query));
@@ -68,10 +72,10 @@ export const createQueryInstance = <TQuery>(
       queryFn: args[0],
     });
   } else if (args.length === 2) {
-    query = new QueryClass(
-      args[0],
-      typeof args[1] === 'function' ? args[1] : () => args[1],
-    );
+    query =
+      typeof args[1] === 'function'
+        ? new QueryClass(args[0], args[1])
+        : new QueryClass({ ...args[1], queryClient: args[0] });
   } else {
     const options = args[0];
     query = new QueryClass({

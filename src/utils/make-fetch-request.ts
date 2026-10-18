@@ -14,6 +14,32 @@ export interface MakeFetchRequestOptions<TOutputData = any> {
   signal: AbortSignal;
 }
 
+function mergeHeaders(
+  clientHeaders?: Record<string, string>,
+  requestHeaders?: Record<string, string>,
+  jsonBody?: boolean,
+): Record<string, string> | undefined {
+  if (!clientHeaders && !requestHeaders && !jsonBody) {
+    return undefined;
+  }
+
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries({
+    ...(jsonBody ? { 'Content-Type': 'application/json' } : {}),
+    ...clientHeaders,
+    ...requestHeaders,
+  })) {
+    const existing = Object.keys(headers).find(
+      (key) => key.toLowerCase() === name.toLowerCase(),
+    );
+    if (existing) {
+      delete headers[existing];
+    }
+    headers[name] = value;
+  }
+  return headers;
+}
+
 export async function makeFetchRequest<TOutputData = any>(
   options: MakeFetchRequestOptions<TOutputData>,
 ): Promise<TOutputData | null> {
@@ -34,41 +60,41 @@ export async function makeFetchRequest<TOutputData = any>(
   );
 
   let fetchBody: BodyInit | undefined;
-  const clientHeaders = clientFetchQueries.headers;
-  let fetchHeaders: Record<string, string> | undefined =
-    clientHeaders || fetchParams.headers
-      ? { ...clientHeaders, ...fetchParams.headers }
-      : undefined;
 
   if (fetchParams.body != null) {
     if (isNativeBodyInit(fetchParams.body)) {
       fetchBody = fetchParams.body;
     } else {
       fetchBody = JSON.stringify(fetchParams.body);
-      fetchHeaders = {
-        'Content-Type': 'application/json',
-        ...fetchHeaders,
-      };
     }
   }
+  const fetchHeaders = mergeHeaders(
+    clientFetchQueries.headers,
+    fetchParams.headers,
+    fetchParams.body != null && !isNativeBodyInit(fetchParams.body),
+  );
 
   const customFetch = clientFetchQueries.customFetch;
   const fetch = customFetch ?? globalThis.fetch;
 
-  let abortSignal = options.signal;
+  let abortSignal = signal;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let abortHandler: (() => void) | undefined;
 
   if (clientFetchQueries.timeout) {
     const abortControllerWithTimeout = new AbortController();
-    const abortHandler = () => abortControllerWithTimeout.abort();
+    abortHandler = () => {
+      clearTimeout(timeoutId);
+      abortControllerWithTimeout.abort();
+    };
 
     if (signal.aborted) {
       abortHandler();
     } else {
       signal.addEventListener('abort', abortHandler, { once: true });
+      timeoutId = setTimeout(abortHandler, clientFetchQueries.timeout);
     }
 
-    const timeoutSignal = AbortSignal.timeout(clientFetchQueries.timeout);
-    timeoutSignal.addEventListener('abort', abortHandler, { once: true });
     abortSignal = abortControllerWithTimeout.signal;
   }
 
@@ -83,19 +109,26 @@ export async function makeFetchRequest<TOutputData = any>(
     signal: abortSignal,
   };
 
-  const response = await fetch(url, requestInit);
+  try {
+    const response = await fetch(url, requestInit);
 
-  if (!response.ok) {
-    if (fetchParams.notFoundAsNull && response.status === 404) {
-      return null;
+    if (!response.ok) {
+      if (fetchParams.notFoundAsNull && response.status === 404) {
+        return null;
+      }
+
+      if (throwOnError) {
+        throw response;
+      }
     }
 
-    if (throwOnError) {
-      throw response;
+    return transformResponse
+      ? await transformResponse(response, fetchParams)
+      : await response[fetchParams.responseType ?? 'json']();
+  } finally {
+    clearTimeout(timeoutId);
+    if (abortHandler) {
+      signal.removeEventListener('abort', abortHandler);
     }
   }
-
-  return transformResponse
-    ? await transformResponse(response, fetchParams)
-    : await response[fetchParams.responseType ?? 'json']();
 }

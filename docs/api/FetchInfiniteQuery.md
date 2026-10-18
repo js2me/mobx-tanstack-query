@@ -53,7 +53,7 @@ const result = await starsQuery.start({
 1. `params` is a function that receives `{ pageParam }` — the current page parameter (starts at `initialPageParam`)
 2. Each page request uses the same `params` logic with a different `pageParam`
 3. After each page loads, `getNextPageParam` determines the next page parameter — return `null` to indicate no more pages
-4. `data` is an array of all fetched pages, and `fetchNextPage()` triggers the next request
+4. `data` is an `InfiniteData` object (`{ pages, pageParams }`) — the array of all fetched pages is `data.pages`, and `fetchNextPage()` triggers the next request
 
 ### Config as a function
 

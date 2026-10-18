@@ -11,7 +11,7 @@
     "build:watch": "pnpm build && nodemon --watch src --ext ts,tsx --exec \"pnpm build\"",
     "build": "vite build",
     "pub": "pnpm build && sborshik publish --useDistDir",
-    "changeset:version": "bash scripts/changeset-version.sh",
+    "changeset:version": "changeset version",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
     "pub:major": "PUBLISH_VERSION=major pnpm pub",

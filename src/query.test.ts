@@ -284,6 +284,20 @@ describe('Query promise', () => {
 });
 
 describe('Query', () => {
+  it('does not fetch when dynamic options disable the query', async () => {
+    const queryFn = vi.fn(() => 'value');
+    const query = new QueryMock({
+      queryKey: ['disabled-dynamic-options'],
+      options: () => ({ enabled: false }),
+      queryFn,
+    });
+
+    expect(query.options.enabled).toBe(false);
+    expect(queryFn).not.toHaveBeenCalled();
+
+    query.destroy();
+  });
+
   it('should be fetched on start', async () => {
     const query = new QueryMock({
       queryKey: ['test'],

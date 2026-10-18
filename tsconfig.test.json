@@ -24,7 +24,7 @@
 			"mobx-tanstack-query": ["./src/index.ts"],
 			"mobx-tanstack-query/preset": ["./src/preset/index.ts"]
 		},
-    "noEmit": false,
+    "noEmit": true,
     "jsx": "react-jsx"
   },
   "include": [

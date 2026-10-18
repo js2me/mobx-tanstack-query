@@ -37,15 +37,15 @@ const errorResponse = (status: number) =>
   new Response(null, { status, statusText: 'error' });
 
 describe('serializeFetchQuery', () => {
-  it('returns null when query is undefined', () => {
+  it('returns undefined when query is undefined', () => {
     expect(serializeFetchQuery()).toBeUndefined();
   });
 
-  it('returns null when query is empty object', () => {
+  it('returns undefined when query is empty object', () => {
     expect(serializeFetchQuery({})).toBeUndefined();
   });
 
-  it('returns null when all values are null/undefined', () => {
+  it('returns undefined when all values are null/undefined', () => {
     expect(serializeFetchQuery({ a: null, b: undefined })).toBeUndefined();
   });
 
@@ -219,6 +219,32 @@ describe('FetchQuery', () => {
 
     expect(query.options.enabled).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
+
+    query.destroy();
+  });
+
+  it('treats a falsy params result as unconfigured', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(okJson({ url })),
+    );
+
+    const state = observable({ path: '/stars' as string | null });
+
+    const query = new FetchQuery(queryClient, {
+      params: () => (state.path ? { path: state.path } : null),
+      retry: false,
+      dynamicOptionsUpdateDelay: 0,
+    });
+
+    await when(() => !query.isLoading);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    runInAction(() => {
+      state.path = null;
+    });
+
+    await when(() => query.options.enabled === false);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     query.destroy();
   });

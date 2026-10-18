@@ -189,6 +189,29 @@ describe('createQuery', () => {
     query.destroy();
   });
 
+  it('keeps nested dynamic options from queryClient and static options object', async () => {
+    const queryFn = vi.fn(async () => 1);
+    const client = new QueryClient();
+    const state = observable({ enabled: false });
+
+    const query = createQuery(client, {
+      queryKey: ['static-client-nested-options'],
+      queryFn,
+      options: () => ({ enabled: state.enabled }),
+    });
+
+    expect(query.options.enabled).toBe(false);
+
+    runInAction(() => {
+      state.enabled = true;
+    });
+
+    await when(() => query.isSuccess);
+    expect(queryFn).toHaveBeenCalledTimes(1);
+
+    query.destroy();
+  });
+
   it('uses queryClient from options for queryFn overload', () => {
     const customClient = new QueryClient();
     const queryFn = vi.fn(async () => 1);

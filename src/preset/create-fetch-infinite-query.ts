@@ -21,6 +21,20 @@ export interface CreateFetchInfiniteQueryFnConfig<
     TOutputData
   > {}
 
+type ClientOptions<TQueryFnData, TError, TPageParam, TData, TOutputData> = Omit<
+  PartialKeys<
+    CreateFetchInfiniteQueryFnConfig<
+      TQueryFnData,
+      TError,
+      TPageParam,
+      TData,
+      TOutputData
+    >,
+    'queryClient'
+  >,
+  'queryClient'
+>;
+
 export function createFetchInfiniteQuery<
   TQueryFnData = unknown,
   TError = DefaultError,
@@ -30,29 +44,13 @@ export function createFetchInfiniteQuery<
 >(
   queryClient: AnyQueryClient,
   options:
-    | Omit<
-        Partial<
-          CreateFetchInfiniteQueryFnConfig<
-            TQueryFnData,
-            TError,
-            TPageParam,
-            TData,
-            TOutputData
-          >
-        >,
-        'queryClient'
-      >
-    | (() => Omit<
-        Partial<
-          CreateFetchInfiniteQueryFnConfig<
-            TQueryFnData,
-            TError,
-            TPageParam,
-            TData,
-            TOutputData
-          >
-        >,
-        'queryClient'
+    | ClientOptions<TQueryFnData, TError, TPageParam, TData, TOutputData>
+    | (() => ClientOptions<
+        TQueryFnData,
+        TError,
+        TPageParam,
+        TData,
+        TOutputData
       >),
 ): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
 

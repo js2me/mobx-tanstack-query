@@ -151,6 +151,41 @@ describe('FetchInfiniteQuery', () => {
     query.destroy();
   });
 
+  it('does not add a page from new reactive params to the previous key', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(okJson({ url })),
+    );
+
+    const state = observable({ path: '/stars' });
+    const query = new FetchInfiniteQuery({
+      queryClient,
+      params: ({ pageParam }) => ({
+        path: state.path,
+        query: { page: pageParam },
+      }),
+      initialPageParam: 1,
+      getNextPageParam: () => 2,
+      retry: false,
+      dynamicOptionsUpdateDelay: 100_000,
+    });
+
+    await when(() => !query.isLoading);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    runInAction(() => {
+      state.path = '/repos';
+    });
+
+    // The observer still has the "/stars" key while the options reaction is delayed.
+    const result = await query.fetchNextPage();
+
+    expect(result.error?.message).toContain('Error #2');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(query.data?.pages).toEqual([{ url: '/stars?page=1' }]);
+
+    query.destroy();
+  });
+
   it('does not invoke the fetcher when disabled without params', async () => {
     const query = new FetchInfiniteQuery({
       queryClient,
