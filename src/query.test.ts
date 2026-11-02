@@ -1773,6 +1773,89 @@ describe('Query', () => {
     });
   });
 
+  describe('"structuralSharing" default', () => {
+    it('keeps the "data" reference when a refetch returns equal data', async ({
+      task,
+    }) => {
+      const query = new QueryMock({
+        queryKey: [task.name] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      const spy = vi.fn();
+      const dispose = reaction(() => query.data, spy);
+      await query.refetch();
+
+      expect(query.options.structuralSharing).toBe(true);
+      expect(query.data).toBe(before);
+      expect(spy).not.toHaveBeenCalled();
+
+      dispose();
+      query.destroy();
+    });
+
+    it('keeps the "data" reference with the preset query client', async ({
+      task,
+    }) => {
+      const query = createQuery(() => ({ ids: [1, 2] }), {
+        queryKey: [task.name] as const,
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      await query.refetch();
+
+      expect(query.data).toBe(before);
+
+      query.destroy();
+    });
+
+    it('stays off for a deep observable result', () => {
+      const query = new QueryMock({
+        queryKey: ['deep'] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        resultObservable: 'deep',
+        enabled: false,
+      });
+
+      expect(query.options.structuralSharing).toBe(false);
+
+      query.destroy();
+    });
+
+    it('stays off for resultObservable: true, which is deep', () => {
+      const query = new QueryMock({
+        queryKey: ['true'] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        resultObservable: true,
+        enabled: false,
+      });
+
+      expect(query.options.structuralSharing).toBe(false);
+
+      query.destroy();
+    });
+
+    it('respects an explicit structuralSharing: false', async ({ task }) => {
+      const query = new QueryMock({
+        queryKey: [task.name] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        structuralSharing: false,
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      await query.refetch();
+
+      expect(query.data).not.toBe(before);
+      expect(query.data).toEqual(before);
+
+      query.destroy();
+    });
+  });
+
   describe('"invalidate" method', () => {
     beforeEach(() => {
       vi.clearAllMocks();

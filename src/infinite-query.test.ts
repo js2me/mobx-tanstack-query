@@ -164,6 +164,30 @@ describe('InfiniteQuery promise', () => {
 });
 
 describe('InfiniteQuery', () => {
+  it('turns structuralSharing on by default, and off for a deep observable result', () => {
+    const refQuery = new InfiniteQueryMock({
+      queryKey: ['sharing-ref'],
+      queryFn: () => [1, 2],
+      initialPageParam: 0,
+      getNextPageParam: () => null,
+      enabled: false,
+    });
+    const deepQuery = new InfiniteQueryMock({
+      queryKey: ['sharing-deep'],
+      queryFn: () => [1, 2],
+      initialPageParam: 0,
+      getNextPageParam: () => null,
+      resultObservable: 'deep',
+      enabled: false,
+    });
+
+    expect(refQuery.options.structuralSharing).toBe(true);
+    expect(deepQuery.options.structuralSharing).toBe(false);
+
+    refQuery.destroy();
+    deepQuery.destroy();
+  });
+
   it('should call queryFn without infinite query params', async () => {
     // @ts-expect-error
     const query = new InfiniteQueryMock({
