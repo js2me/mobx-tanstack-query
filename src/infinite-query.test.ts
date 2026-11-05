@@ -164,6 +164,86 @@ describe('InfiniteQuery promise', () => {
 });
 
 describe('InfiniteQuery', () => {
+  it('keeps equal pages and pageParams references on refetch', async ({
+    task,
+  }) => {
+    const query = new InfiniteQueryMock({
+      queryKey: [task.name],
+      enabled: false,
+      queryFn: ({ pageParam }) => ({ ids: [pageParam] }),
+      initialPageParam: 0,
+      getNextPageParam: (_lastPage, _pages, pageParam) => pageParam + 1,
+    });
+    try {
+      await query.refetch();
+      await query.fetchNextPage();
+      const before = query.data!;
+      expect(before.pages).toHaveLength(2);
+      await query.refetch();
+
+      expect(query.data).toBe(before);
+      expect(query.data!.pages).toBe(before.pages);
+      expect(query.data!.pageParams).toBe(before.pageParams);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('keeps an unchanged page when another page changes on refetch', async ({
+    task,
+  }) => {
+    let version = 0;
+    const query = new InfiniteQueryMock({
+      queryKey: [task.name],
+      enabled: false,
+      queryFn: ({ pageParam }) => ({
+        page: pageParam,
+        version: pageParam === 0 ? 0 : version,
+      }),
+      initialPageParam: 0,
+      getNextPageParam: (_lastPage, _pages, pageParam) => pageParam + 1,
+    });
+    try {
+      await query.refetch();
+      await query.fetchNextPage();
+      const before = query.data!;
+      version++;
+      await query.refetch();
+
+      expect(query.data).not.toBe(before);
+      expect(query.data!.pages[0]).toBe(before.pages[0]);
+      expect(query.data!.pages[1]).not.toBe(before.pages[1]);
+      expect(query.data!.pages[1].version).toBe(1);
+      expect(query.data!.pageParams).toBe(before.pageParams);
+    } finally {
+      query.destroy();
+    }
+  });
+
+  it('turns structuralSharing on by default, and off for a deep observable result', () => {
+    const refQuery = new InfiniteQueryMock({
+      queryKey: ['sharing-ref'],
+      queryFn: () => [1, 2],
+      initialPageParam: 0,
+      getNextPageParam: () => null,
+      enabled: false,
+    });
+    const deepQuery = new InfiniteQueryMock({
+      queryKey: ['sharing-deep'],
+      queryFn: () => [1, 2],
+      initialPageParam: 0,
+      getNextPageParam: () => null,
+      resultObservable: 'deep',
+      enabled: false,
+    });
+
+    expect(refQuery.options.structuralSharing).toBe(true);
+    expect(deepQuery.options.structuralSharing).toBe(false);
+
+    refQuery.destroy();
+    deepQuery.destroy();
+  });
+
   it('should call queryFn without infinite query params', async () => {
     // @ts-expect-error
     const query = new InfiniteQueryMock({

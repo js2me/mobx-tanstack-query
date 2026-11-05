@@ -134,6 +134,15 @@ export abstract class BaseQuery<
     };
   }
 
+  /**
+   * A deep observable result copies `data` on every update, so structural sharing can't keep its
+   * reference and only adds a deep compare (#7). Every other `resultObservable` keeps the reference.
+   */
+  protected get defaultStructuralSharing() {
+    const { resultObservable } = this.features;
+    return resultObservable !== 'deep' && resultObservable !== true;
+  }
+
   protected initializeBaseState(
     queryClient: AnyQueryClient,
     features: QueryFeatures,

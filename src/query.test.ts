@@ -17,6 +17,7 @@ import {
   action,
   comparer,
   computed,
+  isObservable,
   makeAutoObservable,
   makeObservable,
   observable,
@@ -1770,6 +1771,252 @@ describe('Query', () => {
         disposeCount();
         query.destroy();
       });
+    });
+  });
+
+  describe('"structuralSharing" default', () => {
+    it('reuses unchanged branches when part of the response changes', async ({
+      task,
+    }) => {
+      let version = 0;
+      const query = new QueryMock({
+        queryKey: [task.name],
+        enabled: false,
+        queryFn: () => ({
+          stable: { ids: [1, 2] },
+          changed: { version: version++ },
+        }),
+      });
+      try {
+        await query.refetch();
+        const before = query.data!;
+        await query.refetch();
+
+        expect(query.data).not.toBe(before);
+        expect(query.data!.stable).toBe(before.stable);
+        expect(query.data!.changed).not.toBe(before.changed);
+        expect(query.data!.changed.version).toBe(1);
+      } finally {
+        query.destroy();
+      }
+    });
+
+    it.each([
+      'client',
+      'query key',
+    ] as const)('respects structuralSharing: false from %s defaults', async (source) => {
+      const queryClient = new QueryClient();
+      if (source === 'client') {
+        queryClient.setDefaultOptions({
+          queries: { structuralSharing: false },
+        });
+      } else {
+        queryClient.setQueryDefaults(['sharing-defaults'], {
+          structuralSharing: false,
+        });
+      }
+      const query = new QueryMock(
+        {
+          queryKey: ['sharing-defaults', source],
+          enabled: false,
+          queryFn: () => ({ ids: [1, 2] }),
+        },
+        queryClient,
+      );
+      try {
+        await query.refetch();
+        const before = query.data;
+        await query.refetch();
+
+        expect(query.options.structuralSharing).toBe(false);
+        expect(query.data).not.toBe(before);
+      } finally {
+        query.destroy();
+        queryClient.clear();
+      }
+    });
+
+    it('uses the deep result mode inherited from the query client', () => {
+      const queryClient = new MobxQueryClient({
+        defaultOptions: { queries: { resultObservable: 'deep' } },
+      });
+      const query = new QueryMock(
+        {
+          queryKey: ['inherited-deep-sharing'],
+          enabled: false,
+          queryFn: () => ({ ids: [1, 2] }),
+        },
+        queryClient,
+      );
+      try {
+        expect(query.options.structuralSharing).toBe(false);
+      } finally {
+        query.destroy();
+        queryClient.clear();
+      }
+    });
+
+    it('preserves an explicit custom sharing function even for deep results', async ({
+      task,
+    }) => {
+      const structuralSharing = vi.fn(
+        (_oldData: unknown, newData: unknown) => newData,
+      );
+      const query = new QueryMock({
+        queryKey: [task.name],
+        enabled: false,
+        resultObservable: 'deep',
+        structuralSharing,
+        queryFn: () => ({ ids: [1, 2] }),
+      });
+      try {
+        await query.refetch();
+        expect(query.options.structuralSharing).toBe(structuralSharing);
+        expect(structuralSharing).toHaveBeenCalled();
+        expect(query.data).toEqual({ ids: [1, 2] });
+      } finally {
+        query.destroy();
+      }
+    });
+
+    // These cases also exercise the opt-out needed for non-JSON data.
+    it.each([
+      undefined,
+      false,
+    ] as const)('preserves observable query data after a changed refetch (structuralSharing: %s)', async (structuralSharing) => {
+      let version = 0;
+      const query = new QueryMock({
+        queryKey: ['observable-sharing', structuralSharing],
+        enabled: false,
+        queryFn: () => observable({ version: version++ }),
+        ...(structuralSharing === undefined ? {} : { structuralSharing }),
+      });
+      let dispose: VoidFunction | undefined;
+      try {
+        await query.refetch();
+        expect(isObservable(query.data)).toBe(true);
+        await query.refetch();
+
+        const spy = vi.fn();
+        dispose = reaction(() => query.data!.version, spy);
+        runInAction(() => {
+          query.data!.version++;
+        });
+
+        expect(isObservable(query.data)).toBe(true);
+        expect(spy).toHaveBeenCalledTimes(1);
+      } finally {
+        dispose?.();
+        query.destroy();
+      }
+    });
+
+    it.each([
+      undefined,
+      false,
+    ] as const)('preserves self-references after a refetch (structuralSharing: %s)', async (structuralSharing) => {
+      type CyclicData = { id: number; self?: CyclicData };
+      const query = new QueryMock({
+        queryKey: ['cyclic-sharing', structuralSharing],
+        enabled: false,
+        queryFn: () => {
+          const data: CyclicData = { id: 1 };
+          data.self = data;
+          return data;
+        },
+        ...(structuralSharing === undefined ? {} : { structuralSharing }),
+      });
+      try {
+        await query.refetch();
+        expect(query.data!.self).toBe(query.data);
+        await query.refetch();
+
+        expect(query.isSuccess).toBe(true);
+        expect(query.data!.self).toBe(query.data);
+      } finally {
+        query.destroy();
+      }
+    });
+
+    it('keeps the "data" reference when a refetch returns equal data', async ({
+      task,
+    }) => {
+      const query = new QueryMock({
+        queryKey: [task.name] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      const spy = vi.fn();
+      const dispose = reaction(() => query.data, spy);
+      await query.refetch();
+
+      expect(query.options.structuralSharing).toBe(true);
+      expect(query.data).toBe(before);
+      expect(spy).not.toHaveBeenCalled();
+
+      dispose();
+      query.destroy();
+    });
+
+    it('keeps the "data" reference with the preset query client', async ({
+      task,
+    }) => {
+      const query = createQuery(() => ({ ids: [1, 2] }), {
+        queryKey: [task.name] as const,
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      await query.refetch();
+
+      expect(query.data).toBe(before);
+
+      query.destroy();
+    });
+
+    it('stays off for a deep observable result', () => {
+      const query = new QueryMock({
+        queryKey: ['deep'] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        resultObservable: 'deep',
+        enabled: false,
+      });
+
+      expect(query.options.structuralSharing).toBe(false);
+
+      query.destroy();
+    });
+
+    it('stays off for resultObservable: true, which is deep', () => {
+      const query = new QueryMock({
+        queryKey: ['true'] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        resultObservable: true,
+        enabled: false,
+      });
+
+      expect(query.options.structuralSharing).toBe(false);
+
+      query.destroy();
+    });
+
+    it('respects an explicit structuralSharing: false', async ({ task }) => {
+      const query = new QueryMock({
+        queryKey: [task.name] as const,
+        queryFn: () => ({ ids: [1, 2] }),
+        structuralSharing: false,
+      });
+      await when(() => query.isSuccess);
+      const before = query.data;
+
+      await query.refetch();
+
+      expect(query.data).not.toBe(before);
+      expect(query.data).toEqual(before);
+
+      query.destroy();
     });
   });
 
