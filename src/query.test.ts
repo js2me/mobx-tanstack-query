@@ -49,6 +49,7 @@ import type {
 } from './query.types.js';
 import { QueryClient as MobxQueryClient } from './query-client.js';
 import type { QueryClientConfig } from './query-client.types.js';
+import { replaceEqualTree } from './utils/replace-equal-tree.js';
 
 class QueryMock<
   TQueryFnData = unknown,
@@ -1952,7 +1953,7 @@ describe('Query', () => {
       const dispose = reaction(() => query.data, spy);
       await query.refetch();
 
-      expect(query.options.structuralSharing).toBe(true);
+      expect(query.options.structuralSharing).toBe(replaceEqualTree);
       expect(query.data).toBe(before);
       expect(spy).not.toHaveBeenCalled();
 

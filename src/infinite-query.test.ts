@@ -21,6 +21,7 @@ import type {
 import type { QueryInvalidateParams } from './query.types.js';
 import { QueryClient as MobxQueryClient } from './query-client.js';
 import type { QueryClientConfig } from './query-client.types.js';
+import { replaceEqualTree } from './utils/replace-equal-tree.js';
 
 class InfiniteQueryMock<
   TQueryFnData = unknown,
@@ -237,7 +238,7 @@ describe('InfiniteQuery', () => {
       enabled: false,
     });
 
-    expect(refQuery.options.structuralSharing).toBe(true);
+    expect(refQuery.options.structuralSharing).toBe(replaceEqualTree);
     expect(deepQuery.options.structuralSharing).toBe(false);
 
     refQuery.destroy();
