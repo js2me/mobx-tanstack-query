@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.4.0
+
+### Minor Changes
+
+- [#96](https://github.com/js2me/mobx-tanstack-query/pull/96) [`095df8e`](https://github.com/js2me/mobx-tanstack-query/commit/095df8e6ec838e537cb8d368bb17cffa5542d4ec) Thanks [@js2me](https://github.com/js2me)! - Add MobX 7 support and use MobX-version-compatible observable initialization.
+
 ## 7.3.0
 
 ### Minor Changes
