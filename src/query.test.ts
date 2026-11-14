@@ -15,7 +15,6 @@ import {
 import { LinkedAbortController } from 'linked-abort-controller';
 import {
   action,
-  comparer,
   computed,
   makeAutoObservable,
   makeObservable,
@@ -36,6 +35,7 @@ import {
   vi,
 } from 'vitest';
 import { sleep } from 'yummies/async';
+import { annotation, observableMap } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { createQuery } from './preset/index.js';
 import { Query } from './query.js';
@@ -1483,8 +1483,9 @@ describe('Query', () => {
         );
 
         constructor() {
-          computed.struct(this, 'foo');
-          makeObservable(this);
+          makeObservable(this, {
+            foo: annotation.computed('struct'),
+          });
         }
 
         get foo() {
@@ -1554,8 +1555,9 @@ describe('Query', () => {
         );
 
         constructor() {
-          computed.struct(this, 'foo');
-          makeObservable(this);
+          makeObservable(this, {
+            foo: annotation.computed('struct'),
+          });
         }
 
         get foo() {
@@ -3593,9 +3595,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -3688,9 +3690,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -3781,9 +3783,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -3868,9 +3870,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -3963,9 +3965,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4058,9 +4060,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4151,9 +4153,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4238,9 +4240,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4333,9 +4335,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4428,9 +4430,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4523,9 +4525,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -4618,9 +4620,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: computed.struct,
-      data: computed.struct,
-      isLoading: computed.struct,
+      isEmpty: annotation.computed('struct'),
+      data: annotation.computed('struct'),
+      isLoading: annotation.computed('struct'),
     });
 
     // it runs query
@@ -5528,7 +5530,7 @@ describe('Query', () => {
           },
           retry: false,
           gcTime: 0,
-          dynamicOptionsComparer: comparer.structural,
+          dynamicOptionsComparer: observableMap.comparer.structural,
         },
         mutations: {
           gcTime: 0,
@@ -6098,9 +6100,9 @@ describe('Query', () => {
 
       constructor() {
         makeObservable<this, 'isEnabled'>(this, {
-          isEnabled: observable.ref,
+          isEnabled: annotation.observable('ref'),
           enabled: computed,
-          queryKey: computed.struct,
+          queryKey: annotation.computed('struct'),
           enable: action,
         });
         this.q = new QueryMock(this);

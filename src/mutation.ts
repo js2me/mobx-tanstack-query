@@ -8,8 +8,13 @@ import {
   type MutationStatus,
   shouldThrowError,
 } from '@tanstack/query-core';
-import { action, makeObservable } from 'mobx';
-import { annotation, lazyObserve } from 'yummies/mobx';
+import {
+  annotation,
+  applyObservable,
+  lazyObserve,
+  type ObservableAnnotationsArray,
+  observableMap,
+} from 'yummies/mobx';
 import type {
   MutationConfig,
   MutationDoneListener,
@@ -207,14 +212,16 @@ export class Mutation<
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
+    const annotations: ObservableAnnotationsArray<this> = [
+      [observableMap.action.bound, 'updateResult'],
+    ];
     const resultAnnotation = annotation.observable(
       this.features.resultObservable,
     );
     if (resultAnnotation) {
-      resultAnnotation(this, 'result');
+      annotations.unshift([resultAnnotation, 'result']);
     }
 
-    action.bound(this, 'updateResult');
     this.mutate = this.mutate.bind(this);
     this.start = this.start.bind(this);
 
@@ -224,7 +231,7 @@ export class Mutation<
       });
     });
 
-    makeObservable(this);
+    applyObservable(this, annotations);
 
     if (this.features.lazy) {
       const cleanup = lazyObserve({

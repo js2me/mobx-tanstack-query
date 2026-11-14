@@ -3,7 +3,11 @@ import type {
   QueryStatus,
   RefetchOptions,
 } from '@tanstack/query-core';
-import { computed, makeObservable } from 'mobx';
+import {
+  annotation,
+  applyObservable,
+  type ObservableAnnotationsArray,
+} from 'yummies/mobx';
 import type { MaybeFalsy, MaybeFn } from 'yummies/types';
 import type { AnyInfiniteQuery } from './inifinite-query.types.js';
 import type { AnyQuery } from './query.types.js';
@@ -29,6 +33,25 @@ export type QueryGroupErrors<TQueries extends QueryGroupItems> = {
 export type QueryGroupError<TQueries extends QueryGroupItems> =
   QueryGroupItemError<TQueries[number]> | null;
 
+const annotations: ObservableAnnotationsArray<QueryGroup<any>> = [
+  [
+    annotation.computed(),
+    'queries',
+    'data',
+    'error',
+    'errors',
+    'isPending',
+    'isLoading',
+    'isFetching',
+    'isRefetching',
+    'isPaused',
+    'isError',
+    'isSuccess',
+    'status',
+    'fetchStatus',
+  ],
+];
+
 /**
  * Reactive aggregation over multiple `Query` / `InfiniteQuery` instances.
  *
@@ -36,21 +59,7 @@ export type QueryGroupError<TQueries extends QueryGroupItems> =
  */
 export class QueryGroup<TQueries extends QueryGroupItems> {
   constructor(protected queriesInput: MaybeFn<TQueries>) {
-    makeObservable(this, {
-      queries: computed,
-      data: computed,
-      error: computed,
-      errors: computed,
-      isPending: computed,
-      isLoading: computed,
-      isFetching: computed,
-      isRefetching: computed,
-      isPaused: computed,
-      isError: computed,
-      isSuccess: computed,
-      status: computed,
-      fetchStatus: computed,
-    });
+    applyObservable(this, annotations);
 
     this.refetch = this.refetch.bind(this);
   }

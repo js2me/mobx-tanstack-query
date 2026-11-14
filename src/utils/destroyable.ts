@@ -1,5 +1,10 @@
 import { LinkedAbortController } from 'linked-abort-controller';
-import { action, makeObservable } from 'mobx';
+import { action } from 'mobx';
+import { applyObservable, type ObservableAnnotationsArray } from 'yummies/mobx';
+
+const annotations: ObservableAnnotationsArray<Destroyable> = [
+  [action, 'handleDestroy'],
+];
 
 export abstract class Destroyable implements Disposable {
   protected abortController: LinkedAbortController;
@@ -7,8 +12,7 @@ export abstract class Destroyable implements Disposable {
   constructor(abortSignal?: AbortSignal) {
     this.abortController = new LinkedAbortController(abortSignal);
 
-    action(this, 'handleDestroy');
-    makeObservable(this);
+    applyObservable(this, annotations);
 
     this.abortController.signal.addEventListener('abort', () => {
       this.handleDestroy();
