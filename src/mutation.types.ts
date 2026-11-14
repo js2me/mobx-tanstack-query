@@ -42,7 +42,7 @@ export interface MutationFeatures {
 
   /**
    * MobX observable flavour for the mutation `result` property (`MutationObserverResult`), applied with
-   * `annotation.observable()` from `yummies/mobx`. Unlike `Query` (which keeps the observer payload on `_result`
+   * `annotation.observable` from `yummies/mobx`. Unlike `Query` (which keeps the observer payload on `_result`
    * and exposes fields via getters), `Mutation` decorates the public `result` field directly. Convenience fields
    * (`data`, `isPending`, `isError`, …) read from that object, so this option controls how deeply updates propagate.
    *

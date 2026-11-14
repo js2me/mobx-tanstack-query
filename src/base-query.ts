@@ -7,15 +7,14 @@ import {
   type SetDataOptions,
   type Updater,
 } from '@tanstack/query-core';
+import { reaction, runInAction, when } from 'mobx';
+import * as annotation from 'yummies/mobx';
 import {
-  action,
-  makeObservable,
-  observable,
-  reaction,
-  runInAction,
-  when,
-} from 'mobx';
-import { annotation, lazyObserve } from 'yummies/mobx';
+  applyObservable,
+  lazyObserve,
+  type ObservableAnnotationsArray,
+  observableVariants,
+} from 'yummies/mobx';
 import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
 import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
@@ -162,17 +161,21 @@ export abstract class BaseQuery<
   }) {
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    const resultAnnotation = annotation.observable(
-      this.features.resultObservable,
-    );
+    const annotations: ObservableAnnotationsArray<this> = [
+      [annotation.observableRef, 'isResultRequsted'],
+      [annotation.actionBound, 'setData', 'update', 'updateResult'],
+    ];
+    const resultObservable = this.features.resultObservable;
+    const resultAnnotation =
+      resultObservable === true || resultObservable === undefined
+        ? annotation.observable
+        : resultObservable === false
+          ? false
+          : observableVariants[resultObservable];
     if (resultAnnotation) {
-      resultAnnotation(this, '_result');
+      annotations.unshift([resultAnnotation, '_result']);
     }
 
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
     this.refetch = this.refetch.bind(this);
     this.start = this.start.bind(this);
 
@@ -185,7 +188,7 @@ export abstract class BaseQuery<
       });
     });
 
-    makeObservable(this);
+    applyObservable(this, annotations);
 
     if (this.features.lazy) {
       const cleanup = lazyObserve({
