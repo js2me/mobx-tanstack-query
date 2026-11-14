@@ -8,12 +8,12 @@ import {
   type Updater,
 } from '@tanstack/query-core';
 import { reaction, runInAction, when } from 'mobx';
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   lazyObserve,
   type ObservableAnnotationsArray,
-  observableMap,
+  observableVariants,
 } from 'yummies/mobx';
 import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
@@ -171,7 +171,7 @@ export abstract class BaseQuery<
         ? annotation.observable
         : resultObservable === false
           ? false
-          : observableMap[resultObservable];
+          : observableVariants[resultObservable];
     if (resultAnnotation) {
       annotations.unshift([resultAnnotation, '_result']);
     }

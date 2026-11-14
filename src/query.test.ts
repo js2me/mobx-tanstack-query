@@ -35,7 +35,7 @@ import {
   vi,
 } from 'vitest';
 import { sleep } from 'yummies/async';
-import { annotation } from 'yummies/mobx';
+import * as annotation from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { createQuery } from './preset/index.js';
 import { Query } from './query.js';

@@ -3,11 +3,8 @@ import type {
   QueryStatus,
   RefetchOptions,
 } from '@tanstack/query-core';
-import {
-  annotation,
-  applyObservable,
-  type ObservableAnnotationsArray,
-} from 'yummies/mobx';
+import * as annotation from 'yummies/mobx';
+import { applyObservable, type ObservableAnnotationsArray } from 'yummies/mobx';
 import type { MaybeFalsy, MaybeFn } from 'yummies/types';
 import type { AnyInfiniteQuery } from './inifinite-query.types.js';
 import type { AnyQuery } from './query.types.js';

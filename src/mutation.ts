@@ -8,12 +8,12 @@ import {
   type MutationStatus,
   shouldThrowError,
 } from '@tanstack/query-core';
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   lazyObserve,
   type ObservableAnnotationsArray,
-  observableMap,
+  observableVariants,
 } from 'yummies/mobx';
 import type {
   MutationConfig,
@@ -221,7 +221,7 @@ export class Mutation<
         ? annotation.observable
         : resultObservable === false
           ? false
-          : observableMap[resultObservable];
+          : observableVariants[resultObservable];
     if (resultAnnotation) {
       annotations.unshift([resultAnnotation, 'result']);
     }
