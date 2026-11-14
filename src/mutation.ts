@@ -213,11 +213,15 @@ export class Mutation<
     this.updateResult(this.mutationObserver.getCurrentResult());
 
     const annotations: ObservableAnnotationsArray<this> = [
-      [observableMap.action.bound, 'updateResult'],
+      [annotation.actionBound, 'updateResult'],
     ];
-    const resultAnnotation = annotation.observable(
-      this.features.resultObservable,
-    );
+    const resultObservable = this.features.resultObservable;
+    const resultAnnotation =
+      resultObservable === true || resultObservable === undefined
+        ? annotation.observable
+        : resultObservable === false
+          ? false
+          : observableMap[resultObservable];
     if (resultAnnotation) {
       annotations.unshift([resultAnnotation, 'result']);
     }

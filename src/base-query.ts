@@ -162,12 +162,16 @@ export abstract class BaseQuery<
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
     const annotations: ObservableAnnotationsArray<this> = [
-      [annotation.observable('ref'), 'isResultRequsted'],
-      [observableMap.action.bound, 'setData', 'update', 'updateResult'],
+      [annotation.observableRef, 'isResultRequsted'],
+      [annotation.actionBound, 'setData', 'update', 'updateResult'],
     ];
-    const resultAnnotation = annotation.observable(
-      this.features.resultObservable,
-    );
+    const resultObservable = this.features.resultObservable;
+    const resultAnnotation =
+      resultObservable === true || resultObservable === undefined
+        ? annotation.observable
+        : resultObservable === false
+          ? false
+          : observableMap[resultObservable];
     if (resultAnnotation) {
       annotations.unshift([resultAnnotation, '_result']);
     }

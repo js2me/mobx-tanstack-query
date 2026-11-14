@@ -35,7 +35,7 @@ export type QueryGroupError<TQueries extends QueryGroupItems> =
 
 const annotations: ObservableAnnotationsArray<QueryGroup<any>> = [
   [
-    annotation.computed(),
+    annotation.computed,
     'queries',
     'data',
     'error',

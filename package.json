@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "linked-abort-controller": "^1.1.1",
-    "yummies": "^7.22.0"
+    "yummies": "^7.23.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",

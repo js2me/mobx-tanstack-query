@@ -35,7 +35,7 @@ import {
   vi,
 } from 'vitest';
 import { sleep } from 'yummies/async';
-import { annotation, observableMap } from 'yummies/mobx';
+import { annotation } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { createQuery } from './preset/index.js';
 import { Query } from './query.js';
@@ -1484,7 +1484,7 @@ describe('Query', () => {
 
         constructor() {
           makeObservable(this, {
-            foo: annotation.computed('struct'),
+            foo: annotation.computedStruct,
           });
         }
 
@@ -1556,7 +1556,7 @@ describe('Query', () => {
 
         constructor() {
           makeObservable(this, {
-            foo: annotation.computed('struct'),
+            foo: annotation.computedStruct,
           });
         }
 
@@ -3595,9 +3595,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -3690,9 +3690,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -3783,9 +3783,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -3870,9 +3870,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -3965,9 +3965,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4060,9 +4060,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4153,9 +4153,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4240,9 +4240,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4335,9 +4335,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4430,9 +4430,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4525,9 +4525,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -4620,9 +4620,9 @@ describe('Query', () => {
     };
 
     makeObservable(managedQueryData, {
-      isEmpty: annotation.computed('struct'),
-      data: annotation.computed('struct'),
-      isLoading: annotation.computed('struct'),
+      isEmpty: annotation.computedStruct,
+      data: annotation.computedStruct,
+      isLoading: annotation.computedStruct,
     });
 
     // it runs query
@@ -5530,7 +5530,7 @@ describe('Query', () => {
           },
           retry: false,
           gcTime: 0,
-          dynamicOptionsComparer: observableMap.comparer.structural,
+          dynamicOptionsComparer: annotation.comparer.structural,
         },
         mutations: {
           gcTime: 0,
@@ -6100,9 +6100,9 @@ describe('Query', () => {
 
       constructor() {
         makeObservable<this, 'isEnabled'>(this, {
-          isEnabled: annotation.observable('ref'),
+          isEnabled: annotation.observableRef,
           enabled: computed,
-          queryKey: annotation.computed('struct'),
+          queryKey: annotation.computedStruct,
           enable: action,
         });
         this.q = new QueryMock(this);
