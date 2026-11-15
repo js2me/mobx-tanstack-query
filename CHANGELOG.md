@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.4.1
+
+### Patch Changes
+
+- [#99](https://github.com/js2me/mobx-tanstack-query/pull/99) [`921b2f9`](https://github.com/js2me/mobx-tanstack-query/commit/921b2f9310f4fa07b75954a6f101a0c2b0051d62) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.1 for properly typed MobX annotation helpers.
+
 ## 7.4.0
 
 ### Minor Changes
