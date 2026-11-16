@@ -20,7 +20,6 @@ import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
 import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
 import { Destroyable } from './utils/destroyable.js';
-import { replaceEqualTree } from './utils/replace-equal-tree.js';
 
 type BaseObservedQuery = {
   state: {
@@ -141,8 +140,7 @@ export abstract class BaseQuery<
    */
   protected get defaultStructuralSharing() {
     const { resultObservable } = this.features;
-    const isDeep = resultObservable === 'deep' || resultObservable === true;
-    return isDeep ? false : replaceEqualTree;
+    return resultObservable !== 'deep' && resultObservable !== true;
   }
 
   protected initializeBaseState(
