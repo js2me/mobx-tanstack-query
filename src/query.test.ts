@@ -1879,17 +1879,14 @@ describe('Query', () => {
       }
     });
 
-    // These cases also exercise the opt-out needed for non-JSON data.
-    it.each([
-      undefined,
-      false,
-    ] as const)('preserves observable query data after a changed refetch (structuralSharing: %s)', async (structuralSharing) => {
+    // Observable and cyclic data need the opt-out, because `replaceEqualDeep` copies both into plain objects.
+    it('preserves observable query data after a changed refetch (structuralSharing: false)', async () => {
       let version = 0;
       const query = new QueryMock({
-        queryKey: ['observable-sharing', structuralSharing],
+        queryKey: ['observable-sharing'],
         enabled: false,
         queryFn: () => observable({ version: version++ }),
-        ...(structuralSharing === undefined ? {} : { structuralSharing }),
+        structuralSharing: false,
       });
       let dispose: VoidFunction | undefined;
       try {
@@ -1911,20 +1908,17 @@ describe('Query', () => {
       }
     });
 
-    it.each([
-      undefined,
-      false,
-    ] as const)('preserves self-references after a refetch (structuralSharing: %s)', async (structuralSharing) => {
+    it('preserves self-references after a refetch (structuralSharing: false)', async () => {
       type CyclicData = { id: number; self?: CyclicData };
       const query = new QueryMock({
-        queryKey: ['cyclic-sharing', structuralSharing],
+        queryKey: ['cyclic-sharing'],
         enabled: false,
         queryFn: () => {
           const data: CyclicData = { id: 1 };
           data.self = data;
           return data;
         },
-        ...(structuralSharing === undefined ? {} : { structuralSharing }),
+        structuralSharing: false,
       });
       try {
         await query.refetch();
