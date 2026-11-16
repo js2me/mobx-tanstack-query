@@ -1,5 +1,11 @@
 # mobx-tanstack-query
 
+## 7.4.2
+
+### Patch Changes
+
+- [#101](https://github.com/js2me/mobx-tanstack-query/pull/101) [`28eccd8`](https://github.com/js2me/mobx-tanstack-query/commit/28eccd84c036b150c79d98deed9b71a0197ee996) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.2 to fix MobX 6 bundler compatibility.
+
 ## 7.4.1
 
 ### Patch Changes
