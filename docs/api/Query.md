@@ -181,6 +181,10 @@ Is `true` whenever the first fetch for a query is in-flight.
 
 - Is the same as `isFetching && isPending`.
 
+### `isPending: boolean`
+
+Will be `true` if there's no cached data and no query attempt was finished yet.
+
 ### `isLoadingError: boolean`
 
 Will be `true` if the query failed while fetching for the first time.

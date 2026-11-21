@@ -299,7 +299,8 @@ export class InfiniteQuery<
       TQueryKey
     >;
 
-    this.options.structuralSharing = this.options.structuralSharing ?? false;
+    this.options.structuralSharing =
+      this.options.structuralSharing ?? this.defaultStructuralSharing;
 
     const getAllDynamicOptions =
       getDynamicOptions || isQueryKeyDynamic

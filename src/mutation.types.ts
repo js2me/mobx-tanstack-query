@@ -42,14 +42,14 @@ export interface MutationFeatures {
 
   /**
    * MobX observable flavour for the mutation `result` property (`MutationObserverResult`), applied with
-   * `annotation.observable()` from `yummies/mobx`. Unlike `Query` (which keeps the observer payload on `_result`
+   * `annotation.observable` from `yummies/mobx`. Unlike `Query` (which keeps the observer payload on `_result`
    * and exposes fields via getters), `Mutation` decorates the public `result` field directly. Convenience fields
    * (`data`, `isPending`, `isError`, …) read from that object, so this option controls how deeply updates propagate.
    *
    * - `'ref'` — default when omitted; tracks only the result reference.
    * - `'deep'` — deep observability for plain objects and arrays.
    * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
-   * - `true` — base `observable` (same as omitting the option).
+   * - `true` — base `observable`, which is deep.
    * - `false` — skip decorating `result` (no automatic MobX tracking for the result; advanced use only).
    *
    * @default 'ref'

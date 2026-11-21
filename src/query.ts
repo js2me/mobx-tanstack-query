@@ -309,7 +309,8 @@ export class Query<
 
     this.options = this.queryClient.defaultQueryOptions(restOptions as any);
 
-    this.options.structuralSharing = this.options.structuralSharing ?? false;
+    this.options.structuralSharing =
+      this.options.structuralSharing ?? this.defaultStructuralSharing;
 
     const getAllDynamicOptions =
       getDynamicOptions || isQueryKeyDynamic

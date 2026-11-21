@@ -1,5 +1,29 @@
 # mobx-tanstack-query
 
+## 7.4.2
+
+### Patch Changes
+
+- [#101](https://github.com/js2me/mobx-tanstack-query/pull/101) [`28eccd8`](https://github.com/js2me/mobx-tanstack-query/commit/28eccd84c036b150c79d98deed9b71a0197ee996) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.2 to fix MobX 6 bundler compatibility.
+
+## 7.4.1
+
+### Patch Changes
+
+- [#99](https://github.com/js2me/mobx-tanstack-query/pull/99) [`921b2f9`](https://github.com/js2me/mobx-tanstack-query/commit/921b2f9310f4fa07b75954a6f101a0c2b0051d62) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.1 for properly typed MobX annotation helpers.
+
+## 7.4.0
+
+### Minor Changes
+
+- [#96](https://github.com/js2me/mobx-tanstack-query/pull/96) [`095df8e`](https://github.com/js2me/mobx-tanstack-query/commit/095df8e6ec838e537cb8d368bb17cffa5542d4ec) Thanks [@js2me](https://github.com/js2me)! - Add MobX 7 support and use MobX-version-compatible observable initialization.
+
+## 7.3.0
+
+### Minor Changes
+
+- [#92](https://github.com/js2me/mobx-tanstack-query/pull/92) [`6accbe0`](https://github.com/js2me/mobx-tanstack-query/commit/6accbe0696dba65ba00b00235a45fd5a918218c6) Thanks [@js2me](https://github.com/js2me)! - added `groupQueries` utility (`QueryGroup`) that aggregates multiple queries into a single reactive view (`data`, `errors`, `status`, `isFetching`, `isSuccess`, etc.)
+
 ## 7.2.2
 
 ### Patch Changes

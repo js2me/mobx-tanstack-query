@@ -1,5 +1,6 @@
 export * from './fetch-infinite-query.js';
 export * from './fetch-query.js';
+export * from './group-queries.js';
 export * from './inifinite-query.js';
 export * from './inifinite-query.types.js';
 export * from './mutation.js';
