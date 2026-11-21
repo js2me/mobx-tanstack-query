@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/query-core';
-import { when } from 'mobx';
+import { observable, runInAction, when } from 'mobx';
 import { afterEach, expect, it, vi } from 'vitest';
 import { FetchInfiniteQuery } from './fetch-infinite-query.js';
 
@@ -36,7 +36,11 @@ it('separates caches with different initial page params without changing the key
   const firstHash = first.options.queryHash;
   await first.fetchNextPage();
   expect(first.options.queryHash).toBe(firstHash);
-  expect(fetchSpy).toHaveBeenCalledWith('/items?page=2', expect.any(Object));
+  expect(fetchSpy).toHaveBeenCalledTimes(3);
+  expect(fetchSpy).toHaveBeenLastCalledWith(
+    '/items?page=2',
+    expect.any(Object),
+  );
 
   first.destroy();
   second.destroy();
@@ -53,6 +57,7 @@ it('does not reuse a key-time transform when the page callback omits it', async 
     queryClient,
     params: ({ pageParam }) => ({
       path: '/items',
+      transformKey: 'key-time',
       transformResponse:
         pageParam === undefined ? async () => ({ value: 999 }) : undefined,
     }),
@@ -85,4 +90,46 @@ it('clears previous start params when explicitly passed null', async () => {
   expect(query.options.queryKey).toEqual([null]);
   expect(fetchSpy).toHaveBeenCalledTimes(1);
   query.destroy();
+});
+
+it('reacts to enabled and keeps inline transforms with the same transformKey in one cache entry', async () => {
+  const fetchSpy = vi.fn(async () => new Response('1'));
+  vi.stubGlobal('fetch', fetchSpy);
+  const queryClient = new QueryClient();
+  const state = observable({ enabled: false, revision: 0 });
+  const create = (transformKey: string, factor: number) =>
+    new FetchInfiniteQuery(() => ({
+      queryClient,
+      enabled: state.enabled,
+      staleTime: Infinity,
+      meta: { revision: state.revision },
+      initialPageParam: 1,
+      getNextPageParam: () => null,
+      params: {
+        path: '/items',
+        transformKey,
+        transformResponse: async (response: Response) =>
+          Number(await response.text()) * factor,
+      },
+    }));
+  const first = create('single', 1);
+  expect(fetchSpy).not.toHaveBeenCalled();
+  runInAction(() => {
+    state.enabled = true;
+  });
+  await when(() => first.isSuccess);
+  const second = create('single', 1);
+  const doubled = create('double', 2);
+  await when(() => second.isSuccess && doubled.isSuccess);
+  runInAction(() => {
+    state.revision++;
+  });
+  await when(() => first.options.meta?.revision === 1);
+  expect(first.options.queryHash).toBe(second.options.queryHash);
+  expect(first.data?.pages).toEqual([1]);
+  expect(doubled.data?.pages).toEqual([2]);
+  expect(fetchSpy).toHaveBeenCalledTimes(2);
+  first.destroy();
+  second.destroy();
+  doubled.destroy();
 });

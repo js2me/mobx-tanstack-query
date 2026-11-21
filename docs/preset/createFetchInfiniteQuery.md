@@ -25,7 +25,7 @@ const query = createFetchInfiniteQuery<Pet[], Error, number>({
   }),
   initialPageParam: 1,
   getNextPageParam: (lastPage, _, lastPageParam) => {
-    return lastPage.length ? lastPageParam + 1 : null;
+    return lastPage?.length ? lastPageParam + 1 : null;
   },
 });
 ```
@@ -42,7 +42,7 @@ const query = createFetchInfiniteQuery<Pet[], Error, number>(() => ({
   }),
   initialPageParam: 1,
   getNextPageParam: (lastPage, _, lastPageParam) =>
-    lastPage.length ? lastPageParam + 1 : null,
+    lastPage?.length ? lastPageParam + 1 : null,
 }));
 ```
 

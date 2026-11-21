@@ -8,10 +8,10 @@ import { createFetchQueryInstance } from './create-query-instance.js';
 
 export type CreateFetchQueryFnConfig<
   TData = unknown,
-  TOutputData = any,
+  TOutputData = TData,
 > = FetchQueryConfig<TData, TOutputData>;
 
-export function createFetchQuery<TData = unknown, TOutputData = any>(
+export function createFetchQuery<TData = unknown, TOutputData = TData>(
   queryClient: AnyQueryClient,
   options:
     | Omit<Partial<CreateFetchQueryFnConfig<TData, TOutputData>>, 'queryClient'>
@@ -21,14 +21,14 @@ export function createFetchQuery<TData = unknown, TOutputData = any>(
       >),
 ): FetchQuery<TData, TOutputData>;
 
-export function createFetchQuery<TData = unknown, TOutputData = any>(
+export function createFetchQuery<TData = unknown, TOutputData = TData>(
   options: () => PartialKeys<
     CreateFetchQueryFnConfig<TData, TOutputData>,
     'queryClient'
   >,
 ): FetchQuery<TData, TOutputData>;
 
-export function createFetchQuery<TData = unknown, TOutputData = any>(
+export function createFetchQuery<TData = unknown, TOutputData = TData>(
   options: PartialKeys<
     CreateFetchQueryFnConfig<TData, TOutputData>,
     'queryClient'

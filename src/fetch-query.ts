@@ -20,7 +20,7 @@ export type TransformResponseMeta = Omit<FetchQueryParams, 'transformResponse'>;
 export type TransformResponseFn<TOutputData = any> = (
   response: Response,
   meta: TransformResponseMeta,
-) => TOutputData;
+) => TOutputData | Promise<TOutputData>;
 
 export type FetchQueryParams<TOutputData = any> = {
   baseUrl?: string;
@@ -35,6 +35,7 @@ export type FetchQueryParams<TOutputData = any> = {
   notFoundAsNull?: boolean;
   responseType?: ResponseType;
   transformResponse?: TransformResponseFn<TOutputData>;
+  transformKey?: string;
   throwOnError?: boolean;
   meta?: QueryMeta;
 };
@@ -51,7 +52,7 @@ export type FetchQueryKeyMeta = Pick<
   | 'throwOnError'
 > & {
   transformResponse?: TransformResponseFn;
-  transformResponseId?: number;
+  transformResponseId?: number | string;
 };
 
 const transformResponseIds = new WeakMap<TransformResponseFn, number>();
@@ -68,24 +69,20 @@ export interface FetchQueryStartParams<TOutputData = any>
   params: FetchQueryParams<TOutputData>;
 }
 
-export interface FetchQueryConfig<TData = unknown, TOutputData = any>
+export interface FetchQueryConfig<TData = unknown, TOutputData = TData>
   extends Omit<
-    Partial<QueryConfig<unknown, DefaultError, TData>>,
+    Partial<QueryConfig<TOutputData | null, DefaultError, TData | null>>,
     'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
   > {
   queryClient: AnyQueryClient;
   params?: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
-  select?: (data: TOutputData) => TData;
+  select?: (data: TOutputData | null) => TData;
 }
 
-export interface FetchQueryPositionalConfig<TData = unknown, TOutputData = any>
-  extends Omit<
-    Partial<QueryConfig<unknown, DefaultError, TData>>,
-    'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
-  > {
-  params?: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
-  select?: (data: TOutputData) => TData;
-}
+export type FetchQueryPositionalConfig<
+  TData = unknown,
+  TOutputData = TData,
+> = Omit<FetchQueryConfig<TData, TOutputData>, 'queryClient'>;
 
 export const serializeFetchQuery = (
   query?: FetchQueryParams['query'],
@@ -135,13 +132,18 @@ export const isNativeBodyInit = (body: unknown): body is BodyInit => {
 
 export const buildFetchQueryKey = (
   fetchParams: FetchQueryParams | null,
+  pagination?: { infinite: true; initialPageParam: unknown },
 ): FetchQueryKey => {
   if (!fetchParams) {
     return [null];
   }
 
   const transformResponse = fetchParams.transformResponse;
-  if (transformResponse && !transformResponseIds.has(transformResponse)) {
+  if (
+    transformResponse &&
+    fetchParams.transformKey == null &&
+    !transformResponseIds.has(transformResponse)
+  ) {
     transformResponseIds.set(transformResponse, ++nextTransformResponseId);
   }
 
@@ -149,6 +151,7 @@ export const buildFetchQueryKey = (
     ...fetchParams.path.split('/'),
     serializeFetchQuery(fetchParams.query) as any,
     {
+      ...pagination,
       baseUrl: fetchParams.baseUrl,
       method: fetchParams.method,
       headers: fetchParams.headers,
@@ -159,7 +162,8 @@ export const buildFetchQueryKey = (
       throwOnError: fetchParams.throwOnError,
       transformResponse,
       transformResponseId: transformResponse
-        ? transformResponseIds.get(transformResponse)
+        ? (fetchParams.transformKey ??
+          transformResponseIds.get(transformResponse))
         : undefined,
     } satisfies FetchQueryKeyMeta,
   ];
@@ -190,18 +194,19 @@ export const parseFetchQueryKey = (
     request: meta.request,
     throwOnError: meta.throwOnError,
     transformResponse: meta.transformResponse,
+    transformKey:
+      typeof meta.transformResponseId === 'string'
+        ? meta.transformResponseId
+        : undefined,
   };
 };
 
-export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
-  unknown,
+export class FetchQuery<TData = unknown, TOutputData = TData> extends Query<
+  TOutputData | null,
   DefaultError,
-  TData
+  TData | null
 > {
-  private _holders!: {
-    params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
-    transformResponse: undefined | TransformResponseFn<TOutputData>;
-  };
+  private _holders: { params?: FetchQueryParams<TOutputData> };
 
   constructor(config: MaybeFn<FetchQueryConfig<TData, TOutputData>>);
   constructor(
@@ -240,32 +245,22 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
       } as FetchQueryConfig<TData, TOutputData>;
     }
 
-    const holders: {
-      params: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
-      transformResponse: undefined | TransformResponseFn<TOutputData>;
-    } = {
-      params: getConfig
-        ? () => callFunction(getConfig!().params)
-        : queryFullConfig.params,
-      transformResponse: undefined,
-    };
+    const holders: { params?: FetchQueryParams<TOutputData> } = {};
 
     super({
       ...(queryFullConfig as any),
       options: () => {
         const currentConfig = getConfig?.() ?? queryFullConfig;
         const fetchParams =
-          callFunction(getConfig ? currentConfig.params : holders.params) ||
-          null;
+          (holders.params ?? callFunction(currentConfig.params)) || null;
         const qc = queryFullConfig.queryClient as QueryClient;
-
-        holders.transformResponse = fetchParams?.transformResponse;
 
         return {
           ...(getConfig ? currentConfig : {}),
-          enabled: !!fetchParams && currentConfig.enabled !== false,
+          enabled: fetchParams ? (currentConfig.enabled ?? true) : false,
           queryKey: buildFetchQueryKey(fetchParams),
-          meta: fetchParams?.meta ?? qc.fetchQueries?.meta,
+          meta:
+            fetchParams?.meta ?? currentConfig.meta ?? qc.fetchQueries?.meta,
         };
       },
       queryFn: async ({ signal, queryKey }) => {
@@ -273,7 +268,7 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
 
         if (!fetchParams) {
           if (
-            typeof process === 'undefined' ||
+            typeof process !== 'undefined' &&
             process.env.NODE_ENV !== 'production'
           ) {
             throw new Error(
@@ -290,8 +285,7 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
 
         return makeFetchRequest<TOutputData>({
           fetchParams,
-          transformResponse:
-            fetchParams.transformResponse ?? holders.transformResponse,
+          transformResponse: fetchParams.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });
@@ -303,16 +297,21 @@ export class FetchQuery<TData = unknown, TOutputData = any> extends Query<
 
   start(
     startParams: FetchQueryStartParams<TOutputData>,
-  ): Promise<QueryObserverResult<TData, DefaultError>>;
+  ): Promise<QueryObserverResult<TData | null, DefaultError>>;
   start(
-    startParams?: QueryStartParams<unknown, DefaultError, TData>,
-  ): Promise<QueryObserverResult<TData, DefaultError>>;
-  start(startParams: any): Promise<QueryObserverResult<TData, DefaultError>> {
+    startParams?: QueryStartParams<
+      TOutputData | null,
+      DefaultError,
+      TData | null
+    >,
+  ): Promise<QueryObserverResult<TData | null, DefaultError>>;
+  start(
+    startParams: any,
+  ): Promise<QueryObserverResult<TData | null, DefaultError>> {
     if (startParams?.params) {
       const { params, ...restStartParams } = startParams;
       const fetchParams: FetchQueryParams<TOutputData> = params;
       this._holders.params = fetchParams;
-      this._holders.transformResponse = fetchParams.transformResponse;
 
       return super.start({
         ...restStartParams,

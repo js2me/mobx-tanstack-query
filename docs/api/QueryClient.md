@@ -101,8 +101,8 @@ Global configuration for [`FetchQuery`](/api/FetchQuery) and [`FetchInfiniteQuer
 - `headers?: Record<string, string>` — Default headers merged with per-request headers
 - `customFetch?: typeof globalThis.fetch` — Custom fetch implementation (useful for testing or non-browser environments)
 - `transformResponse?: TransformResponseFn` — Global response transformation function
-- `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`
-- `timeout?: number` — Request timeout in milliseconds. `0` (or not set) disables the timeout
+- `throwOnError?: boolean` — Whether to throw a `FetchError` on non-ok status. Its `response` property contains the HTTP response. Defaults to `true`
+- `timeout?: number` — Request timeout in milliseconds. Omit to disable the timeout. Zero schedules a timeout on the next timer tick
 - `credentials?: RequestCredentials` — Credentials mode for requests (e.g. `"include"`, `"same-origin"`)
 - `mode?: RequestMode` — Request mode (e.g. `"cors"`, `"no-cors"`)
 - `meta?: QueryMeta` — Default metadata attached to fetch queries

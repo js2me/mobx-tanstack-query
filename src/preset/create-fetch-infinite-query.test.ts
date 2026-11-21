@@ -27,7 +27,7 @@ describe('createFetchInfiniteQuery', () => {
     });
 
   beforeEach(() => {
-    fetchSpy = vi.fn().mockResolvedValue(okJson({}));
+    fetchSpy = vi.fn().mockImplementation(async () => okJson({}));
     vi.stubGlobal('fetch', fetchSpy);
   });
 
@@ -60,7 +60,7 @@ describe('createFetchInfiniteQuery', () => {
     });
 
     expectTypeOf(queryFromOptionsWithGenerics.data).toMatchTypeOf<
-      InfiniteData<User, unknown> | undefined
+      InfiniteData<User | null, unknown> | undefined
     >();
 
     // options-only overload with select
@@ -73,7 +73,7 @@ describe('createFetchInfiniteQuery', () => {
       params: () => ({ path: '/users' }),
       initialPageParam: 0,
       getNextPageParam: () => undefined,
-      select: (data) => data.pages.map((u) => u.email).join(','),
+      select: (data) => data.pages.map((u) => u?.email).join(','),
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
@@ -90,7 +90,7 @@ describe('createFetchInfiniteQuery', () => {
       params: () => ({ path: '/users' }),
       initialPageParam: 0,
       getNextPageParam: () => undefined,
-      select: (data) => data.pages.map((u) => u.email).join(','),
+      select: (data) => data.pages.map((u) => u?.email).join(','),
     }));
 
     expectTypeOf(queryFromClientAndOptions.data).toEqualTypeOf<
@@ -108,7 +108,7 @@ describe('createFetchInfiniteQuery', () => {
     );
 
     expectTypeOf(queryFromClientAndStaticOptions.data).toMatchTypeOf<
-      InfiniteData<User, unknown> | undefined
+      InfiniteData<User | null, unknown> | undefined
     >();
 
     // with explicit TPageParam generic
@@ -116,11 +116,11 @@ describe('createFetchInfiniteQuery', () => {
       params: () => ({ path: '/users', pageParam: 0 }),
       initialPageParam: 0,
       getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-        lastPage.id ? lastPageParam + 1 : undefined,
+        lastPage?.id ? lastPageParam + 1 : undefined,
     });
 
     expectTypeOf(queryWithPageParam.data).toMatchTypeOf<
-      InfiniteData<User, number> | undefined
+      InfiniteData<User | null, number> | undefined
     >();
 
     // 1-arg function overload — queryClient defaults to preset
@@ -131,7 +131,7 @@ describe('createFetchInfiniteQuery', () => {
     }));
 
     expectTypeOf(queryFromFunction.data).toMatchTypeOf<
-      InfiniteData<User, unknown> | undefined
+      InfiniteData<User | null, unknown> | undefined
     >();
 
     // 1-arg function overload with select
@@ -144,7 +144,7 @@ describe('createFetchInfiniteQuery', () => {
       params: () => ({ path: '/users' }),
       initialPageParam: 0,
       getNextPageParam: () => undefined,
-      select: (data) => data.pages.map((u) => u.email).join(','),
+      select: (data) => data.pages.map((u) => u?.email).join(','),
     }));
 
     expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<

@@ -7,6 +7,13 @@ import {
 import type { QueryClient } from '../query-client.js';
 import type { AnyQueryClient } from '../query-client.types.js';
 
+export class FetchError extends Error {
+  constructor(readonly response: Response) {
+    super(`HTTP ${response.status} ${response.statusText}`.trimEnd());
+    this.name = 'FetchError';
+  }
+}
+
 export interface MakeFetchRequestOptions<TOutputData = any> {
   fetchParams: Omit<FetchQueryParams<TOutputData>, 'transformResponse'>;
   transformResponse?: TransformResponseFn;
@@ -81,18 +88,24 @@ export async function makeFetchRequest<TOutputData = any>(
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   let abortHandler: (() => void) | undefined;
 
-  if (clientFetchQueries.timeout) {
+  if (clientFetchQueries.timeout != null) {
     const abortControllerWithTimeout = new AbortController();
     abortHandler = () => {
       clearTimeout(timeoutId);
-      abortControllerWithTimeout.abort();
+      abortControllerWithTimeout.abort(signal.reason);
     };
 
     if (signal.aborted) {
       abortHandler();
     } else {
       signal.addEventListener('abort', abortHandler, { once: true });
-      timeoutId = setTimeout(abortHandler, clientFetchQueries.timeout);
+      timeoutId = setTimeout(
+        () =>
+          abortControllerWithTimeout.abort(
+            new DOMException('Fetch query timed out', 'TimeoutError'),
+          ),
+        clientFetchQueries.timeout,
+      );
     }
 
     abortSignal = abortControllerWithTimeout.signal;
@@ -118,7 +131,7 @@ export async function makeFetchRequest<TOutputData = any>(
       }
 
       if (throwOnError) {
-        throw response;
+        throw new FetchError(response);
       }
     }
 

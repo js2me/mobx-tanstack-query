@@ -11,25 +11,12 @@ export interface CreateFetchInfiniteQueryFnConfig<
   TQueryFnData = unknown,
   TError = DefaultError,
   TPageParam = unknown,
-  TData = InfiniteData<TQueryFnData, TPageParam>,
-  TOutputData = any,
-> extends FetchInfiniteQueryConfig<
-    TQueryFnData,
-    TError,
-    TPageParam,
-    TData,
-    TOutputData
-  > {}
+  TData = InfiniteData<TQueryFnData | null, TPageParam>,
+> extends FetchInfiniteQueryConfig<TQueryFnData, TError, TPageParam, TData> {}
 
-type ClientOptions<TQueryFnData, TError, TPageParam, TData, TOutputData> = Omit<
+type ClientOptions<TQueryFnData, TError, TPageParam, TData> = Omit<
   PartialKeys<
-    CreateFetchInfiniteQueryFnConfig<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TOutputData
-    >,
+    CreateFetchInfiniteQueryFnConfig<TQueryFnData, TError, TPageParam, TData>,
     'queryClient'
   >,
   'queryClient'
@@ -39,58 +26,37 @@ export function createFetchInfiniteQuery<
   TQueryFnData = unknown,
   TError = DefaultError,
   TPageParam = unknown,
-  TData = InfiniteData<TQueryFnData, TPageParam>,
-  TOutputData = any,
+  TData = InfiniteData<TQueryFnData | null, TPageParam>,
 >(
   queryClient: AnyQueryClient,
   options:
-    | ClientOptions<TQueryFnData, TError, TPageParam, TData, TOutputData>
-    | (() => ClientOptions<
-        TQueryFnData,
-        TError,
-        TPageParam,
-        TData,
-        TOutputData
-      >),
-): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
+    | ClientOptions<TQueryFnData, TError, TPageParam, TData>
+    | (() => ClientOptions<TQueryFnData, TError, TPageParam, TData>),
+): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData>;
 
 export function createFetchInfiniteQuery<
   TQueryFnData = unknown,
   TError = DefaultError,
   TPageParam = unknown,
-  TData = InfiniteData<TQueryFnData, TPageParam>,
-  TOutputData = any,
+  TData = InfiniteData<TQueryFnData | null, TPageParam>,
 >(
   options: () => PartialKeys<
-    CreateFetchInfiniteQueryFnConfig<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TOutputData
-    >,
+    CreateFetchInfiniteQueryFnConfig<TQueryFnData, TError, TPageParam, TData>,
     'queryClient'
   >,
-): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
+): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData>;
 
 export function createFetchInfiniteQuery<
   TQueryFnData = unknown,
   TError = DefaultError,
   TPageParam = unknown,
-  TData = InfiniteData<TQueryFnData, TPageParam>,
-  TOutputData = any,
+  TData = InfiniteData<TQueryFnData | null, TPageParam>,
 >(
   options: PartialKeys<
-    CreateFetchInfiniteQueryFnConfig<
-      TQueryFnData,
-      TError,
-      TPageParam,
-      TData,
-      TOutputData
-    >,
+    CreateFetchInfiniteQueryFnConfig<TQueryFnData, TError, TPageParam, TData>,
     'queryClient'
   >,
-): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData, TOutputData>;
+): FetchInfiniteQuery<TQueryFnData, TError, TPageParam, TData>;
 
 export function createFetchInfiniteQuery(...args: [any, any?]) {
   return createFetchQueryInstance(FetchInfiniteQuery, args);

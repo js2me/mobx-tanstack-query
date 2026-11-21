@@ -11,7 +11,7 @@ Like [`FetchQuery`](/api/FetchQuery), it auto-generates `queryKey` from `params`
 ## Usage
 
 ```ts
-const starsQuery = new FetchInfiniteQuery({
+const starsQuery = new FetchInfiniteQuery<unknown[], Error, number>({
   queryClient,
   params: ({ pageParam }) => ({
     path: '/stars',
@@ -22,7 +22,7 @@ const starsQuery = new FetchInfiniteQuery({
   }),
   initialPageParam: 1,
   getNextPageParam: (lastPage, _, lastPageParam) => {
-    return lastPage.length ? lastPageParam + 1 : null;
+    return lastPage?.length ? lastPageParam + 1 : null;
   },
 });
 ```
@@ -32,11 +32,11 @@ const starsQuery = new FetchInfiniteQuery({
 Create a `FetchInfiniteQuery` without `params` (disabled by default), then fetch manually:
 
 ```ts
-const starsQuery = new FetchInfiniteQuery({
+const starsQuery = new FetchInfiniteQuery<unknown[], Error, number>({
   queryClient,
   initialPageParam: 1,
   getNextPageParam: (lastPage, _, lastPageParam) => {
-    return lastPage.length ? lastPageParam + 1 : null;
+    return lastPage?.length ? lastPageParam + 1 : null;
   },
 });
 
@@ -60,7 +60,7 @@ const result = await starsQuery.start({
 Like [`FetchQuery`](/api/FetchQuery), the whole config object can be a function. MobX observables read inside it are tracked, so the query reacts to their changes.
 
 ```ts
-const starsQuery = new FetchInfiniteQuery(() => ({
+const starsQuery = new FetchInfiniteQuery<unknown[], Error, number>(() => ({
   queryClient,
   params: ({ pageParam }) => ({
     path: '/stars',
@@ -68,20 +68,20 @@ const starsQuery = new FetchInfiniteQuery(() => ({
   }),
   initialPageParam: 1,
   getNextPageParam: (lastPage, _, lastPageParam) =>
-    lastPage.length ? lastPageParam + 1 : null,
+    lastPage?.length ? lastPageParam + 1 : null,
 }));
 ```
 
 ### Example: cursor-based pagination
 
 ```ts
-const commentsQuery = new FetchInfiniteQuery({
+const commentsQuery = new FetchInfiniteQuery<{ nextCursor?: string }, Error, string | undefined>({
   queryClient,
   params: ({ pageParam }) => ({
     path: '/comments',
     query: { cursor: pageParam },
   }),
   initialPageParam: undefined as string | undefined,
-  getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+  getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
 });
 ```

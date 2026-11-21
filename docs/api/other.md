@@ -1,6 +1,6 @@
 # Other
 
-## `InferQuery`, `InferMutation`, `InferInfiniteQuery`, `InferFetchQuery`, `InferFetchInfiniteQuery` types
+## `InferQuery`, `InferMutation`, `InferInfiniteQuery` types
 
 This types are needed to infer some other types from mutations\configs.
 
@@ -8,11 +8,9 @@ This types are needed to infer some other types from mutations\configs.
 type MyData = InferMutation<typeof myMutation, "data">;
 type MyVariables = InferMutation<typeof myMutation, "variables">;
 type MyConfig = InferMutation<typeof myMutation, "config">;
-type MyFetchData = InferFetchQuery<typeof myFetchQuery, "data">;
-type MyFetchConfig = InferFetchQuery<typeof myFetchQuery, "config">;
 ```
 
-## `QueryConfigFromFn`, `MutationConfigFromFn`, `InfiniteQueryConfigFromFn`, `FetchQueryConfigFromFn`, `FetchInfiniteQueryConfigFromFn`
+## `QueryConfigFromFn`, `MutationConfigFromFn`, `InfiniteQueryConfigFromFn`
 
 This types are needed to create configuration types from your functions of your http client
 

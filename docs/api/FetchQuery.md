@@ -106,10 +106,11 @@ const petQuery = new FetchQuery({
 - `headers?: Record<string, string>` — Request headers. Merged with global headers from `QueryClient.fetchQueries`
 - `body?: BodyInit | Record<string, unknown>` — Request body. Objects are JSON-serialized with `Content-Type: application/json`; native `BodyInit` (Blob, FormData, etc.) is passed through as-is
 - `request?: Partial<RequestInit>` — Additional `RequestInit` options (except `signal`, `method`, `headers`, `body`)
-- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing. Include `null` in the data type (e.g. `new FetchQuery<User | null>(...)`) and handle it in `select`
+- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing. With `new FetchQuery<string, User>(...)`, the selector receives `User | null` (for example, `select: user => user?.name ?? ""`)
 - `responseType?: ResponseType` — Method to read the response body (e.g. `"json"`, `"text"`, `"blob"`). Defaults to `"json"`
 - `transformResponse?: TransformResponseFn` — Custom function to transform the `Response` object before data is returned
-- `throwOnError?: boolean` — Whether to throw the raw `Response` on non-ok status. Defaults to `true`
+- `transformKey?: string` — Stable cache identifier for an inline transformer. Queries sharing this identifier must produce interchangeable results. Without it, use a stable function reference for `transformResponse`. This also applies to `FetchInfiniteQuery`.
+- `throwOnError?: boolean` — Whether to throw a `FetchError` on non-ok status. Its `response` property contains the HTTP response. Defaults to `true`
 - `meta?: QueryMeta` — Metadata attached to the query
 
 ## Manual control with `start()`

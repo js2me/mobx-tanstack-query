@@ -22,7 +22,7 @@ describe('createFetchQuery', () => {
     });
 
   beforeEach(() => {
-    fetchSpy = vi.fn().mockResolvedValue(okJson({}));
+    fetchSpy = vi.fn().mockImplementation(async () => okJson({}));
     vi.stubGlobal('fetch', fetchSpy);
   });
 
@@ -49,17 +49,17 @@ describe('createFetchQuery', () => {
     });
 
     expectTypeOf(queryFromOptionsWithGenerics.data).toEqualTypeOf<
-      User | undefined
+      User | null | undefined
     >();
 
     // options-only overload with select
     const queryFromOptionsWithSelect = createFetchQuery<string, User>({
       params: () => ({ path: '/users/1' }),
-      select: (user) => user.email,
+      select: (user) => user?.email ?? '',
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
-      string | undefined
+      string | null | undefined
     >();
 
     // queryClient + dynamic options overload
@@ -67,12 +67,12 @@ describe('createFetchQuery', () => {
       new QueryClient(),
       () => ({
         params: () => ({ path: '/users/1' }),
-        select: (user) => user.email,
+        select: (user) => user?.email ?? '',
       }),
     );
 
     expectTypeOf(queryFromClientAndOptions.data).toEqualTypeOf<
-      string | undefined
+      string | null | undefined
     >();
 
     // queryClient + static options overload
@@ -84,7 +84,7 @@ describe('createFetchQuery', () => {
     );
 
     expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
-      User | undefined
+      User | null | undefined
     >();
 
     // 1-arg function overload — queryClient defaults to preset
@@ -92,16 +92,18 @@ describe('createFetchQuery', () => {
       params: () => ({ path: '/users/1' }),
     }));
 
-    expectTypeOf(queryFromFunction.data).toEqualTypeOf<User | undefined>();
+    expectTypeOf(queryFromFunction.data).toEqualTypeOf<
+      User | null | undefined
+    >();
 
     // 1-arg function overload with select
     const queryFromFunctionWithSelect = createFetchQuery<string, User>(() => ({
       params: () => ({ path: '/users/1' }),
-      select: (user) => user.email,
+      select: (user) => user?.email ?? '',
     }));
 
     expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<
-      string | undefined
+      string | null | undefined
     >();
 
     for (const query of [
@@ -200,7 +202,7 @@ describe('createFetchQuery', () => {
 
     const query = createFetchQuery<string, User>({
       params: { path: '/users/1' },
-      select: (user) => user.email,
+      select: (user) => user?.email ?? '',
     });
 
     expect(query).toBeInstanceOf(FetchQuery);
@@ -219,20 +221,21 @@ describe('createFetchQuery', () => {
       params: { path: '/users/1' },
     });
 
-    expectTypeOf(queryFromOptions.data).toEqualTypeOf<User | undefined>();
+    expectTypeOf(queryFromOptions.data).toEqualTypeOf<
+      User | null | undefined
+    >();
 
     // options-only overload with plain params object and select
     const queryFromOptionsWithSelect = createFetchQuery<string, User>({
       params: { path: '/users/1' },
       select: (user) => {
-        expectTypeOf(user).toEqualTypeOf<User>();
-        expectTypeOf(user.email).toEqualTypeOf<string>();
-        return user.email;
+        expectTypeOf(user).toEqualTypeOf<User | null>();
+        return user?.email ?? '';
       },
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
-      string | undefined
+      string | null | undefined
     >();
 
     // queryClient + static options overload with plain params object
@@ -244,7 +247,7 @@ describe('createFetchQuery', () => {
     );
 
     expectTypeOf(queryFromClientAndStaticOptions.data).toEqualTypeOf<
-      User | undefined
+      User | null | undefined
     >();
 
     queryFromOptions.destroy();

@@ -274,8 +274,8 @@ describe('FetchQuery', () => {
 
     await when(() => query.isError);
 
-    expect(query.error).toBeInstanceOf(Response);
-    expect((query.error as unknown as Response).status).toBe(500);
+    expect(query.error).toBeInstanceOf(Error);
+    expect(query.error).toHaveProperty('response.status', 500);
 
     query.destroy();
   });
@@ -306,8 +306,8 @@ describe('FetchQuery', () => {
     });
 
     await when(() => query.isError);
-    expect(query.error).toBeInstanceOf(Response);
-    expect((query.error as unknown as Response).status).toBe(404);
+    expect(query.error).toBeInstanceOf(Error);
+    expect(query.error).toHaveProperty('response.status', 404);
 
     query.destroy();
   });
@@ -336,9 +336,9 @@ describe('FetchQuery', () => {
   it('applies select() to transform response', async () => {
     fetchSpy.mockResolvedValueOnce(okJson({ id: 1, name: 'js2me' }));
 
-    const query = new FetchQuery<string>(queryClient, {
+    const query = new FetchQuery<string, { name: string }>(queryClient, {
       params: () => ({ path: '/users/1' }),
-      select: (data) => (data as { name: string }).name.toUpperCase(),
+      select: (data) => data?.name.toUpperCase() ?? '',
     });
 
     await when(() => !query.isLoading);
@@ -613,15 +613,17 @@ describe('FetchQuery', () => {
       params: () => null,
     }));
 
-    expectTypeOf(query.data).toEqualTypeOf<User | undefined>();
+    expectTypeOf(query.data).toEqualTypeOf<User | null | undefined>();
 
     const queryWithSelect = new FetchQuery<string, User>(() => ({
       queryClient,
       params: () => null,
-      select: (user) => user.name,
+      select: (user) => user?.name ?? '',
     }));
 
-    expectTypeOf(queryWithSelect.data).toEqualTypeOf<string | undefined>();
+    expectTypeOf(queryWithSelect.data).toEqualTypeOf<
+      string | null | undefined
+    >();
 
     query.destroy();
     queryWithSelect.destroy();
@@ -1160,6 +1162,29 @@ describe('FetchQuery', () => {
 
       query.destroy();
     });
+  });
+
+  it('keeps manually started params when a reactive config changes', async () => {
+    fetchSpy.mockImplementation(async (url: string) => okJson(url));
+    const state = observable({ revision: 0 });
+    const query = new FetchQuery(() => ({
+      queryClient,
+      params: { path: '/configured' },
+      enabled: () => false,
+      meta: { revision: state.revision },
+    }));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    await query.start({ params: { path: '/manual' } });
+    runInAction(() => {
+      state.revision++;
+    });
+    await when(() => query.options.meta?.revision === 1);
+    expect(query.data).toBe('/manual');
+    expect(parseFetchQueryKey(query.options.queryKey as any)?.path).toBe(
+      '/manual',
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    query.destroy();
   });
 
   describe('start()', () => {

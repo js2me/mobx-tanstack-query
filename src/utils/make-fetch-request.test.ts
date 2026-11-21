@@ -168,12 +168,12 @@ describe('makeFetchRequest timeout', () => {
         signals.push(init.signal!);
         return new Promise((_resolve, reject) => {
           init.signal!.addEventListener('abort', () =>
-            reject(new Error('aborted')),
+            reject(init.signal!.reason),
           );
         });
       });
     const queryClient = new QueryClient({
-      fetchQueries: { timeout: 10, customFetch },
+      fetchQueries: { timeout: 0, customFetch },
     });
     const source = new AbortController();
     const bySource = makeFetchRequest({
@@ -181,8 +181,9 @@ describe('makeFetchRequest timeout', () => {
       signal: source.signal,
       fetchParams: { path: '/source' },
     });
-    source.abort();
-    await expect(bySource).rejects.toThrow('aborted');
+    const reason = new Error('caller cancelled');
+    source.abort(reason);
+    await expect(bySource).rejects.toBe(reason);
     expect(signals[0].aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
 
@@ -191,8 +192,10 @@ describe('makeFetchRequest timeout', () => {
       signal: new AbortController().signal,
       fetchParams: { path: '/timeout' },
     });
-    const timeoutRejection = expect(byTimeout).rejects.toThrow('aborted');
-    await vi.advanceTimersByTimeAsync(10);
+    const timeoutRejection = expect(byTimeout).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+    await vi.advanceTimersByTimeAsync(0);
     await timeoutRejection;
     expect(signals[1].aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0);

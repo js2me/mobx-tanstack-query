@@ -179,7 +179,7 @@ describe('FetchInfiniteQuery', () => {
     // The observer still has the "/stars" key while the options reaction is delayed.
     const result = await query.fetchNextPage();
 
-    expect(result.error?.message).toContain('Error #2');
+    expect(result.error?.message).toContain('active query key is stale');
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(query.data?.pages).toEqual([{ url: '/stars?page=1' }]);
 
