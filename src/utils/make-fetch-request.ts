@@ -1,4 +1,4 @@
-import type { FetchQueryParams, TransformResponseFn } from '../fetch-query.js';
+import type { TransformResponseMeta } from '../fetch-query.js';
 import {
   buildFetchQueryUrl,
   isNativeBodyInit,
@@ -14,9 +14,15 @@ export class FetchError extends Error {
   }
 }
 
-export interface MakeFetchRequestOptions<TOutputData = any> {
-  fetchParams: Omit<FetchQueryParams<TOutputData>, 'transformResponse'>;
-  transformResponse?: TransformResponseFn;
+export interface MakeFetchRequestOptions<
+  TOutputData = any,
+  TMeta extends TransformResponseMeta = TransformResponseMeta,
+> {
+  fetchParams: TMeta;
+  transformResponse?: (
+    response: Response,
+    meta: TMeta,
+  ) => TOutputData | Promise<TOutputData>;
   queryClient: AnyQueryClient;
   signal: AbortSignal;
 }
@@ -31,24 +37,28 @@ function mergeHeaders(
   }
 
   const headers: Record<string, string> = {};
-  for (const [name, value] of Object.entries({
-    ...(jsonBody ? { 'Content-Type': 'application/json' } : {}),
-    ...clientHeaders,
-    ...requestHeaders,
-  })) {
-    const existing = Object.keys(headers).find(
-      (key) => key.toLowerCase() === name.toLowerCase(),
-    );
-    if (existing) {
-      delete headers[existing];
+  const sources = [
+    jsonBody ? { 'Content-Type': 'application/json' } : undefined,
+    clientHeaders,
+    requestHeaders,
+  ];
+  for (const source of sources) {
+    for (const [name, value] of Object.entries(source ?? {})) {
+      const existing = Object.keys(headers).find(
+        (key) => key.toLowerCase() === name.toLowerCase(),
+      );
+      if (existing) delete headers[existing];
+      headers[name] = value;
     }
-    headers[name] = value;
   }
   return headers;
 }
 
-export async function makeFetchRequest<TOutputData = any>(
-  options: MakeFetchRequestOptions<TOutputData>,
+export async function makeFetchRequest<
+  TOutputData = any,
+  TMeta extends TransformResponseMeta = TransformResponseMeta,
+>(
+  options: MakeFetchRequestOptions<TOutputData, TMeta>,
 ): Promise<TOutputData | null> {
   const { fetchParams, queryClient, signal } = options;
   const clientFetchQueries = (queryClient as QueryClient).fetchQueries ?? {};

@@ -27,6 +27,32 @@ const starsQuery = new FetchInfiniteQuery<unknown[], Error, number>({
 });
 ```
 
+### Parsing paginated responses
+
+The config-level parser receives the current request's typed `pageParam` along with its request parameters. Use it as a fallback when a pagination header is absent.
+
+```ts
+type Page = { items: Project[]; page: number; next: number | null };
+
+const projects = new FetchInfiniteQuery<Page, Error, number>(() => ({
+  queryClient,
+  cacheScope: [connection.id, currentUserId],
+  initialPageParam: 1,
+  params: ({ pageParam }) => ({
+    path: '/projects',
+    headers: { 'PRIVATE-TOKEN': connection.token },
+    query: { page: pageParam },
+  }),
+  transformKey: 'projects-page-v1',
+  transformResponse: async (response, { pageParam }) => ({
+    items: await response.json(),
+    page: Number(response.headers.get('X-Page') || pageParam),
+    next: Number(response.headers.get('X-Next-Page')) || null,
+  }),
+  getNextPageParam: lastPage => lastPage?.next,
+}));
+```
+
 ### Manual control with `start()`
 
 Create a `FetchInfiniteQuery` without `params` (disabled by default), then fetch manually:

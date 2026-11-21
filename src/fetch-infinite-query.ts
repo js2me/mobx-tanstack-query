@@ -7,7 +7,12 @@ import {
 import { callFunction } from 'yummies/common';
 import type { Dict, MaybeFalsy, MaybeFn } from 'yummies/types';
 
-import type { FetchQueryKeyMeta, FetchQueryParams } from './fetch-query.js';
+import type {
+  FetchCacheScope,
+  FetchQueryKeyMeta,
+  FetchQueryParams,
+  TransformResponseMeta,
+} from './fetch-query.js';
 import { buildFetchQueryKey, parseFetchQueryKey } from './fetch-query.js';
 import { InfiniteQuery } from './inifinite-query.js';
 import type {
@@ -80,6 +85,12 @@ export interface FetchInfiniteQueryConfig<
     'queryFn' | 'queryKey' | 'options' | 'initialPageParam' | 'getNextPageParam'
   > {
   queryClient: AnyQueryClient;
+  cacheScope?: FetchCacheScope;
+  transformKey?: string;
+  transformResponse?: (
+    response: Response,
+    meta: TransformResponseMeta & { pageParam: TPageParam },
+  ) => TPage | Promise<TPage>;
   initialPageParam: TPageParam;
   getNextPageParam: NonNullable<
     InfiniteQueryConfig<
@@ -107,8 +118,13 @@ export type FetchInfiniteQueryPositionalConfig<
 export const buildFetchInfiniteQueryKey = (
   fetchParams: FetchInfiniteQueryParams | null,
   initialPageParam?: unknown,
+  transformIdentity?: object,
 ): FetchInfiniteQueryKey => {
-  return buildFetchQueryKey(fetchParams, { infinite: true, initialPageParam });
+  return buildFetchQueryKey(
+    fetchParams,
+    { infinite: true, initialPageParam },
+    transformIdentity,
+  );
 };
 
 export const parseFetchInfiniteQueryKey = parseFetchQueryKey;
@@ -119,6 +135,10 @@ export class FetchInfiniteQuery<
   TPageParam = unknown,
   TData = InfiniteData<TQueryFnData | null, TPageParam>,
 > extends InfiniteQuery<TQueryFnData | null, TError, TPageParam, TData, any> {
+  private _startKey: (
+    params: FetchInfiniteQueryParams | null,
+    initialPageParam: unknown,
+  ) => FetchInfiniteQueryKey;
   private _holders: {
     params?: FetchInfiniteQueryParamsComputed<TQueryFnData, TPageParam>;
   };
@@ -206,6 +226,30 @@ export class FetchInfiniteQuery<
     const resolveParams = (config: typeof queryFullConfig) =>
       'params' in holders ? holders.params : config.params;
 
+    const keyFor = (
+      params: FetchInfiniteQueryParams | null,
+      config: typeof queryFullConfig,
+      initialPageParam: unknown,
+    ) => {
+      const dynamic =
+        getConfig ||
+        (params?.transformResponse &&
+          typeof resolveParams(config) === 'function');
+      const parser = params?.transformResponse ?? config.transformResponse;
+      return buildFetchInfiniteQueryKey(
+        params && {
+          ...params,
+          cacheScope:
+            params.cacheScope === undefined
+              ? config.cacheScope
+              : params.cacheScope,
+          transformKey: params.transformKey ?? config.transformKey,
+        },
+        initialPageParam,
+        parser && dynamic ? holders : parser,
+      );
+    };
+
     super({
       ...(queryFullConfig as any),
       options: () => {
@@ -219,8 +263,9 @@ export class FetchInfiniteQuery<
         return {
           ...(getConfig ? currentConfig : {}),
           enabled: fetchParams ? (currentConfig.enabled ?? true) : false,
-          queryKey: buildFetchInfiniteQueryKey(
+          queryKey: keyFor(
             fetchParams,
+            currentConfig,
             currentConfig.initialPageParam,
           ),
           meta:
@@ -228,40 +273,28 @@ export class FetchInfiniteQuery<
         };
       },
       queryFn: async ({ signal, queryKey, pageParam }) => {
-        const baseFetchParams = parseFetchInfiniteQueryKey(
-          queryKey as FetchInfiniteQueryKey,
-        );
-
         const currentConfig = getConfig?.() ?? queryFullConfig;
         const params = resolveParams(currentConfig);
-        let resolvedParams = baseFetchParams;
-
-        if (baseFetchParams && (getConfig || typeof params === 'function')) {
-          // Reactive params may have moved to another key while the options
-          // update is delayed, so fresh page params must belong to this key.
-          const keyParams =
-            callFunction(params, { pageParam: undefined }) || null;
-          if (
-            keyParams &&
-            hashKey(
-              buildFetchInfiniteQueryKey(
-                keyParams,
-                (queryKey[queryKey.length - 1] as FetchInfiniteQueryKeyMeta)
-                  .initialPageParam,
-              ),
-            ) !== hashKey(queryKey)
-          ) {
-            throw new Error(
-              'FetchInfiniteQuery params changed before the page request. The active query key is stale.',
-            );
-          }
-          resolvedParams = keyParams
-            ? callFunction(params, {
-                pageParam: pageParam as TPageParam,
-              }) || null
-            : null;
+        const baseParams =
+          callFunction(params, { pageParam: undefined }) || null;
+        const keyMeta = queryKey[
+          queryKey.length - 1
+        ] as FetchInfiniteQueryKeyMeta | null;
+        if (
+          baseParams &&
+          keyMeta &&
+          hashKey(
+            keyFor(baseParams, currentConfig, keyMeta.initialPageParam),
+          ) !== hashKey(queryKey)
+        ) {
+          throw new Error(
+            'FetchInfiniteQuery params changed before the page request. The active query key is stale.',
+          );
         }
-
+        const resolvedParams =
+          baseParams &&
+          keyMeta &&
+          callFunction(params, { pageParam: pageParam as TPageParam });
         if (!resolvedParams) {
           if (
             typeof process !== 'undefined' &&
@@ -279,15 +312,14 @@ export class FetchInfiniteQuery<
           );
         }
 
-        const fetchParams: FetchInfiniteQueryParams<TQueryFnData, TPageParam> =
-          {
-            ...resolvedParams,
-            pageParam: pageParam as TPageParam,
-          };
-
-        return makeFetchRequest<TQueryFnData>({
+        const fetchParams = {
+          ...resolvedParams,
+          pageParam: pageParam as TPageParam,
+        };
+        return makeFetchRequest<TQueryFnData, typeof fetchParams>({
           fetchParams,
-          transformResponse: fetchParams.transformResponse,
+          transformResponse:
+            fetchParams.transformResponse ?? currentConfig.transformResponse,
           queryClient: queryFullConfig.queryClient,
           signal,
         });
@@ -295,6 +327,8 @@ export class FetchInfiniteQuery<
     });
 
     this._holders = holders;
+    this._startKey = (params, initialPageParam) =>
+      keyFor(params, getConfig?.() ?? queryFullConfig, initialPageParam);
   }
 
   start(
@@ -322,7 +356,7 @@ export class FetchInfiniteQuery<
 
       return super.start({
         ...restStartParams,
-        queryKey: buildFetchInfiniteQueryKey(
+        queryKey: this._startKey(
           fetchParams,
           restStartParams.initialPageParam ?? this.options.initialPageParam,
         ),

@@ -1,5 +1,6 @@
 import type {
   DefaultError,
+  QueryFunctionContext,
   QueryMeta,
   QueryObserverResult,
 } from '@tanstack/query-core';
@@ -22,7 +23,17 @@ export type TransformResponseFn<TOutputData = any> = (
   meta: TransformResponseMeta,
 ) => TOutputData | Promise<TOutputData>;
 
+export type FetchCacheScope =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly FetchCacheScope[]
+  | { readonly [key: string]: FetchCacheScope };
+
 export type FetchQueryParams<TOutputData = any> = {
+  cacheScope?: FetchCacheScope;
+  bodyKey?: string;
   baseUrl?: string;
   path: string;
   query?: Dict<string | number | boolean | null | undefined>;
@@ -44,19 +55,55 @@ export type FetchQueryKeyMeta = Pick<
   FetchQueryParams,
   | 'baseUrl'
   | 'method'
-  | 'headers'
-  | 'body'
+  | 'cacheScope'
   | 'notFoundAsNull'
   | 'responseType'
   | 'request'
   | 'throwOnError'
 > & {
-  transformResponse?: TransformResponseFn;
-  transformResponseId?: number | string;
+  body?: unknown;
+  bodyKind?: string;
+  transformResponseId?: string;
 };
 
-const transformResponseIds = new WeakMap<TransformResponseFn, number>();
-let nextTransformResponseId = 0;
+// Process-local identities must not alias persisted keys from another session.
+const identityPrefix = Math.random().toString(36).slice(2);
+const objectIds = new WeakMap<object, string>();
+let nextId = 0;
+function objectId(value: object) {
+  let id = objectIds.get(value);
+  if (!id) {
+    id = `${identityPrefix}:${++nextId}`;
+    objectIds.set(value, id);
+  }
+  return id;
+}
+
+function bodyIdentity({ body, bodyKey }: FetchQueryParams) {
+  if (body == null) return {};
+  if (bodyKey !== undefined) return { bodyKind: 'key', body: bodyKey };
+  if (typeof body === 'string') return { bodyKind: 'text', body };
+  if (body instanceof URLSearchParams)
+    return { bodyKind: 'urlencoded', body: body.toString() };
+  if (body instanceof FormData)
+    return {
+      bodyKind: 'form',
+      body: Array.from(body, ([name, value]) => [
+        name,
+        typeof value === 'string' ? value : { file: objectId(value) },
+      ]),
+    };
+  if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+    const bytes =
+      body instanceof ArrayBuffer
+        ? new Uint8Array(body)
+        : new Uint8Array(body.buffer, body.byteOffset, body.byteLength);
+    return { bodyKind: 'bytes', body: Array.from(bytes) };
+  }
+  if (body instanceof Blob || body instanceof ReadableStream)
+    return { bodyKind: 'opaque', body: objectId(body) };
+  return { bodyKind: 'json', body: JSON.parse(JSON.stringify(body)) };
+}
 
 export type FetchQueryKey = readonly (
   | string
@@ -64,25 +111,34 @@ export type FetchQueryKey = readonly (
   | FetchQueryKeyMeta
   | null
 )[];
-export interface FetchQueryStartParams<TOutputData = any>
-  extends QueryStartParams<unknown, DefaultError, any> {
+export interface FetchQueryStartParams<
+  TOutputData = unknown,
+  TData = TOutputData | null,
+> extends QueryStartParams<TOutputData | null, DefaultError, TData> {
   params: FetchQueryParams<TOutputData>;
 }
 
-export interface FetchQueryConfig<TData = unknown, TOutputData = TData>
-  extends Omit<
-    Partial<QueryConfig<TOutputData | null, DefaultError, TData | null>>,
-    'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
-  > {
-  queryClient: AnyQueryClient;
-  params?: MaybeFn<MaybeFalsy<FetchQueryParams<TOutputData>>>;
-  select?: (data: TOutputData | null) => TData;
-}
+type FetchSelection<TRaw, TData> = [TRaw | null] extends [TData]
+  ? { select?: (data: TRaw | null) => TData }
+  : { select: (data: TRaw | null) => TData };
 
 export type FetchQueryPositionalConfig<
-  TData = unknown,
-  TOutputData = TData,
-> = Omit<FetchQueryConfig<TData, TOutputData>, 'queryClient'>;
+  TRaw = unknown,
+  TData = TRaw | null,
+> = Omit<
+  Partial<QueryConfig<TRaw | null, DefaultError, TData>>,
+  'queryClient' | 'queryFn' | 'queryKey' | 'options' | 'select'
+> & {
+  params?: MaybeFn<MaybeFalsy<FetchQueryParams<TRaw>>>;
+  transformResponse?: TransformResponseFn<TRaw>;
+  transformKey?: string;
+  cacheScope?: FetchCacheScope;
+} & FetchSelection<TRaw, TData>;
+
+export type FetchQueryConfig<
+  TRaw = unknown,
+  TData = TRaw | null,
+> = FetchQueryPositionalConfig<TRaw, TData> & { queryClient: AnyQueryClient };
 
 export const serializeFetchQuery = (
   query?: FetchQueryParams['query'],
@@ -130,23 +186,37 @@ export const isNativeBodyInit = (body: unknown): body is BodyInit => {
   );
 };
 
+function snapshotBody(
+  body: FetchQueryParams['body'],
+): FetchQueryParams['body'] {
+  if (body == null || typeof body === 'string') return body;
+  if (body instanceof URLSearchParams) return new URLSearchParams(body);
+  if (body instanceof FormData) {
+    const copy = new FormData();
+    for (const [name, value] of body) copy.append(name, value);
+    return copy;
+  }
+  if (body instanceof ArrayBuffer) return body.slice(0);
+  if (ArrayBuffer.isView(body))
+    return new Uint8Array(
+      body.buffer,
+      body.byteOffset,
+      body.byteLength,
+    ).slice();
+  if (body instanceof Blob || body instanceof ReadableStream) return body;
+  return JSON.parse(JSON.stringify(body));
+}
+
 export const buildFetchQueryKey = (
   fetchParams: FetchQueryParams | null,
   pagination?: { infinite: true; initialPageParam: unknown },
+  transformIdentity?: object,
 ): FetchQueryKey => {
   if (!fetchParams) {
     return [null];
   }
 
-  const transformResponse = fetchParams.transformResponse;
-  if (
-    transformResponse &&
-    fetchParams.transformKey == null &&
-    !transformResponseIds.has(transformResponse)
-  ) {
-    transformResponseIds.set(transformResponse, ++nextTransformResponseId);
-  }
-
+  const parserIdentity = transformIdentity ?? fetchParams.transformResponse;
   return [
     ...fetchParams.path.split('/'),
     serializeFetchQuery(fetchParams.query) as any,
@@ -154,160 +224,176 @@ export const buildFetchQueryKey = (
       ...pagination,
       baseUrl: fetchParams.baseUrl,
       method: fetchParams.method,
-      headers: fetchParams.headers,
-      body: fetchParams.body as any,
+      cacheScope:
+        typeof fetchParams.cacheScope === 'object' &&
+        fetchParams.cacheScope !== null
+          ? JSON.parse(JSON.stringify(fetchParams.cacheScope))
+          : fetchParams.cacheScope,
+      ...bodyIdentity(fetchParams),
       notFoundAsNull: fetchParams.notFoundAsNull,
       responseType: fetchParams.responseType,
-      request: fetchParams.request,
+      request:
+        fetchParams.request &&
+        Object.fromEntries(
+          Object.entries(fetchParams.request).filter(
+            ([key]) => !['headers', 'body', 'signal', 'method'].includes(key),
+          ),
+        ),
       throwOnError: fetchParams.throwOnError,
-      transformResponse,
-      transformResponseId: transformResponse
-        ? (fetchParams.transformKey ??
-          transformResponseIds.get(transformResponse))
-        : undefined,
+      transformResponseId:
+        fetchParams.transformKey !== undefined
+          ? `key:${fetchParams.transformKey}`
+          : parserIdentity
+            ? objectId(parserIdentity)
+            : undefined,
     } satisfies FetchQueryKeyMeta,
   ];
 };
 
-export const parseFetchQueryKey = (
-  queryKey: FetchQueryKey,
-): FetchQueryParams | null => {
-  if (!queryKey.length || queryKey[0] === null) {
-    return null;
-  }
-
+/** Reads the serializable cache identity. HTTP headers and parser functions live on the request. */
+export const parseFetchQueryKey = (queryKey: FetchQueryKey) => {
+  if (queryKey.length < 3 || queryKey[0] === null) return null;
   const meta = queryKey[queryKey.length - 1] as FetchQueryKeyMeta;
-  const serializedQuery = queryKey[queryKey.length - 2] as
-    | Dict<string>
-    | undefined;
-  const path = (queryKey.slice(0, -2) as string[]).join('/');
-
   return {
-    path,
-    query: serializedQuery,
-    baseUrl: meta.baseUrl,
-    method: meta.method,
-    headers: meta.headers,
-    body: meta.body,
-    notFoundAsNull: meta.notFoundAsNull,
-    responseType: meta.responseType,
-    request: meta.request,
-    throwOnError: meta.throwOnError,
-    transformResponse: meta.transformResponse,
-    transformKey:
-      typeof meta.transformResponseId === 'string'
-        ? meta.transformResponseId
-        : undefined,
+    ...meta,
+    path: queryKey.slice(0, -2).join('/'),
+    query: (queryKey[queryKey.length - 2] ?? undefined) as
+      | Dict<string>
+      | undefined,
   };
 };
 
-export class FetchQuery<TData = unknown, TOutputData = TData> extends Query<
-  TOutputData | null,
-  DefaultError,
-  TData | null
-> {
+export class FetchQuery<
+  TOutputData = unknown,
+  TData = TOutputData | null,
+> extends Query<TOutputData | null, DefaultError, TData> {
+  private _startOptions: (params: FetchQueryParams<TOutputData>) => {
+    queryKey: FetchQueryKey;
+    queryFn: (ctx: QueryFunctionContext) => Promise<TOutputData | null>;
+  };
   private _holders: { params?: FetchQueryParams<TOutputData> };
 
-  constructor(config: MaybeFn<FetchQueryConfig<TData, TOutputData>>);
+  constructor(config: MaybeFn<FetchQueryConfig<TOutputData, TData>>);
   constructor(
     queryClient: AnyQueryClient,
-    config: FetchQueryPositionalConfig<TData, TOutputData>,
+    config: FetchQueryPositionalConfig<TOutputData, TData>,
   );
 
   constructor(
     queryClientOrConfig:
       | AnyQueryClient
-      | FetchQueryConfig<TData, TOutputData>
-      | (() => FetchQueryConfig<TData, TOutputData>),
-    positionalConfig?: FetchQueryPositionalConfig<TData, TOutputData>,
+      | FetchQueryConfig<TOutputData, TData>
+      | (() => FetchQueryConfig<TOutputData, TData>),
+    positionalConfig?: FetchQueryPositionalConfig<TOutputData, TData>,
   ) {
-    let queryFullConfig: FetchQueryConfig<TData, TOutputData>;
-    let getConfig: (() => FetchQueryConfig<TData, TOutputData>) | undefined;
+    let queryFullConfig: FetchQueryConfig<TOutputData, TData>;
+    let getConfig: (() => FetchQueryConfig<TOutputData, TData>) | undefined;
 
     if (typeof queryClientOrConfig === 'function') {
       getConfig = queryClientOrConfig as () => FetchQueryConfig<
-        TData,
-        TOutputData
+        TOutputData,
+        TData
       >;
       queryFullConfig = getConfig();
     } else if (
       'queryClient' in
-      (queryClientOrConfig as FetchQueryConfig<TData, TOutputData>)
+      (queryClientOrConfig as FetchQueryConfig<TOutputData, TData>)
     ) {
       queryFullConfig = queryClientOrConfig as FetchQueryConfig<
-        TData,
-        TOutputData
+        TOutputData,
+        TData
       >;
     } else {
       queryFullConfig = {
         ...positionalConfig,
         queryClient: queryClientOrConfig as AnyQueryClient,
-      } as FetchQueryConfig<TData, TOutputData>;
+      } as FetchQueryConfig<TOutputData, TData>;
     }
 
     const holders: { params?: FetchQueryParams<TOutputData> } = {};
 
+    const requestOptions = (
+      params: FetchQueryParams<TOutputData> | null,
+      config: typeof queryFullConfig,
+    ) => {
+      const fetchParams = params && {
+        ...params,
+        query: params.query && { ...params.query },
+        headers: params.headers && { ...params.headers },
+        request: params.request && { ...params.request },
+        body: snapshotBody(params.body),
+        cacheScope:
+          params.cacheScope === undefined
+            ? config.cacheScope
+            : params.cacheScope,
+        transformResponse: params.transformResponse ?? config.transformResponse,
+        transformKey: params.transformKey ?? config.transformKey,
+      };
+      const dynamic =
+        getConfig ||
+        (params?.transformResponse && typeof config.params === 'function');
+      return {
+        queryKey: buildFetchQueryKey(
+          fetchParams,
+          undefined,
+          dynamic && fetchParams?.transformResponse ? holders : undefined,
+        ),
+        queryFn: async ({ signal }: QueryFunctionContext) => {
+          if (!fetchParams) {
+            if (
+              typeof process !== 'undefined' &&
+              process.env.NODE_ENV !== 'production'
+            ) {
+              throw new Error(
+                'Error #1: Fetch query is not configured.\n' +
+                  'The "params" option for FetchQuery returned a falsy value.\n' +
+                  'Please ensure that "params" returns a valid FetchQueryParams object with at least a "path" property.\n' +
+                  'More info: https://js2me.github.io/mobx-tanstack-query/errors/1',
+              );
+            }
+            throw new Error(
+              'Error #1: https://js2me.github.io/mobx-tanstack-query/errors/1',
+            );
+          }
+
+          return makeFetchRequest<TOutputData>({
+            fetchParams,
+            transformResponse: fetchParams.transformResponse,
+            queryClient: queryFullConfig.queryClient,
+            signal,
+          });
+        },
+      };
+    };
     super({
       ...(queryFullConfig as any),
       options: () => {
-        const currentConfig = getConfig?.() ?? queryFullConfig;
-        const fetchParams =
-          (holders.params ?? callFunction(currentConfig.params)) || null;
-        const qc = queryFullConfig.queryClient as QueryClient;
-
+        const config = getConfig?.() ?? queryFullConfig;
+        const params = (holders.params ?? callFunction(config.params)) || null;
         return {
-          ...(getConfig ? currentConfig : {}),
-          enabled: fetchParams ? (currentConfig.enabled ?? true) : false,
-          queryKey: buildFetchQueryKey(fetchParams),
+          ...(getConfig ? config : {}),
+          ...requestOptions(params, config),
+          enabled: params ? (config.enabled ?? true) : false,
           meta:
-            fetchParams?.meta ?? currentConfig.meta ?? qc.fetchQueries?.meta,
+            params?.meta ??
+            config.meta ??
+            (queryFullConfig.queryClient as QueryClient).fetchQueries?.meta,
         };
       },
-      queryFn: async ({ signal, queryKey }) => {
-        const fetchParams = parseFetchQueryKey(queryKey as FetchQueryKey);
-
-        if (!fetchParams) {
-          if (
-            typeof process !== 'undefined' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            throw new Error(
-              'Error #1: Fetch query is not configured.\n' +
-                'This happened because the "params" option for FetchQuery returned a falsy value and the query key could not be parsed.\n' +
-                'Please ensure that "params" returns a valid FetchQueryParams object with at least a "path" property.\n' +
-                'More info: https://js2me.github.io/mobx-tanstack-query/errors/1',
-            );
-          }
-          throw new Error(
-            'Error #1: https://js2me.github.io/mobx-tanstack-query/errors/1',
-          );
-        }
-
-        return makeFetchRequest<TOutputData>({
-          fetchParams,
-          transformResponse: fetchParams.transformResponse,
-          queryClient: queryFullConfig.queryClient,
-          signal,
-        });
-      },
     });
+    this._startOptions = (params) =>
+      requestOptions(params, getConfig?.() ?? queryFullConfig);
 
     this._holders = holders;
   }
 
   start(
-    startParams: FetchQueryStartParams<TOutputData>,
-  ): Promise<QueryObserverResult<TData | null, DefaultError>>;
+    startParams: FetchQueryStartParams<TOutputData, TData>,
+  ): Promise<QueryObserverResult<TData, DefaultError>>;
   start(
-    startParams?: QueryStartParams<
-      TOutputData | null,
-      DefaultError,
-      TData | null
-    >,
-  ): Promise<QueryObserverResult<TData | null, DefaultError>>;
-  start(
-    startParams: any,
-  ): Promise<QueryObserverResult<TData | null, DefaultError>> {
+    startParams?: QueryStartParams<TOutputData | null, DefaultError, TData>,
+  ): Promise<QueryObserverResult<TData, DefaultError>>;
+  start(startParams: any): Promise<QueryObserverResult<TData, DefaultError>> {
     if (startParams?.params) {
       const { params, ...restStartParams } = startParams;
       const fetchParams: FetchQueryParams<TOutputData> = params;
@@ -315,7 +401,7 @@ export class FetchQuery<TData = unknown, TOutputData = TData> extends Query<
 
       return super.start({
         ...restStartParams,
-        queryKey: buildFetchQueryKey(fetchParams),
+        ...this._startOptions(fetchParams),
         enabled: true,
         meta:
           fetchParams.meta ??

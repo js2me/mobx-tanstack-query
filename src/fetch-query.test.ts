@@ -84,37 +84,27 @@ describe('buildFetchQueryUrl', () => {
   });
 });
 
-describe('buildFetchQueryKey / parseFetchQueryKey', () => {
+describe('buildFetchQueryKey', () => {
   it('builds [null] for null params', () => {
     expect(buildFetchQueryKey(null)).toEqual([null]);
   });
 
-  it('roundtrips path/query/method/headers/body/meta', () => {
-    const params = {
-      path: '/api/users',
+  it('reads serializable key fields after a JSON round trip', () => {
+    const key = buildFetchQueryKey({
+      path: '/search',
       query: { page: 1 },
+      headers: { Authorization: 'secret' },
+      cacheScope: ['host', 'user'],
       method: 'POST',
-      headers: { 'X-Token': 'abc' },
-      body: '{"search":"hello"}',
-      notFoundAsNull: true,
-      responseType: 'json' as const,
-      request: { cache: 'no-cache' as RequestCache },
-      throwOnError: false,
-    };
-    const key = buildFetchQueryKey(params);
-    const parsed = parseFetchQueryKey(key);
-
-    expect(parsed).toEqual({
-      path: '/api/users',
-      query: { page: '1' },
-      method: 'POST',
-      headers: { 'X-Token': 'abc' },
-      body: '{"search":"hello"}',
-      notFoundAsNull: true,
-      responseType: 'json',
-      request: { cache: 'no-cache' },
-      throwOnError: false,
     });
+    expect(parseFetchQueryKey(JSON.parse(JSON.stringify(key)))).toEqual({
+      path: '/search',
+      query: { page: '1' },
+      cacheScope: ['host', 'user'],
+      method: 'POST',
+    });
+    expect(parseFetchQueryKey([])).toBeNull();
+    expect(parseFetchQueryKey([null])).toBeNull();
   });
 
   it('stores plain object body as-is in key', () => {
@@ -135,28 +125,23 @@ describe('buildFetchQueryKey / parseFetchQueryKey', () => {
     expect(meta.body).toBe('raw-payload');
   });
 
-  it('stores FormData body as-is in key', () => {
+  it('stores FormData entries in key', () => {
     const formData = new FormData();
     const key = buildFetchQueryKey({
       path: '/upload',
       body: formData,
     });
     const meta = key[key.length - 1] as { body: unknown };
-    expect(meta.body).toBe(formData);
+    expect(meta.body).toEqual([]);
   });
 
-  it('stores null headers when not provided', () => {
-    const key = buildFetchQueryKey({ path: '/items' });
+  it('excludes headers from the key even when provided', () => {
+    const key = buildFetchQueryKey({
+      path: '/items',
+      headers: { Authorization: 'secret' },
+    });
     const meta = key[key.length - 1] as { headers: unknown };
     expect(meta.headers).toBeUndefined();
-  });
-
-  it('parse returns null when key is null-headed', () => {
-    expect(parseFetchQueryKey([null])).toBeNull();
-  });
-
-  it('parse returns null for empty key', () => {
-    expect(parseFetchQueryKey([])).toBeNull();
   });
 });
 
@@ -336,7 +321,7 @@ describe('FetchQuery', () => {
   it('applies select() to transform response', async () => {
     fetchSpy.mockResolvedValueOnce(okJson({ id: 1, name: 'js2me' }));
 
-    const query = new FetchQuery<string, { name: string }>(queryClient, {
+    const query = new FetchQuery<{ name: string }, string>(queryClient, {
       params: () => ({ path: '/users/1' }),
       select: (data) => data?.name.toUpperCase() ?? '',
     });
@@ -615,15 +600,13 @@ describe('FetchQuery', () => {
 
     expectTypeOf(query.data).toEqualTypeOf<User | null | undefined>();
 
-    const queryWithSelect = new FetchQuery<string, User>(() => ({
+    const queryWithSelect = new FetchQuery<User, string>(() => ({
       queryClient,
       params: () => null,
       select: (user) => user?.name ?? '',
     }));
 
-    expectTypeOf(queryWithSelect.data).toEqualTypeOf<
-      string | null | undefined
-    >();
+    expectTypeOf(queryWithSelect.data).toEqualTypeOf<string | undefined>();
 
     query.destroy();
     queryWithSelect.destroy();
@@ -1180,8 +1163,8 @@ describe('FetchQuery', () => {
     });
     await when(() => query.options.meta?.revision === 1);
     expect(query.data).toBe('/manual');
-    expect(parseFetchQueryKey(query.options.queryKey as any)?.path).toBe(
-      '/manual',
+    expect(query.options.queryKey).toEqual(
+      buildFetchQueryKey({ path: '/manual' }),
     );
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     query.destroy();

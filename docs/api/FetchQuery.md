@@ -106,12 +106,32 @@ const petQuery = new FetchQuery({
 - `headers?: Record<string, string>` — Request headers. Merged with global headers from `QueryClient.fetchQueries`
 - `body?: BodyInit | Record<string, unknown>` — Request body. Objects are JSON-serialized with `Content-Type: application/json`; native `BodyInit` (Blob, FormData, etc.) is passed through as-is
 - `request?: Partial<RequestInit>` — Additional `RequestInit` options (except `signal`, `method`, `headers`, `body`)
-- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing. With `new FetchQuery<string, User>(...)`, the selector receives `User | null` (for example, `select: user => user?.name ?? ""`)
+- `notFoundAsNull?: boolean` — If `true`, a 404 response returns `null` instead of throwing. With `new FetchQuery<User, string>(...)`, the selector receives `User | null` (for example, `select: user => user?.name ?? ""`)
 - `responseType?: ResponseType` — Method to read the response body (e.g. `"json"`, `"text"`, `"blob"`). Defaults to `"json"`
 - `transformResponse?: TransformResponseFn` — Custom function to transform the `Response` object before data is returned
-- `transformKey?: string` — Stable cache identifier for an inline transformer. Queries sharing this identifier must produce interchangeable results. Without it, use a stable function reference for `transformResponse`. This also applies to `FetchInfiniteQuery`.
+- `transformKey?: string` — Stable identifier for the response format. Supply the same key for interchangeable parsers across instances, SSR, or persisted caches. Change it when the format changes.
+- `bodyKey?: string` — Explicit body identity, for example a content digest. Useful for large buffers or for sharing opaque bodies such as blobs across sessions.
 - `throwOnError?: boolean` — Whether to throw a `FetchError` on non-ok status. Its `response` property contains the HTTP response. Defaults to `true`
 - `meta?: QueryMeta` — Metadata attached to the query
+
+## Cache scope and response types
+
+Headers go to the HTTP request. Use a JSON-serializable `cacheScope` to identify the account, tenant, or locale whenever it affects the result. Rotating a token within a scope preserves cached data. Changing scope selects a separate cache entry. These options work on both fetch query classes and their presets.
+
+```ts
+const profile = new FetchQuery<User, string>(() => ({
+  queryClient,
+  cacheScope: [connection.id, currentUserId, locale],
+  params: { path: '/user', headers: { 'PRIVATE-TOKEN': connection.token } },
+  transformKey: 'user-v1',
+  transformResponse: async response => await response.json() as User,
+  select: user => user?.name ?? '',
+}));
+```
+
+The first type argument is the parsed response type. A selector receives that type or `null` and determines the second type argument. Here `profile.data` is `string | undefined`. Without a selector, `new FetchQuery<User>(...)` exposes `User | null | undefined`.
+
+Set `cacheScope`, `transformResponse`, and `transformKey` on the config or in `params`. Values in `params` take precedence. Supply a stable `transformKey` for cross-instance cache sharing with dynamic parsers. Without an explicit key, inline parsers from a config or params factory can use an instance-local identity. If captured state changes what the parser produces, include that state in the scope or format key.
 
 ## Manual control with `start()`
 

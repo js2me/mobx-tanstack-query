@@ -38,7 +38,7 @@ describe('makeFetchRequest headers', () => {
     const queryClient = new QueryClient({
       fetchQueries: {
         customFetch,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'content-type': 'application/client' },
       },
     });
 
@@ -48,7 +48,7 @@ describe('makeFetchRequest headers', () => {
       fetchParams: {
         path: '/data',
         body: { id: 1 },
-        headers: { 'content-type': 'application/vnd.api+json' },
+        headers: { 'Content-Type': 'application/vnd.api+json' },
       },
     });
 

@@ -53,17 +53,17 @@ describe('createFetchQuery', () => {
     >();
 
     // options-only overload with select
-    const queryFromOptionsWithSelect = createFetchQuery<string, User>({
+    const queryFromOptionsWithSelect = createFetchQuery<User, string>({
       params: () => ({ path: '/users/1' }),
       select: (user) => user?.email ?? '',
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
 
     // queryClient + dynamic options overload
-    const queryFromClientAndOptions = createFetchQuery<string, User>(
+    const queryFromClientAndOptions = createFetchQuery<User, string>(
       new QueryClient(),
       () => ({
         params: () => ({ path: '/users/1' }),
@@ -72,7 +72,7 @@ describe('createFetchQuery', () => {
     );
 
     expectTypeOf(queryFromClientAndOptions.data).toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
 
     // queryClient + static options overload
@@ -97,13 +97,13 @@ describe('createFetchQuery', () => {
     >();
 
     // 1-arg function overload with select
-    const queryFromFunctionWithSelect = createFetchQuery<string, User>(() => ({
+    const queryFromFunctionWithSelect = createFetchQuery<User, string>(() => ({
       params: () => ({ path: '/users/1' }),
       select: (user) => user?.email ?? '',
     }));
 
     expectTypeOf(queryFromFunctionWithSelect.data).toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
 
     for (const query of [
@@ -200,7 +200,7 @@ describe('createFetchQuery', () => {
   it('accepts params as a plain object with select in options-only overload', () => {
     type User = { id: string; email: string };
 
-    const query = createFetchQuery<string, User>({
+    const query = createFetchQuery<User, string>({
       params: { path: '/users/1' },
       select: (user) => user?.email ?? '',
     });
@@ -226,7 +226,7 @@ describe('createFetchQuery', () => {
     >();
 
     // options-only overload with plain params object and select
-    const queryFromOptionsWithSelect = createFetchQuery<string, User>({
+    const queryFromOptionsWithSelect = createFetchQuery<User, string>({
       params: { path: '/users/1' },
       select: (user) => {
         expectTypeOf(user).toEqualTypeOf<User | null>();
@@ -235,7 +235,7 @@ describe('createFetchQuery', () => {
     });
 
     expectTypeOf(queryFromOptionsWithSelect.data).toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
 
     // queryClient + static options overload with plain params object

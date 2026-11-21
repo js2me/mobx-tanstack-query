@@ -1,39 +1,30 @@
+import type { FetchQueryPositionalConfig } from 'mobx-tanstack-query';
 import {
   type AnyQueryClient,
   FetchQuery,
   type FetchQueryConfig,
 } from 'mobx-tanstack-query';
-import type { PartialKeys } from 'yummies/types';
 import { createFetchQueryInstance } from './create-query-instance.js';
 
 export type CreateFetchQueryFnConfig<
-  TData = unknown,
-  TOutputData = TData,
-> = FetchQueryConfig<TData, TOutputData>;
+  TRaw = unknown,
+  TData = TRaw | null,
+> = FetchQueryConfig<TRaw, TData>;
 
-export function createFetchQuery<TData = unknown, TOutputData = TData>(
+type PresetConfig<TRaw, TData> = FetchQueryPositionalConfig<TRaw, TData> & {
+  queryClient?: AnyQueryClient;
+};
+
+export function createFetchQuery<TRaw = unknown, TData = TRaw | null>(
   queryClient: AnyQueryClient,
   options:
-    | Omit<Partial<CreateFetchQueryFnConfig<TData, TOutputData>>, 'queryClient'>
-    | (() => Omit<
-        Partial<CreateFetchQueryFnConfig<TData, TOutputData>>,
-        'queryClient'
-      >),
-): FetchQuery<TData, TOutputData>;
+    | FetchQueryPositionalConfig<TRaw, TData>
+    | (() => FetchQueryPositionalConfig<TRaw, TData>),
+): FetchQuery<TRaw, TData>;
 
-export function createFetchQuery<TData = unknown, TOutputData = TData>(
-  options: () => PartialKeys<
-    CreateFetchQueryFnConfig<TData, TOutputData>,
-    'queryClient'
-  >,
-): FetchQuery<TData, TOutputData>;
-
-export function createFetchQuery<TData = unknown, TOutputData = TData>(
-  options: PartialKeys<
-    CreateFetchQueryFnConfig<TData, TOutputData>,
-    'queryClient'
-  >,
-): FetchQuery<TData, TOutputData>;
+export function createFetchQuery<TRaw = unknown, TData = TRaw | null>(
+  options: PresetConfig<TRaw, TData> | (() => PresetConfig<TRaw, TData>),
+): FetchQuery<TRaw, TData>;
 
 export function createFetchQuery(...args: [any, any?]) {
   return createFetchQueryInstance(FetchQuery, args);
