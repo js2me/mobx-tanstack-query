@@ -17,7 +17,7 @@
 
 Use [TanStack Query Core](https://tanstack.com/query/latest) in your MobX stores. Queries and mutations expose observable state, so MobX reactions can respond when data arrives or a request fails.
 
-[Read the documentation →](https://js2me.github.io/mobx-tanstack-query/)
+### [Read the docs →](https://js2me.github.io/mobx-tanstack-query/)
 
 ## Quick example
 
