@@ -1,3 +1,5 @@
+<img src="docs/public/logo.png" align="right" width="156" alt="logo" />
+
 # mobx-tanstack-query
 
 [![npm version][npm-image]][npm-url]
@@ -12,8 +14,6 @@
 [download-image]: https://img.shields.io/npm/dm/mobx-tanstack-query
 [size-image]: https://img.shields.io/badge/bundle%20size-Bundlephobia-blue
 [size-url]: https://bundlephobia.com/package/mobx-tanstack-query
-
-<img src="docs/public/logo.png" align="right" width="72" alt="" />
 
 Use [TanStack Query Core](https://tanstack.com/query/latest) in your MobX stores. Queries and mutations expose observable state, so MobX reactions can respond when data arrives or a request fails.
 
