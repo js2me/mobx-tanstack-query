@@ -1,6 +1,6 @@
 {
   "name": "mobx-tanstack-query",
-  "version": "7.0.0",
+  "version": "7.4.2",
   "scripts": {
     "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",
@@ -46,13 +46,12 @@
   "type": "module",
   "peerDependencies": {
     "@tanstack/query-core": "^5.90.2",
-    "mobx": "^6.12.4"
+    "mobx": "^6.12.4 || ^7.0.0"
   },
   "dependencies": {
-    "yummies": "^7.19.4"
+    "yummies": "^7.23.2"
   },
   "devDependencies": {
-    "linked-abort-controller": "^1.1.1",
     "@biomejs/biome": "^2.4.14",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.31.0",
@@ -66,6 +65,8 @@
     "js2me-biome-config": "^1.1.0",
     "jsdom": "^29.1.1",
     "lefthook": "^1.13.6",
+    "linked-abort-controller": "^1.1.1",
+    "mobx": "^6.12.4",
     "nodemon": "^3.1.14",
     "rimraf": "^6.1.3",
     "sborshik": "^3.5.0",

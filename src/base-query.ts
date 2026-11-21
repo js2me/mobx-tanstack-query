@@ -7,15 +7,14 @@ import {
   type SetDataOptions,
   type Updater,
 } from '@tanstack/query-core';
+import { reaction, runInAction, when } from 'mobx';
+import * as annotation from 'yummies/mobx';
 import {
-  action,
-  makeObservable,
-  observable,
-  reaction,
-  runInAction,
-  when,
-} from 'mobx';
-import { annotation, lazyObserve } from 'yummies/mobx';
+  applyObservable,
+  lazyObserve,
+  type ObservableAnnotationsArray,
+  observableVariants,
+} from 'yummies/mobx';
 import { enableHolder } from './constants.js';
 import type { QueryFeatures } from './query.types.js';
 import type { AnyQueryClient, QueryClientHooks } from './query-client.types.js';
@@ -60,6 +59,7 @@ type BaseResult<TData, TError> = {
   isSuccess: boolean;
   fetchStatus: FetchStatus;
   isFetching: boolean;
+  promise: Promise<TData>;
 };
 
 export abstract class BaseQuery<
@@ -91,6 +91,9 @@ export abstract class BaseQuery<
 
   protected holdedEnabledOption!: TOptions['enabled'];
   protected _observerSubscription?: VoidFunction;
+  private disposeObservation?: VoidFunction;
+  private disposeDynamicOptions?: VoidFunction;
+  private startController?: AbortController;
   protected hooks?: QueryClientHooks;
 
   protected errorListeners!: TErrorListener[];
@@ -133,6 +136,15 @@ export abstract class BaseQuery<
     };
   }
 
+  /**
+   * A deep observable result copies `data` on every update, so structural sharing can't keep its
+   * reference and only adds a deep compare (#7). Every other `resultObservable` keeps the reference.
+   */
+  protected get defaultStructuralSharing() {
+    const { resultObservable } = this.features;
+    return resultObservable !== 'deep' && resultObservable !== true;
+  }
+
   protected initializeBaseState(
     queryClient: AnyQueryClient,
     features: QueryFeatures,
@@ -156,22 +168,25 @@ export abstract class BaseQuery<
   protected finalizeInitialization(params: {
     originalQueryProperties: readonly string[];
     getAllDynamicOptions?: () => Partial<TOptions>;
-    abortSignal?: AbortSignal;
     preserveExistingProperties?: boolean;
   }) {
     this.updateResult(this.queryObserver.getOptimisticResult(this.options));
 
-    const resultAnnotation = annotation.observable(
-      this.features.resultObservable,
-    );
+    const annotations: ObservableAnnotationsArray<this> = [
+      [annotation.observableRef, 'isResultRequsted'],
+      [annotation.actionBound, 'setData', 'update', 'updateResult'],
+    ];
+    const resultObservable = this.features.resultObservable;
+    const resultAnnotation =
+      resultObservable === true || resultObservable === undefined
+        ? annotation.observable
+        : resultObservable === false
+          ? false
+          : observableVariants[resultObservable];
     if (resultAnnotation) {
-      resultAnnotation(this, '_result');
+      annotations.unshift([resultAnnotation, '_result']);
     }
 
-    observable.ref(this, 'isResultRequsted');
-    action.bound(this, 'setData');
-    action.bound(this, 'update');
-    action.bound(this, 'updateResult');
     this.refetch = this.refetch.bind(this);
     this.start = this.start.bind(this);
 
@@ -184,15 +199,15 @@ export abstract class BaseQuery<
       });
     });
 
-    makeObservable(this);
+    applyObservable(this, annotations);
 
     if (this.features.lazy) {
-      const cleanup = lazyObserve({
+      this.disposeObservation = lazyObserve({
         context: this,
         property: '_result',
         endDelay: this.features.lazyDelay,
         onStart: () => {
-          if (!this._observerSubscription) {
+          if (!this._destroyed && !this._observerSubscription) {
             if (params.getAllDynamicOptions) {
               this.update(params.getAllDynamicOptions() as TUpdateOptions);
             }
@@ -200,12 +215,11 @@ export abstract class BaseQuery<
               this.updateResult,
             );
             if (params.getAllDynamicOptions) {
-              return reaction(
+              this.disposeDynamicOptions = reaction(
                 params.getAllDynamicOptions,
                 (options) => this.update(options as TUpdateOptions),
                 {
                   delay: this.features.dynamicOptionsUpdateDelay,
-                  signal: params.abortSignal,
                   fireImmediately: true,
                   equals: this.features.dynamicOptionsComparer,
                 },
@@ -213,25 +227,22 @@ export abstract class BaseQuery<
             }
           }
         },
-        onEnd: (disposeFn, cleanup) => {
+        onEnd: () => {
           if (this._observerSubscription) {
-            disposeFn?.();
+            this.disposeDynamicOptions?.();
+            this.disposeDynamicOptions = undefined;
             this._observerSubscription();
             this._observerSubscription = undefined;
-            params.abortSignal?.removeEventListener('abort', cleanup);
           }
         },
       });
-
-      params.abortSignal?.addEventListener('abort', cleanup);
     } else {
       if (params.getAllDynamicOptions) {
-        reaction(
+        this.disposeDynamicOptions = reaction(
           params.getAllDynamicOptions,
           (options) => this.update(options as TUpdateOptions),
           {
             delay: this.features.dynamicOptionsUpdateDelay,
-            signal: params.abortSignal,
             fireImmediately: true,
             equals: this.features.dynamicOptionsComparer,
           },
@@ -554,6 +565,9 @@ export abstract class BaseQuery<
   }
 
   protected cleanup() {
+    this.startController?.abort();
+    this.disposeObservation?.();
+    this.disposeDynamicOptions?.();
     this._observerSubscription?.();
 
     this.doneListeners = [];
@@ -583,12 +597,16 @@ export abstract class BaseQuery<
    * [**Documentation**](https://js2me.github.io/mobx-tanstack-query/api/Query.html#start-params)
    */
   async start(params: TStartParams = {} as TStartParams): Promise<TResult> {
+    if (this._destroyed) throw new Error('WHEN_ABORTED');
     this.update({ ...params } as TUpdateOptions);
 
     if (this.result.isFetching) {
+      this.startController ??= new AbortController();
+      if (this._destroyed) this.startController.abort();
       await when(() => !this.result.isFetching, {
-        signal: this._abortSignal,
+        signal: this.startController.signal,
       });
+      if (this._destroyed) throw new Error('WHEN_ABORTED');
       const throwableError = this.getCurrentThrowableError();
       if (throwableError) {
         throw throwableError;

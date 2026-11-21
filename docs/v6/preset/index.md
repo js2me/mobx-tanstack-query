@@ -6,6 +6,8 @@ This is additional api to work with this package, which contains factory functio
 
 Here is [link for built-in configuration of `QueryClient`](/src/preset/configs/default-query-client-config.ts)   
 
+[`createQuery`](/v6/preset/createQuery) from the preset **mounts the query's `QueryClient` once** (per client instance) after the query is created, so you usually do not need to call `mount()` yourself for queries created this way. See [createQuery → QueryClient `mount()`](/v6/preset/createQuery#queryclient-mount).
+
 
 ## Usage  
 

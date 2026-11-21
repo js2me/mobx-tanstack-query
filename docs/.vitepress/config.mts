@@ -32,11 +32,12 @@ export default defineDocsVitepressConfig(configs, {
 					text: "Core API",
 					link: "/api/Query",
 					items: [
-						{ text: "Query", link: "/api/Query" },
-						{ text: "Mutation", link: "/api/Mutation" },
-						{ text: "InfiniteQuery", link: "/api/InfiniteQuery" },
-						{ text: "QueryClient", link: "/api/QueryClient" },
-						{ text: "Other", link: "/api/other" },
+					{ text: "Query", link: "/api/Query" },
+					{ text: "Mutation", link: "/api/Mutation" },
+					{ text: "InfiniteQuery", link: "/api/InfiniteQuery" },
+					{ text: "QueryGroup", link: "/api/QueryGroup" },
+					{ text: "QueryClient", link: "/api/QueryClient" },
+					{ text: "Other", link: "/api/other" },
 					],
 				},
 				{

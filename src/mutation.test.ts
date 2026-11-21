@@ -65,6 +65,34 @@ class MutationMock<
 }
 
 describe('Mutation', () => {
+  it('keeps overlapping mutations independent until settlement or destruction', async () => {
+    const pending: { signal: AbortSignal; resolve: () => void }[] = [];
+    const mutation = new Mutation({
+      queryClient: new QueryClientCore(),
+      mutationFn: (_, { signal }) =>
+        new Promise<void>((resolve) => {
+          pending.push({ signal, resolve });
+        }),
+    });
+    const first = mutation.mutate();
+    const second = mutation.mutate();
+    const third = mutation.mutate();
+    await vi.waitFor(() => expect(pending).toHaveLength(3));
+    expect(pending.every(({ signal }) => !signal.aborted)).toBe(true);
+    pending[0]!.resolve();
+    await first;
+    expect(pending.map(({ signal }) => signal.aborted)).toEqual([
+      true,
+      false,
+      false,
+    ]);
+    mutation.destroy();
+    expect(pending.every(({ signal }) => signal.aborted)).toBe(true);
+    pending[1]!.resolve();
+    pending[2]!.resolve();
+    await Promise.all([second, third]);
+  });
+
   it('should call mutationFn', async () => {
     const mutation = new MutationMock({
       mutationKey: ['test'],
@@ -472,6 +500,322 @@ describe('Mutation', () => {
       );
 
       expect(mutation.mergedFeatures.lazyDelay).toBe(3);
+      mutation.destroy();
+    });
+  });
+
+  describe('throwOnError', () => {
+    type CreateTaskVariables = {
+      completed: boolean;
+      title: string;
+      userId: number;
+    };
+
+    type MutateCatchResult = 'mutate-resolved' | 'catched-error' | undefined;
+
+    const title = 'Buy milk';
+
+    const failingMutationFn = async () => {
+      throw new Error('network');
+    };
+
+    const mutateWithCatch = async (
+      mutation: Mutation<void, CreateTaskVariables>,
+    ): Promise<MutateCatchResult> => {
+      try {
+        await mutation.mutate({
+          completed: false,
+          title,
+          userId: 1,
+        });
+
+        return 'mutate-resolved';
+      } catch {
+        return 'catched-error';
+      }
+    };
+
+    describe('via QueryClient defaultOptions', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: false,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via mutation options', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          throwOnError: false,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          throwOnError: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via QueryClient defaultOptions (lazy: true)', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: false,
+              lazy: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient({
+          defaultOptions: {
+            mutations: {
+              throwOnError: true,
+              lazy: true,
+            },
+          },
+        });
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+
+    describe('via mutation options (lazy: true)', () => {
+      it('false', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationFn: failingMutationFn,
+          throwOnError: false,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('mutate-resolved');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+
+      it('true', async () => {
+        const queryClient = new MobxQueryClient();
+
+        const mutation = new Mutation<void, CreateTaskVariables>({
+          queryClient,
+          mutationKey: ['create-task'],
+          mutationFn: failingMutationFn,
+          throwOnError: true,
+          lazy: true,
+        });
+
+        const result = await mutateWithCatch(mutation);
+
+        expect(result).toBe('catched-error');
+        expect(mutation.result.status).toBe('error');
+        mutation.destroy();
+      });
+    });
+  });
+
+  describe('listener deduplication', () => {
+    it('onDone fires only once per mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-done'],
+        mutationFn: async () => 'OK',
+      });
+
+      await mutation.mutate();
+
+      expect(mutation.spies.onDone).toHaveBeenCalledTimes(1);
+      expect(mutation.spies.onDone).toHaveBeenCalledWith(
+        'OK',
+        undefined,
+        undefined,
+      );
+      mutation.destroy();
+    });
+
+    it('onError fires only once per mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-error'],
+        mutationFn: async () => {
+          throw new Error('FAIL');
+        },
+      });
+
+      try {
+        await mutation.mutate();
+      } catch {}
+
+      expect(mutation.spies.onError).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('onDone fires for each separate mutation attempt', async () => {
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-multi'],
+        mutationFn: async (x: number) => x,
+      });
+
+      await mutation.mutate(1);
+      await mutation.mutate(2);
+
+      expect(mutation.spies.onDone).toHaveBeenCalledTimes(2);
+      mutation.destroy();
+    });
+
+    it('invalidateQueries fires only once per mutation attempt', async () => {
+      const queryClient = new MobxQueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['dedup-invalidate'],
+        mutationFn: async () => 'OK',
+        invalidateQueries: { queryKey: ['documents'] },
+      });
+
+      await mutation.mutate();
+
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['documents'] });
+      mutation.destroy();
+    });
+
+    it('onSettled fires only once per mutation attempt', async () => {
+      const onSettled = vi.fn();
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-settled'],
+        mutationFn: async () => 'OK',
+      });
+      mutation.onSettled(onSettled);
+
+      await mutation.mutate();
+
+      expect(onSettled).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('onSettled fires only once on error', async () => {
+      const onSettled = vi.fn();
+      const mutation = new MutationMock({
+        mutationKey: ['dedup-settled-error'],
+        mutationFn: async () => {
+          throw new Error('FAIL');
+        },
+      });
+      mutation.onSettled(onSettled);
+
+      try {
+        await mutation.mutate();
+      } catch {}
+
+      expect(onSettled).toHaveBeenCalledTimes(1);
+      mutation.destroy();
+    });
+
+    it('invalidateByKey fires only once per mutation attempt', async () => {
+      const queryClient = new MobxQueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const mutation = new Mutation({
+        queryClient,
+        mutationKey: ['documents'],
+        mutationFn: async () => 'OK',
+        invalidateByKey: true,
+      });
+
+      await mutation.mutate();
+
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['documents'],
+      });
       mutation.destroy();
     });
   });

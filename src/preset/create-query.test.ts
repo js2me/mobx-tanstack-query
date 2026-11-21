@@ -1,8 +1,14 @@
+import type {
+  QueryMeta,
+  QueryClient as TanstackQueryClient,
+} from '@tanstack/query-core';
+import { observable, runInAction, when } from 'mobx';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-
 import { Query } from '../query.js';
 import { QueryClient } from '../query-client.js';
+import { getQueryClient } from '../utils/get-query-client.js';
 import { createQuery } from './create-query.js';
+import { queryClient as presetModuleQueryClient } from './query-client.js';
 
 describe('createQuery', () => {
   it('preserves typings for overloads', () => {
@@ -126,9 +132,7 @@ describe('createQuery', () => {
   });
 
   it('rejects mismatched initialData for queryFn overload', () => {
-    const validQuery = createQuery(() => 1, {
-      initialData: 2,
-    });
+    const validQuery = createQuery(() => 1, {});
 
     expectTypeOf(validQuery.data).toEqualTypeOf<number | undefined>();
 
@@ -164,6 +168,215 @@ describe('createQuery', () => {
     expect(query).toBeInstanceOf(Query);
     expect(query.options.queryKey).toEqual(['dynamic-options']);
     expect(query.options.queryFn).toBe(queryFn);
+
+    query.destroy();
+  });
+
+  it('creates query from queryClient and static options object (not a getter)', () => {
+    const queryFn = vi.fn(async () => 1);
+    const client = new QueryClient();
+
+    const query = createQuery(client, {
+      enabled: false,
+      queryKey: ['static-client-options'],
+      queryFn,
+    });
+
+    expect(getQueryClient(query)).toBe(client);
+    expect(query.options.queryKey).toEqual(['static-client-options']);
+    expect(query.options.queryFn).toBe(queryFn);
+
+    query.destroy();
+  });
+
+  it('uses queryClient from options for queryFn overload', () => {
+    const customClient = new QueryClient();
+    const queryFn = vi.fn(async () => 1);
+
+    const query = createQuery(queryFn, {
+      enabled: false,
+      queryKey: ['fn-with-custom-client'],
+      queryClient: customClient,
+    });
+
+    expect(getQueryClient(query)).toBe(customClient);
+    expect(getQueryClient(query)).not.toBe(presetModuleQueryClient);
+
+    query.destroy();
+  });
+
+  it('uses explicit queryClient in single options overload', () => {
+    const customClient = new QueryClient();
+    const queryFn = vi.fn(async () => 42);
+
+    const query = createQuery({
+      queryClient: customClient,
+      enabled: false,
+      queryKey: ['single-options-with-client'],
+      queryFn,
+    });
+
+    expect(getQueryClient(query)).toBe(customClient);
+    expect(getQueryClient(query)).not.toBe(presetModuleQueryClient);
+    expect(query.options.queryKey).toEqual(['single-options-with-client']);
+
+    query.destroy();
+  });
+
+  it('input typings test', () => {
+    type CtxWide = {
+      client: TanstackQueryClient;
+      queryKey: readonly unknown[];
+      signal: AbortSignal;
+      meta: QueryMeta | undefined;
+      pageParam?: unknown;
+      direction?: unknown;
+    };
+
+    type CtxFioBar = {
+      client: TanstackQueryClient;
+      queryKey: readonly ['fio', 'bar'];
+      signal: AbortSignal;
+      meta: QueryMeta | undefined;
+      pageParam?: unknown;
+      direction?: unknown;
+    };
+
+    const client = new QueryClient();
+
+    createQuery((input) => {
+      expectTypeOf(input).toEqualTypeOf<CtxWide>();
+    });
+
+    createQuery(
+      (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      {
+        queryKey: ['fio', 'bar'] as const,
+        enabled: true,
+      },
+    );
+
+    createQuery(
+      (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      {
+        options: () => ({
+          queryKey: ['fio', 'bar'] as const,
+          enabled: true,
+        }),
+      },
+    );
+
+    createQuery({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
+    });
+
+    createQuery({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      options: () => ({
+        queryKey: ['fio', 'bar'] as const,
+        enabled: true,
+      }),
+    });
+
+    createQuery(client, () => ({
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
+    }));
+
+    createQuery(client, {
+      queryFn: (input) => {
+        expectTypeOf(input).toEqualTypeOf<CtxFioBar>();
+      },
+      queryKey: ['fio', 'bar'] as const,
+      enabled: true,
+    });
+  });
+
+  it('options-only overload: reactive "options.enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 42);
+
+    const query = createQuery({
+      queryKey: ['options-reactive-enabled'],
+      queryFn,
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(42);
+
+    query.destroy();
+  });
+
+  it('queryClient + dynamic options overload: reactive "enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 99);
+    const client = new QueryClient();
+
+    const query = createQuery(client, () => ({
+      queryKey: ['client-dynamic-enabled'],
+      queryFn,
+      enabled: enabled.get(),
+    }));
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(99);
+
+    query.destroy();
+  });
+
+  it('queryFn overload: reactive "options.enabled" should enable query on change', async () => {
+    const enabled = observable.box(false);
+    const queryFn = vi.fn(async () => 77);
+
+    const query = createQuery(queryFn, {
+      queryKey: ['fn-dynamic-enabled'],
+      options: () => ({
+        enabled: enabled.get(),
+      }),
+    });
+
+    expect(queryFn).toHaveBeenCalledTimes(0);
+
+    runInAction(() => {
+      enabled.set(true);
+    });
+
+    await when(() => !query.result.isLoading);
+
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    expect(query.result.data).toBe(77);
 
     query.destroy();
   });

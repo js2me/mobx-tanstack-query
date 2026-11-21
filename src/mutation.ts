@@ -1,4 +1,5 @@
 import {
+  type MutationFunctionContext as CoreMutationFunctionContext,
   type DefaultError,
   type MutateOptions,
   MutationObserver,
@@ -6,9 +7,15 @@ import {
   type MutationObserverOptions,
   type MutationObserverResult,
   type MutationStatus,
+  shouldThrowError,
 } from '@tanstack/query-core';
-import { action, makeObservable } from 'mobx';
-import { annotation, lazyObserve } from 'yummies/mobx';
+import * as annotation from 'yummies/mobx';
+import {
+  applyObservable,
+  lazyObserve,
+  type ObservableAnnotationsArray,
+  observableVariants,
+} from 'yummies/mobx';
 import type {
   MutationConfig,
   MutationDoneListener,
@@ -90,6 +97,10 @@ export class Mutation<
   private _observerSubscription?: VoidFunction;
   private hooks?: QueryClientHooks;
 
+  private _notifiedResult:
+    | MutationObserverResult<TData, TError, TVariables, TOnMutateResult>
+    | undefined;
+
   /**
    * The last successfully resolved data for the mutation.
    */
@@ -139,8 +150,11 @@ export class Mutation<
   isPaused!: boolean;
   submittedAt!: number;
 
-  /** */
-  protected tempAc?: AbortController;
+  private readonly controllers = new Map<
+    CoreMutationFunctionContext,
+    AbortController
+  >();
+  private disposeObservation?: VoidFunction;
 
   constructor(
     protected config: MutationConfig<
@@ -197,26 +211,34 @@ export class Mutation<
     >(queryClient, {
       ...this.mutationOptions,
       onSettled: (...args) => {
-        this.abortTempAc();
+        const context = args[4];
+        this.controllers.get(context)?.abort();
+        this.controllers.delete(context);
         return this.mutationOptions.onSettled?.(...args);
       },
       mutationFn: (variables, context) =>
         mutationFn?.(variables, {
           ...context,
-          signal: this._abortSignal ?? this.recreateTempAc().signal,
+          signal: this.getMutationSignal(context),
         } satisfies MutationFunctionContext),
     });
 
     this.updateResult(this.mutationObserver.getCurrentResult());
 
-    const resultAnnotation = annotation.observable(
-      this.features.resultObservable,
-    );
+    const annotations: ObservableAnnotationsArray<this> = [
+      [annotation.actionBound, 'updateResult'],
+    ];
+    const resultObservable = this.features.resultObservable;
+    const resultAnnotation =
+      resultObservable === true || resultObservable === undefined
+        ? annotation.observable
+        : resultObservable === false
+          ? false
+          : observableVariants[resultObservable];
     if (resultAnnotation) {
-      resultAnnotation(this, 'result');
+      annotations.unshift([resultAnnotation, 'result']);
     }
 
-    action.bound(this, 'updateResult');
     this.mutate = this.mutate.bind(this);
     this.start = this.start.bind(this);
 
@@ -226,15 +248,15 @@ export class Mutation<
       });
     });
 
-    makeObservable(this);
+    applyObservable(this, annotations);
 
     if (this.features.lazy) {
-      const cleanup = lazyObserve({
+      this.disposeObservation = lazyObserve({
         context: this,
         property: 'result',
         endDelay: this.features.lazyDelay,
         onStart: () => {
-          if (!this._observerSubscription) {
+          if (!this._destroyed && !this._observerSubscription) {
             this.updateResult(this.mutationObserver.getCurrentResult());
             this._observerSubscription = this.mutationObserver.subscribe(
               this.updateResult,
@@ -248,7 +270,6 @@ export class Mutation<
           }
         },
       });
-      config.abortSignal?.addEventListener('abort', cleanup);
     } else {
       this._observerSubscription = this.mutationObserver.subscribe(
         this.updateResult,
@@ -308,23 +329,28 @@ export class Mutation<
     variables: TVariables,
     options?: MutateOptions<TData, TError, TVariables, TOnMutateResult>,
   ) {
-    if (this.features.lazy) {
-      let error: any;
+    let caughtError: unknown;
 
-      try {
-        await this.mutationObserver.mutate(variables, options);
-      } catch (error_) {
-        error = error_;
-      }
+    try {
+      await this.mutationObserver.mutate(variables, options);
+    } catch (_error) {
+      caughtError = _error;
+    }
 
-      const result = this.mutationObserver.getCurrentResult();
-      this.updateResult(result);
+    const result = this.mutationObserver.getCurrentResult();
+    this.updateResult(result);
 
-      if (error && this.mutationOptions.throwOnError) {
+    const error = this.result.error ?? caughtError;
+
+    if (error) {
+      const { throwOnError } = this.mutationOptions;
+
+      if (
+        throwOnError !== false &&
+        shouldThrowError(throwOnError ?? true, [error as TError])
+      ) {
         throw error;
       }
-    } else {
-      await this.mutationObserver.mutate(variables, options);
     }
 
     return this.result;
@@ -348,6 +374,12 @@ export class Mutation<
     if (this.features.transformError && this.result.error) {
       this.result.error = this.features.transformError(this.result.error);
     }
+
+    if (result === this._notifiedResult) {
+      return;
+    }
+
+    this._notifiedResult = result;
 
     if (result.isSuccess && !result.error) {
       this.doneListeners.forEach((fn) => {
@@ -393,27 +425,33 @@ export class Mutation<
     this.mutationObserver.reset();
   }
 
-  protected abortTempAc() {
-    this.tempAc?.abort();
-    this.tempAc = undefined;
-  }
+  private getMutationSignal(context: CoreMutationFunctionContext): AbortSignal {
+    if (this._destroyed) return AbortSignal.abort();
+    if (this._abortSignal) return this._abortSignal;
 
-  protected recreateTempAc() {
-    this.abortTempAc();
-    this.tempAc = new AbortController();
-    return this.tempAc;
+    let controller = this.controllers.get(context);
+    if (!controller) {
+      controller = new AbortController();
+      this.controllers.set(context, controller);
+    }
+    return controller.signal;
   }
 
   destroy() {
+    if (this._destroyed) return;
     super.destroy();
 
-    this.abortTempAc();
+    for (const controller of this.controllers.values()) controller.abort();
+    this.controllers.clear();
+    this.disposeObservation?.();
 
     this._observerSubscription?.();
 
     this.doneListeners = [];
     this.errorListeners = [];
     this.settledListeners = [];
+
+    this._notifiedResult = undefined;
 
     if (this.features.resetOnDestroy) {
       this.reset();

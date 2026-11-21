@@ -141,13 +141,13 @@ export interface QueryFeatures {
 
   /**
    * MobX observable flavour for the internal TanStack Query result object (`_result`), applied with
-   * `annotation.observable()` from `yummies/mobx`. Public fields (`data`, `status`, `isLoading`, …) read from
+   * `annotation.observable` from `yummies/mobx`. Public fields (`data`, `status`, `isLoading`, …) read from
    * this object, so the option controls how deeply updates to the query result propagate to observers.
    *
    * - `'ref'` — default when omitted; tracks only the result reference.
    * - `'deep'` — deep observability for plain objects and arrays.
    * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
-   * - `true` — base `observable` (same as omitting the option).
+   * - `true` — base `observable`, which is deep.
    * - `false` — skip decorating `_result` (no automatic MobX tracking for the result; advanced use only).
    *
    * @default 'ref'

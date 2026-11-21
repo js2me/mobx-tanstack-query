@@ -1,5 +1,69 @@
 # mobx-tanstack-query
 
+## 7.4.2
+
+### Patch Changes
+
+- [#101](https://github.com/js2me/mobx-tanstack-query/pull/101) [`28eccd8`](https://github.com/js2me/mobx-tanstack-query/commit/28eccd84c036b150c79d98deed9b71a0197ee996) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.2 to fix MobX 6 bundler compatibility.
+
+## 7.4.1
+
+### Patch Changes
+
+- [#99](https://github.com/js2me/mobx-tanstack-query/pull/99) [`921b2f9`](https://github.com/js2me/mobx-tanstack-query/commit/921b2f9310f4fa07b75954a6f101a0c2b0051d62) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.1 for properly typed MobX annotation helpers.
+
+## 7.4.0
+
+### Minor Changes
+
+- [#96](https://github.com/js2me/mobx-tanstack-query/pull/96) [`095df8e`](https://github.com/js2me/mobx-tanstack-query/commit/095df8e6ec838e537cb8d368bb17cffa5542d4ec) Thanks [@js2me](https://github.com/js2me)! - Add MobX 7 support and use MobX-version-compatible observable initialization.
+
+## 7.3.0
+
+### Minor Changes
+
+- [#92](https://github.com/js2me/mobx-tanstack-query/pull/92) [`6accbe0`](https://github.com/js2me/mobx-tanstack-query/commit/6accbe0696dba65ba00b00235a45fd5a918218c6) Thanks [@js2me](https://github.com/js2me)! - added `groupQueries` utility (`QueryGroup`) that aggregates multiple queries into a single reactive view (`data`, `errors`, `status`, `isFetching`, `isSuccess`, etc.)
+
+## 7.2.2
+
+### Patch Changes
+
+- [`f67b672`](https://github.com/js2me/mobx-tanstack-query/commit/f67b6722ec2af521aee43ce776fde3aa33c09349) Thanks [@js2me](https://github.com/js2me)! - fixed bug with listener duplicate calls in Mutation
+
+## 7.2.1
+
+### Patch Changes
+
+- [`00fdb0a`](https://github.com/js2me/mobx-tanstack-query/commit/00fdb0aee47e838be368066fb32c4e7d755f4778) Thanks [@js2me](https://github.com/js2me)! - better overloads work for `createInfiniteQuery` `/preset` function
+
+- [`ab908fd`](https://github.com/js2me/mobx-tanstack-query/commit/ab908fd411f7e9a57e27bc51063c7295a9f75c18) Thanks [@js2me](https://github.com/js2me)! - better overloads work for `createQuery` `/preset` function
+
+## 7.2.0
+
+### Minor Changes
+
+- [`c7713ea`](https://github.com/js2me/mobx-tanstack-query/commit/c7713eac98247a6b1b42c831719591857c7409be) Thanks [@js2me](https://github.com/js2me)! - Expose `promise` property on Query and InfiniteQuery for Suspense integration ([#28](https://github.com/js2me/mobx-tanstack-query/issues/28))
+
+  The `promise` property is already provided by TanStack Query's `QueryObserverResult` but was not proxied by the library. It can be used to wait for the query to complete, or with `React.use(query.promise)` for Suspense integration when `experimental_prefetchInRender: true` is enabled.
+
+## 7.1.1
+
+### Patch Changes
+
+- [`3b5d49e`](https://github.com/js2me/mobx-tanstack-query/commit/3b5d49e4726fa821c89e0b35f984dc3efb167cfa) Thanks [@js2me](https://github.com/js2me)! - fixed problem with not working throwOnError during original tanstack query
+
+## 7.1.0
+
+### Minor Changes
+
+- [#84](https://github.com/js2me/mobx-tanstack-query/pull/84) [`3a8bcea`](https://github.com/js2me/mobx-tanstack-query/commit/3a8bcea840e1558faf1f06d4101f8c4179a02385) Thanks [@y0na24](https://github.com/y0na24)! - add mutationOptions helper
+
+## 7.0.1
+
+### Patch Changes
+
+- [`6559a28`](https://github.com/js2me/mobx-tanstack-query/commit/6559a284f19bb6d604827f95e1749a79d5768883) Thanks [@js2me](https://github.com/js2me)! - fixed typings for createQuery overloads
+
 ## 7.0.0
 
 ### Major Changes

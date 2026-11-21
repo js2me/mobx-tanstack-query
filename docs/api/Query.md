@@ -181,6 +181,10 @@ Is `true` whenever the first fetch for a query is in-flight.
 
 - Is the same as `isFetching && isPending`.
 
+### `isPending: boolean`
+
+Will be `true` if there's no cached data and no query attempt was finished yet.
+
 ### `isLoadingError: boolean`
 
 Will be `true` if the query failed while fetching for the first time.
@@ -268,6 +272,55 @@ Explanation of difference between `fetchStatus` and `status`:
 - `status` indicates the overall result state of the query: "pending", "error", or "success"
 - `fetchStatus` indicates the current fetching state of the query: "fetching", "paused", or "idle"
 - A query can be in "fetching" state while still having a "pending" status, or it can be in "idle" state while having an "error" or "success" status
+
+### `promise: Promise<TData>`
+
+A stable promise that will be resolved with the data of the query.
+Requires the `experimental_prefetchInRender` feature flag to be enabled.
+Can be used with `React.use(query.promise)` for Suspense integration.
+
+::: warning
+Without `experimental_prefetchInRender: true`, the promise will never resolve. Enable it either per-query or via `QueryClient` defaults.
+:::
+
+Example:
+
+```ts
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      experimental_prefetchInRender: true,
+    },
+  },
+});
+
+const query = new Query({
+  queryClient,
+  queryKey: ["pets"],
+  queryFn: async () => api.fetchPets(),
+});
+```
+
+Usage with React Suspense:
+
+```tsx
+function PetList({ query }) {
+  const data = React.use(query.promise);
+
+  return (
+    <ul>
+      {data.map((pet) => (
+        <li key={pet.id}>{pet.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+// In your component tree:
+<React.Suspense fallback={<div>Loading...</div>}>
+  <PetList query={query} />
+</React.Suspense>
+```
 
 ### `options: QueryOptions`
 
@@ -549,6 +602,20 @@ This is alternative for `destroy` method
 
 ::: tip this option is optional if you are using `lazy` option
 :::
+
+### `onInit` (constructor)
+
+Optional. Runs once when the query is ready; receives the instance.
+
+If you use [`QueryClient`](/api/QueryClient) hooks, `onQueryInit` runs after `onInit`.
+
+### `onDone` (constructor)
+
+Optional. Same as registering [`onDone(...)`](#ondone-listener) on the instance right away; you can still add more listeners later.
+
+### `onError` (constructor)
+
+Optional. Same as registering [`onError(...)`](#onerror-listener) on the instance right away; you can still add more listeners later.
 
 ### `enableOnDemand` option <Badge type="tip">QueryFeature</Badge>
 

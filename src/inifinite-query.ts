@@ -208,6 +208,12 @@ export class InfiniteQuery<
    * Will be `true` while fetching the previous page with `fetchPreviousPage`.
    */
   isFetchingPreviousPage!: boolean;
+  /**
+   * A stable promise that will be resolved with the data of the query.
+   * Requires the `experimental_prefetchInRender` feature flag to be enabled.
+   * Can be used to wait for the query to complete, or with `React.use(query.promise)` for Suspense integration.
+   */
+  promise!: Promise<TData>;
 
   constructor(
     config: InfiniteQueryConfig<
@@ -293,7 +299,8 @@ export class InfiniteQuery<
       TQueryKey
     >;
 
-    this.options.structuralSharing = this.options.structuralSharing ?? false;
+    this.options.structuralSharing =
+      this.options.structuralSharing ?? this.defaultStructuralSharing;
 
     const getAllDynamicOptions =
       getDynamicOptions || isQueryKeyDynamic
@@ -331,7 +338,6 @@ export class InfiniteQuery<
     this.finalizeInitialization({
       originalQueryProperties: originalInfiniteQueryProperties,
       getAllDynamicOptions,
-      abortSignal: config.abortSignal,
       preserveExistingProperties: true,
     });
     this.registerInitialListeners({
@@ -358,6 +364,7 @@ export class InfiniteQuery<
   }
 
   destroy(): void {
+    if (this._destroyed) return;
     super.destroy();
     this.cleanup();
     this.hooks?.onInfiniteQueryDestroy?.(this);

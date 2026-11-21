@@ -6,7 +6,7 @@
 
 - **Removed `protected abortController`** from `Query`, `InfiniteQuery`, and `Mutation`. Use `this._abortSignal` (can be `undefined`) and `this._destroyed` instead.
 
-- **Removed `handleDestroy()`**. Override `destroy()` and call `super.destroy()` at the top:
+- **Removed `handleDestroy()`**. Override `destroy()` and guard against repeated calls before calling `super.destroy()`:
 
   ```ts
   // Before
@@ -14,6 +14,7 @@
 
   // After
   destroy() {
+    if (this._destroyed) return;
     super.destroy();
     // your cleanup
   }
