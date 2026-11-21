@@ -49,7 +49,7 @@ export interface MutationFeatures {
    * - `'ref'` — default when omitted; tracks only the result reference.
    * - `'deep'` — deep observability for plain objects and arrays.
    * - `'shallow'` / `'struct'` — shallow or structural comparison for nested keys.
-   * - `true` — base `observable` (same as omitting the option).
+   * - `true` — base `observable`, which is deep.
    * - `false` — skip decorating `result` (no automatic MobX tracking for the result; advanced use only).
    *
    * @default 'ref'
