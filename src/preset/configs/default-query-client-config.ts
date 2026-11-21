@@ -1,6 +1,6 @@
 import { hashKey } from '@tanstack/query-core';
 
-import type { QueryClientConfig } from 'mobx-tanstack-query';
+import { FetchError, type QueryClientConfig } from 'mobx-tanstack-query';
 
 export const defaultQueryClientConfig = {
   defaultOptions: {
@@ -11,7 +11,8 @@ export const defaultQueryClientConfig = {
       refetchOnReconnect: 'always',
       staleTime: 5 * 60 * 1000,
       retry: (failureCount, error) => {
-        if (error instanceof Response && error.status >= 500) {
+        const response = error instanceof FetchError ? error.response : error;
+        if (response instanceof Response && response.status >= 500) {
           return failureCount < 3;
         }
         return false;

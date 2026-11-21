@@ -6,7 +6,7 @@ This is additional api to work with this package, which contains factory functio
 
 Here is [link for built-in configuration of `QueryClient`](/src/preset/configs/default-query-client-config.ts)   
 
-[`createQuery`](/preset/createQuery) from the preset **mounts the query's `QueryClient` once** (per client instance) after the query is created, so you usually do not need to call `mount()` yourself for queries created this way. See [createQuery → QueryClient `mount()`](/preset/createQuery#queryclient-mount).
+[`createQuery`](/preset/createQuery) and [`createFetchQuery`](/preset/createFetchQuery) from the preset **mount the query's `QueryClient` once** (per client instance) after the query is created, so you usually do not need to call `mount()` yourself for queries created this way. See [createQuery → QueryClient `mount()`](/preset/createQuery#queryclient-mount).
 
 
 ## Usage  
@@ -14,6 +14,7 @@ Here is [link for built-in configuration of `QueryClient`](/src/preset/configs/d
 ```ts
 import {
   createQuery,
+  createFetchQuery,
   createMutation
 } from "mobx-tanstack-query/preset";
 
@@ -24,6 +25,12 @@ const query = createQuery(async ({ signal }) => {
 }, {
   enabled: false,
   queryKey: ['fruits']
+});
+
+const fetchQuery = createFetchQuery({
+  params: () => ({
+    path: '/vegetables',
+  }),
 });
 
 await query.start();

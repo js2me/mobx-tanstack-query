@@ -45,7 +45,7 @@ The current React integration is implemented via `MobX` React bindings.
 This is extended version of original [`QueryClient`](https://tanstack.com/query/v5/docs/reference/QueryClient)
 
 ```ts
-import { QueryClient } from "mobx-tanstack-query";
+import { FetchError, QueryClient } from "mobx-tanstack-query";
 import { hashKey } from "@tanstack/query-core";
 
 export const queryClient = new QueryClient({
@@ -57,7 +57,8 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
       staleTime: 10 * 60 * 1000,
       retry: (failureCount, error) => {
-        if (error instanceof Response && error.status >= 500) {
+        const response = error instanceof FetchError ? error.response : error;
+        if (response instanceof Response && response.status >= 500) {
           return failureCount < 3;
         }
         return false;

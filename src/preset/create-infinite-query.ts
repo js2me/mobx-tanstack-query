@@ -6,13 +6,11 @@ import type {
 } from '@tanstack/query-core';
 import {
   type AnyQueryClient,
-  getQueryClient,
   InfiniteQuery,
   type InfiniteQueryConfig,
-  mountQueryClientOnce,
 } from 'mobx-tanstack-query';
 import type { PartialKeys } from 'yummies/types';
-import { queryClient } from './query-client.js';
+import { createQueryInstance } from './create-query-instance.js';
 
 export interface CreateInfiniteQueryFnConfig<
   TQueryFnData = unknown,
@@ -106,28 +104,5 @@ export function createInfiniteQuery<
 ): InfiniteQuery<TQueryFnData, TError, TPageParam, TData, TQueryKey>;
 
 export function createInfiniteQuery(...args: [any, any?]) {
-  let query: InfiniteQuery;
-
-  if (typeof args[0] === 'function') {
-    query = new InfiniteQuery({
-      ...args[1],
-      queryClient: args[1]?.queryClient ?? queryClient,
-      queryFn: args[0],
-    });
-  } else if (args.length === 2) {
-    query = new InfiniteQuery(
-      args[0],
-      typeof args[1] === 'function' ? args[1] : () => args[1],
-    );
-  } else {
-    const options = args[0];
-    query = new InfiniteQuery({
-      ...options,
-      queryClient: options.queryClient ?? queryClient,
-    });
-  }
-
-  mountQueryClientOnce(getQueryClient(query));
-
-  return query;
+  return createQueryInstance(InfiniteQuery, args);
 }

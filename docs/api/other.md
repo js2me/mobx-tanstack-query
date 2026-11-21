@@ -24,7 +24,7 @@ type Config = MutationConfigFromFn<typeof myApi.createApple>
 
 ## `using` keyword
 
-`Query`, `InfiniteQuery`, `Mutation` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).
+`Query`, `InfiniteQuery`, `Mutation`, `FetchQuery`, `FetchInfiniteQuery` supports out-of-box [`using` keyword](https://github.com/tc39/proposal-explicit-resource-management).
 
 In your project you need to install babel plugin [`@babel/plugin-proposal-explicit-resource-management`](https://www.npmjs.com/package/@babel/plugin-proposal-explicit-resource-management) to add this support.
 
