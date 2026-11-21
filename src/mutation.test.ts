@@ -65,6 +65,35 @@ class MutationMock<
 }
 
 describe('Mutation', () => {
+  it.each([
+    'manual',
+    'manual with parent',
+    'external',
+  ] as const)('keeps the same live signal across calls until %s destruction', async (trigger) => {
+    const parent = new AbortController();
+    const signals: AbortSignal[] = [];
+    const mutation = new Mutation({
+      queryClient: new QueryClientCore(),
+      abortSignal: trigger === 'manual' ? undefined : parent.signal,
+      mutationFn: async (_, { signal }) => {
+        signals.push(signal);
+      },
+    });
+    await mutation.mutate();
+    await mutation.mutate();
+    const [signal] = signals;
+    expect(signals[1]).toBe(signal);
+    expect(signal.aborted).toBe(false);
+    if (trigger === 'external') {
+      parent.abort('parent stopped');
+      expect(signal.reason).toBe(parent.signal.reason);
+    } else {
+      mutation.destroy();
+      expect(parent.signal.aborted).toBe(false);
+    }
+    expect(signal.aborted).toBe(true);
+  });
+
   it('should call mutationFn', async () => {
     const mutation = new MutationMock({
       mutationKey: ['test'],

@@ -285,6 +285,33 @@ describe('Query promise', () => {
 });
 
 describe('Query', () => {
+  it('defers the lifecycle controller until a subclass first uses it', () => {
+    class CustomQuery extends Query {
+      get controller() {
+        return this.abortController;
+      }
+    }
+    const link = vi.spyOn(LinkedAbortController.prototype, 'link');
+    try {
+      const query = new CustomQuery({
+        queryClient: new QueryClient(),
+        queryKey: ['lazy-controller'],
+        enabled: false,
+      });
+      query.update({ enabled: false });
+      expect(query.result.isFetching).toBe(false);
+      expect(link).not.toHaveBeenCalled();
+      const controller = query.controller;
+      expect(controller).toBeInstanceOf(LinkedAbortController);
+      expect(query.controller).toBe(controller);
+      query.destroy();
+      expect(controller.signal.aborted).toBe(true);
+      expect(link).toHaveBeenCalledTimes(1);
+    } finally {
+      link.mockRestore();
+    }
+  });
+
   it('should be fetched on start', async () => {
     const query = new QueryMock({
       queryKey: ['test'],
