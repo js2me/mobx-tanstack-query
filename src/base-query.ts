@@ -202,9 +202,13 @@ export abstract class BaseQuery<
       let derived: IComputedValue<TResult[keyof TResult]> | undefined;
       Object.defineProperty(this, property, {
         get: () => {
-          // A computed only updates when `_result` changes. It would go stale when MobX doesn't
-          // track `_result`, or after destroy when `result` reads the cache instead.
-          if (!resultAnnotation || this.abortController.signal.aborted) {
+          // A computed would go stale when MobX doesn't track `_result` or after destroy. A lazy
+          // query subscribes on its first read and runs `options`, which could read it again.
+          if (
+            !resultAnnotation ||
+            this.abortController.signal.aborted ||
+            !this._observerSubscription
+          ) {
             return read();
           }
           derived ??= computed(read);

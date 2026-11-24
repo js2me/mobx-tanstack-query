@@ -6368,12 +6368,16 @@ describe('Query', () => {
 });
 
 describe('result properties as computeds', () => {
-  it('reruns a derivation over "data" only when "data" changes', async () => {
+  it.each([
+    false,
+    true,
+  ])('reruns a derivation over "data" only when "data" changes (lazy: %s)', async (lazy) => {
     let version = 1;
     const query = new QueryMock({
-      queryKey: ['computed-data'],
+      queryKey: ['computed-data', lazy],
       queryFn: () => ({ ids: ['o1', 'o2'], version }),
       structuralSharing: true,
+      lazy,
     });
     let runs = 0;
     const ids = computed(() => {
@@ -6449,6 +6453,27 @@ describe('result properties as computeds', () => {
     } finally {
       dispose();
       queryClient.clear();
+    }
+  });
+
+  it('starts a lazy query whose options read a result property', async () => {
+    const query = new QueryMock({
+      queryKey: ['computed-lazy-options'],
+      queryFn: () => 1,
+      lazy: true,
+      options: (q) => ({ enabled: !q.isSuccess }),
+    });
+    const dispose = reaction(
+      () => query.isSuccess,
+      () => {},
+    );
+    try {
+      await when(() => query.isSuccess, { timeout: 1000 });
+
+      expect(query.spies.queryFn).toHaveBeenCalledTimes(1);
+    } finally {
+      dispose();
+      query.destroy();
     }
   });
 
