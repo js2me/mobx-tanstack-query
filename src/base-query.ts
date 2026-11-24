@@ -7,7 +7,13 @@ import {
   type SetDataOptions,
   type Updater,
 } from '@tanstack/query-core';
-import { reaction, runInAction, when } from 'mobx';
+import {
+  computed,
+  type IComputedValue,
+  reaction,
+  runInAction,
+  when,
+} from 'mobx';
 import * as annotation from 'yummies/mobx';
 import {
   applyObservable,
@@ -192,8 +198,18 @@ export abstract class BaseQuery<
       if (params.preserveExistingProperties && this[property as keyof this]) {
         return;
       }
+      const read = () => this.result[property as keyof TResult];
+      let derived: IComputedValue<TResult[keyof TResult]> | undefined;
       Object.defineProperty(this, property, {
-        get: () => this.result[property as keyof TResult],
+        get: () => {
+          // A computed only updates when `_result` changes. It would go stale when MobX doesn't
+          // track `_result`, or after destroy when `result` reads the cache instead.
+          if (!resultAnnotation || this.abortController.signal.aborted) {
+            return read();
+          }
+          derived ??= computed(read);
+          return derived.get();
+        },
       });
     });
 

@@ -6366,3 +6366,115 @@ describe('Query', () => {
     expect(q.data).toBe('hello!');
   });
 });
+
+describe('result properties as computeds', () => {
+  it('reruns a derivation over "data" only when "data" changes', async () => {
+    let version = 1;
+    const query = new QueryMock({
+      queryKey: ['computed-data'],
+      queryFn: () => ({ ids: ['o1', 'o2'], version }),
+      structuralSharing: true,
+    });
+    let runs = 0;
+    const ids = computed(() => {
+      runs++;
+      return query.data?.ids.map((id) => id.toUpperCase());
+    });
+    const dispose = reaction(
+      () => ids.get(),
+      () => {},
+    );
+    try {
+      await when(() => query.isSuccess);
+      const runsBefore = runs;
+
+      await query.refetch();
+      expect(runs).toBe(runsBefore);
+
+      version = 2;
+      await query.refetch();
+      expect(runs).toBe(runsBefore + 1);
+      expect(query.data?.version).toBe(2);
+    } finally {
+      dispose();
+      query.destroy();
+    }
+  });
+
+  it('reruns a derivation over "isSuccess" only when "isSuccess" changes', async () => {
+    const query = new QueryMock({
+      queryKey: ['computed-is-success'],
+      queryFn: () => 1,
+    });
+    let runs = 0;
+    const dispose = reaction(
+      () => {
+        runs++;
+        return query.isSuccess;
+      },
+      () => {},
+    );
+    try {
+      await when(() => query.isSuccess);
+      const runsBefore = runs;
+
+      await query.refetch();
+
+      expect(runs).toBe(runsBefore);
+    } finally {
+      dispose();
+      query.destroy();
+    }
+  });
+
+  it('reads the cache in a derivation after destroy', async () => {
+    const queryClient = new QueryClient();
+    const query = new QueryMock(
+      { queryKey: ['computed-after-destroy'], queryFn: () => 1 },
+      queryClient,
+    );
+    const tick = observable.box(0);
+    const seen: unknown[] = [];
+    const dispose = reaction(
+      () => [tick.get(), query.data],
+      ([, data]) => seen.push(data),
+    );
+    try {
+      await when(() => query.isSuccess);
+      query.destroy();
+      queryClient.setQueryData(['computed-after-destroy'], 2);
+      runInAction(() => tick.set(1));
+
+      expect(seen.at(-1)).toBe(2);
+    } finally {
+      dispose();
+      queryClient.clear();
+    }
+  });
+
+  it('reads fresh "data" in a derivation when "_result" is not observable', async () => {
+    let version = 1;
+    const query = new QueryMock({
+      queryKey: ['computed-unobservable-result'],
+      queryFn: () => version,
+      resultObservable: false,
+    });
+    const tick = observable.box(0);
+    const seen: unknown[] = [];
+    const dispose = reaction(
+      () => [tick.get(), query.data],
+      ([, data]) => seen.push(data),
+    );
+    try {
+      await query.refetch();
+      version = 2;
+      await query.refetch();
+      runInAction(() => tick.set(1));
+
+      expect(seen.at(-1)).toBe(2);
+    } finally {
+      dispose();
+      query.destroy();
+    }
+  });
+});
