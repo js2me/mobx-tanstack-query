@@ -7,7 +7,13 @@ import {
   type SetDataOptions,
   type Updater,
 } from '@tanstack/query-core';
-import { reaction, runInAction, when } from 'mobx';
+import {
+  computed,
+  type IComputedValue,
+  reaction,
+  runInAction,
+  when,
+} from 'mobx';
 import * as annotation from 'yummies/mobx';
 import {
   applyObservable,
@@ -192,8 +198,30 @@ export abstract class BaseQuery<
       if (params.preserveExistingProperties && this[property as keyof this]) {
         return;
       }
+      const read = () => this.result[property as keyof TResult];
+      let derived: IComputedValue<TResult[keyof TResult]> | undefined;
+      let evaluating = false;
       Object.defineProperty(this, property, {
-        get: () => this.result[property as keyof TResult],
+        get: () => {
+          // A computed would go stale when MobX doesn't track `_result` or after destroy. A lazy
+          // query subscribes inside its first read and runs `options`, which can read it again.
+          if (
+            !resultAnnotation ||
+            this.abortController.signal.aborted ||
+            evaluating
+          ) {
+            return read();
+          }
+          derived ??= computed(() => {
+            evaluating = true;
+            try {
+              return read();
+            } finally {
+              evaluating = false;
+            }
+          });
+          return derived.get();
+        },
       });
     });
 
