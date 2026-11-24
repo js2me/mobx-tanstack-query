@@ -6477,6 +6477,48 @@ describe('result properties as computeds', () => {
     }
   });
 
+  it('reruns a derivation over a cached lazy query only when "data" changes', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: Infinity } },
+    });
+    let version = 1;
+    queryClient.setQueryData(['computed-lazy-cached'], {
+      ids: ['o1'],
+      version,
+    });
+    const query = new QueryMock(
+      {
+        queryKey: ['computed-lazy-cached'],
+        queryFn: () => ({ ids: ['o1'], version }),
+        lazy: true,
+      },
+      queryClient,
+    );
+    let runs = 0;
+    const ids = computed(() => {
+      runs++;
+      return query.data?.ids.map((id) => id.toUpperCase());
+    });
+    const dispose = reaction(
+      () => ids.get(),
+      () => {},
+    );
+    try {
+      const runsBefore = runs;
+
+      await query.refetch();
+      expect(runs).toBe(runsBefore);
+
+      version = 2;
+      await query.refetch();
+      expect(runs).toBe(runsBefore + 1);
+    } finally {
+      dispose();
+      query.destroy();
+      queryClient.clear();
+    }
+  });
+
   it('reads fresh "data" in a derivation when "_result" is not observable', async () => {
     let version = 1;
     const query = new QueryMock({

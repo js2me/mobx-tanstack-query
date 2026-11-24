@@ -200,18 +200,26 @@ export abstract class BaseQuery<
       }
       const read = () => this.result[property as keyof TResult];
       let derived: IComputedValue<TResult[keyof TResult]> | undefined;
+      let evaluating = false;
       Object.defineProperty(this, property, {
         get: () => {
           // A computed would go stale when MobX doesn't track `_result` or after destroy. A lazy
-          // query subscribes on its first read and runs `options`, which could read it again.
+          // query subscribes inside its first read and runs `options`, which can read it again.
           if (
             !resultAnnotation ||
             this.abortController.signal.aborted ||
-            !this._observerSubscription
+            evaluating
           ) {
             return read();
           }
-          derived ??= computed(read);
+          derived ??= computed(() => {
+            evaluating = true;
+            try {
+              return read();
+            } finally {
+              evaluating = false;
+            }
+          });
           return derived.get();
         },
       });
